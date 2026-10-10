@@ -14,6 +14,7 @@ export async function runPrint(opts: {
   target: string;
   out?: (s: string) => void;
   tokenBudget?: number;
+  review?: boolean;
 }): Promise<RunResult> {
   const out = opts.out ?? ((s: string) => process.stdout.write(s));
   const useColor = !opts.out && process.stdout.isTTY && !process.env.NO_COLOR;
@@ -51,6 +52,9 @@ export async function runPrint(opts: {
         if (streaming) { out("\n"); streaming = false; }
         out(`  ${col("#4c8dff", "▸")} ${e.name} ${argSummary(e.name, e.args)}\n`);
         break;
+      case "review":
+        out(col(e.approved ? "#f5c542" : "#ef5b5b", `  ${e.approved ? "!" : "\u2715"} review ${e.approved ? "skipped" : `blocked by ${e.rule ?? "review"}`}: ${e.critique}\n`));
+        break;
       case "approval_required":
         out(col("#f08a3c", `    ▲ ${e.request.tool} needs approval (re-run with --yes to allow)\n`));
         break;
@@ -76,6 +80,7 @@ export async function runPrint(opts: {
     root: opts.root,
     mode: opts.mode,
     maxSteps: opts.maxSteps,
+    review: opts.review,
     onEvent,
     // No interactive approval in print mode: deny unless --yes/--auto set mode=auto.
     confirm: async () => false,

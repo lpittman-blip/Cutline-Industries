@@ -1,4 +1,5 @@
 import { executeTool, MUTATING_TOOLS, previewFor, toolSchemasFor, type PlanStep, type ToolName, type ToolResult } from "../tools/index.ts";
+import { actionForTool, review, type Verdict } from "../audit/review.ts";
 import type { AgentEvent, ChatMessage, ConfirmRequest, Mode, Phase, Provider } from "./types.ts";
 
 export type ConfirmFn = (req: ConfirmRequest) => Promise<boolean | "always">;
@@ -14,6 +15,12 @@ export interface AgentOptions {
   onEvent?: (e: AgentEvent) => void;
   forceJsGrep?: boolean;
   shellTimeoutMs?: number;
+  /**
+   * Ask the model for a second opinion on mutating actions. Off by default: it
+   * costs a round trip and tokens per action. The deterministic rules run either
+   * way, because they cost neither.
+   */
+  review?: boolean;
   systemPromptExtra?: string;
 }
 
@@ -147,8 +154,46 @@ export class Agent {
     if (args.__parse_error !== undefined) return { ok: false, output: `Error: arguments were not valid JSON: ${String(args.__parse_error).slice(0, 200)}`, summary: "invalid JSON arguments" };
     const mutating = MUTATING_TOOLS.has(name as ToolName);
     if (mutating && this.mode === "read_only") return { ok: false, output: "Error: read-only mode; this tool is disabled.", summary: "blocked (read-only)" };
+
+    // Pre-flight review, in front of the approval gate and never instead of it.
+    let verdict: Verdict | null = null;
+    if (mutating) {
+      const action = actionForTool(name, args);
+      if (action) {
+        verdict = await review(action, {
+          root,
+          // Deterministic rules always; the model only when asked to pay for it.
+          ...(this.opts.review && this.opts.provider ? { provider: this.opts.provider } : {}),
+          ...(signal ? { signal } : {}),
+        });
+        if (!verdict.approved || verdict.source === "unavailable") {
+          this.emit({
+            type: "review", callId, tool: name, approved: verdict.approved,
+            ...(verdict.rule ? { rule: verdict.rule } : {}),
+            critique: verdict.critique, source: verdict.source,
+          });
+        }
+        // A hard rule holds in EVERY mode, --yes included. `rm -rf /` is not a
+        // preference the user turns off by asking for fewer prompts. A soft
+        // finding - `any`, a vector-store import - is a judgement call: it reaches
+        // the human in the preview, and never halts an unattended run on its own.
+        if (!verdict.approved && verdict.hard) {
+          return {
+            ok: false,
+            output: `Error: blocked by ${verdict.rule}: ${verdict.critique}${verdict.suggestedFix ? `\nTry instead: ${verdict.suggestedFix}` : ""}`,
+            summary: `blocked (${verdict.rule})`,
+          };
+        }
+      }
+    }
+
     if (mutating && this.mode === "confirm") {
-      const request: ConfirmRequest = { callId, tool: name, args, preview: previewFor(name, args, root) };
+      // The critique rides along in the preview, so the human approving this sees
+      // what the reviewer objected to at the moment they decide.
+      const note = verdict && !verdict.approved
+        ? `\n\n⚠ review (${verdict.rule ?? "model"}): ${verdict.critique}${verdict.suggestedFix ? `\n  suggested: ${verdict.suggestedFix}` : ""}`
+        : "";
+      const request: ConfirmRequest = { callId, tool: name, args, preview: previewFor(name, args, root) + note };
       this.transition("awaiting_approval");
       this.emit({ type: "approval_required", request });
       const answer = this.opts.confirm ? await this.opts.confirm(request) : false;

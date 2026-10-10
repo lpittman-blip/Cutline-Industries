@@ -75,6 +75,7 @@ export type AgentEvent =
   | { type: "tool_start"; callId: string; name: string; args: Record<string, unknown> }
   | { type: "approval_required"; request: ConfirmRequest }
   | { type: "approval_resolved"; callId: string; approved: boolean }
+  | { type: "review"; callId: string; tool: string; approved: boolean; rule?: string; critique: string; source: "rules" | "model" | "unavailable" }
   | {
       type: "tool_end";
       callId: string;

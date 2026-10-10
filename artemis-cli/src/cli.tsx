@@ -30,6 +30,8 @@ Usage
 
 Options
   -y, --yes, --auto      don't ask before write_file / edit_file / run_shell
+      --review           ask the model to review each mutating action first
+                         (safety rules run either way, and --yes cannot skip them)
   -r, --read-only        disable write_file, edit_file and run_shell
   -p, --print            non-interactive output (approvals are denied unless --yes)
       --json             with --print: one JSON event per line
@@ -46,7 +48,7 @@ interface Flags {
   yes: boolean; readOnly: boolean; print: boolean; json: boolean; mock: boolean; direct: boolean;
   url?: string; key?: string; model?: string; cwd?: string; maxSteps?: number; tokenBudget?: number; port?: number; host?: string;
   help: boolean; version: boolean; positional: string[];
-  stagedOnly?: boolean; noCache?: boolean; force?: boolean; uninstall?: boolean;
+  stagedOnly?: boolean; noCache?: boolean; force?: boolean; uninstall?: boolean; review?: boolean;
 }
 
 export function parseArgs(argv: string[]): Flags {
@@ -61,6 +63,7 @@ export function parseArgs(argv: string[]): Flags {
       case "--json": f.json = true; break;
       case "--staged-only": f.stagedOnly = true; break;
       case "--no-cache": f.noCache = true; break;
+      case "--review": f.review = true; break;
       case "--force": f.force = true; break;
       case "--uninstall": f.uninstall = true; break;
       case "--mock": f.mock = true; break;
@@ -220,13 +223,13 @@ async function main() {
 
   if (f.print || !process.stdin.isTTY) {
     if (!task) { console.error("--print needs a task, e.g. artemis -p \"find the auth middleware\""); process.exit(2); }
-    const res = await runPrint({ provider: resolved.provider, root, mode, maxSteps, task, json: f.json, tokenBudget, connection: resolved.connection, target: resolved.target });
+    const res = await runPrint({ provider: resolved.provider, root, mode, maxSteps, task, json: f.json, tokenBudget, connection: resolved.connection, target: resolved.target, review: f.review });
     process.exit(res.status === "done" ? 0 : 1);
   }
 
   let status = "done";
   const app = render(
-    <App provider={resolved.provider} connection={resolved.connection} target={resolved.target} root={root} mode={mode} maxSteps={maxSteps} tokenBudget={tokenBudget} initialTask={task || undefined} exitOnDone={Boolean(task)} onExit={(s) => (status = s)} />,
+    <App provider={resolved.provider} connection={resolved.connection} target={resolved.target} root={root} mode={mode} maxSteps={maxSteps} tokenBudget={tokenBudget} review={f.review} initialTask={task || undefined} exitOnDone={Boolean(task)} onExit={(s) => (status = s)} />,
     { exitOnCtrlC: false }, // Ctrl+C aborts a running task; when idle it quits (handled in App)
   );
   await app.waitUntilExit();

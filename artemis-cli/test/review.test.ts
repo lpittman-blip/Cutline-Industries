@@ -146,13 +146,31 @@ describe("the reviewer", () => {
   });
 
   test("a clean pass prints nothing at all", () => {
-    expect(renderVerdict({ approved: true, critique: "", source: "rules" }, false)).toEqual([]);
-    expect(renderVerdict({ approved: false, rule: "DESTRUCTIVE_SHELL", critique: "no", source: "rules" }, false).join("\n"))
+    expect(renderVerdict({ approved: true, critique: "", source: "rules", hard: false }, false)).toEqual([]);
+    expect(renderVerdict({ approved: false, rule: "DESTRUCTIVE_SHELL", critique: "no", source: "rules", hard: true }, false).join("\n"))
       .toContain("DESTRUCTIVE_SHELL");
   });
 
   test("deterministic() reports every rule a write trips, not just the first", () => {
     const hits = deterministic(write("a.ts", "const k: any = 'sk-abcdefghijklmnopqrstuvwxyz0123';"), bunRepo());
     expect(hits.map((h) => h.rule).sort()).toEqual(["SECRET_EXPOSURE", "TYPESCRIPT_VIOLATION"]);
+  });
+});
+
+describe("hard and soft rejections are distinguishable", () => {
+  test("a hard rule marks itself hard; a soft one does not", async () => {
+    // Without this the loop cannot tell `rm -rf /` from a stray `any`, and every
+    // judgement call would halt an unattended run.
+    const root = bunRepo();
+    expect((await review(shell("rm -rf /"), { root })).hard).toBe(true);
+    expect((await review(write("a.ts", "const x: any = 1;"), { root })).hard).toBe(false);
+  });
+
+  test("a model rejection is never hard", async () => {
+    const root = bunRepo();
+    const reply = '{"approved": false, "rule": "CLEAN_CODE", "critique": "no validation"}';
+    const verdict = await review(write("a.ts", "ok"), { root, provider: provider(reply) });
+    expect(verdict.approved).toBe(false);
+    expect(verdict.hard).toBe(false);
   });
 });

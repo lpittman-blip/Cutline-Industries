@@ -21,6 +21,8 @@ export interface AppProps {
   /** One-shot: exit after the first task finishes. */
   exitOnDone?: boolean;
   forceJsGrep?: boolean;
+  /** Ask the model to review mutating actions. Safety rules run regardless. */
+  review?: boolean;
   onExit?: (status: string) => void;
 }
 
@@ -88,6 +90,17 @@ export function App(props: AppProps) {
       case "approval_required":
         update((items) => items.map((i) => (i.kind === "tool" && i.id === e.request.callId ? { ...i, status: "awaiting" } : i)));
         break;
+      case "review":
+        // Shown as its own transcript line, not folded into the tool row: a
+        // blocked action and a failed one read very differently to a user.
+        update((items) => [...items, {
+          kind: e.approved ? "info" : "error",
+          id: e.callId + ":review",
+          text: e.approved
+            ? `review skipped — ${e.critique}`
+            : `blocked by ${e.rule ?? "review"} (${e.source}): ${e.critique}`,
+        }]);
+        break;
       case "approval_resolved":
         update((items) => items.map((i) => (i.kind === "tool" && i.id === e.callId ? { ...i, status: e.approved ? "running" : "denied" } : i)));
         break;
@@ -124,6 +137,7 @@ export function App(props: AppProps) {
       maxSteps: props.maxSteps,
       tokenBudget: tokenLimit,
       forceJsGrep: props.forceJsGrep,
+      review: props.review,
       onEvent,
       confirm: (req) =>
         new Promise((resolve) => {

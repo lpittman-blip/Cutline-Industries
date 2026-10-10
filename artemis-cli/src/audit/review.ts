@@ -33,6 +33,12 @@ export interface Verdict {
   suggestedFix?: string;
   /** How it was decided, so a log can distinguish a regex from an opinion. */
   source: "rules" | "model" | "unavailable";
+  /**
+   * True only for a rejection that must hold even in auto mode. `rm -rf /` is
+   * hard; a `any` is a judgement call. Without this the two are both "rules" and
+   * every soft finding would halt an unattended run.
+   */
+  hard: boolean;
 }
 
 const SYSTEM = `You review one proposed action in a Bun + TypeScript codebase before it runs.
@@ -81,6 +87,7 @@ export function parseVerdict(reply: string): Verdict | null {
     critique: typeof v.critique === "string" ? v.critique : "",
     ...(typeof v.suggested_fix === "string" && v.suggested_fix ? { suggestedFix: v.suggested_fix } : {}),
     source: "model" as const,
+    hard: false,        // a model's opinion never overrides the user's mode
   };
 }
 
@@ -103,14 +110,14 @@ export async function review(action: ProposedAction, options: ReviewOptions): Pr
   const hard = hits.find((h) => h.hard);
   if (hard) {
     // Settled without asking anyone. No network, no tokens, no argument.
-    return { approved: false, rule: hard.rule, critique: hard.critique, source: "rules" };
+    return { approved: false, rule: hard.rule, critique: hard.critique, source: "rules", hard: true };
   }
 
   if (!options.provider) {
     const soft = hits[0];
     return soft
-      ? { approved: false, rule: soft.rule, critique: soft.critique, source: "rules" }
-      : { approved: true, critique: "no rule matched", source: "rules" };
+      ? { approved: false, rule: soft.rule, critique: soft.critique, source: "rules", hard: false }
+      : { approved: true, critique: "no rule matched", source: "rules", hard: false };
   }
 
   const noted = hits.length
@@ -133,10 +140,10 @@ export async function review(action: ProposedAction, options: ReviewOptions): Pr
     if (verdict) return verdict;
     // An unparseable verdict is not a rejection. Treating garbage as "blocked" makes
     // every provider hiccup look like a policy violation.
-    return { approved: true, critique: "the reviewer did not return a usable verdict", source: "unavailable" };
+    return { approved: true, critique: "the reviewer did not return a usable verdict", source: "unavailable", hard: false };
   } catch (error) {
     const why = error instanceof Error ? error.message : String(error);
-    return { approved: true, critique: `the reviewer could not run: ${why}`, source: "unavailable" };
+    return { approved: true, critique: `the reviewer could not run: ${why}`, source: "unavailable", hard: false };
   }
 }
 
@@ -151,4 +158,27 @@ export function renderVerdict(verdict: Verdict, colour = true): string[] {
     lines.push(`  ${c("32", "suggested:")} ${verdict.suggestedFix.split("\n")[0]}`);
   }
   return lines;
+}
+
+/**
+ * Builds the reviewable action from a tool call. Returns null for tools that
+ * change nothing, which are not worth a review.
+ */
+export function actionForTool(name: string, args: Record<string, unknown>): ProposedAction | null {
+  const str = (key: string): string => (typeof args[key] === "string" ? (args[key] as string) : "");
+  if (name === "run_shell") {
+    const command = str("command");
+    return command ? { kind: "shell", target: command } : null;
+  }
+  if (name === "write_file") {
+    const path = str("path");
+    return path ? { kind: "write", target: path, contents: str("content") } : null;
+  }
+  if (name === "edit_file") {
+    // Only the incoming text is reviewed. old_string is what is already in the
+    // file; flagging `any` that the edit is removing would be backwards.
+    const path = str("path");
+    return path ? { kind: "write", target: path, contents: str("new_string") } : null;
+  }
+  return null;
 }

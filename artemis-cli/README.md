@@ -440,6 +440,30 @@ all. An unreachable or unparseable reviewer reports that it could not run and th
 human gate still stands. Hard deterministic hits do not fail open — they need no
 network to decide.
 
+### Wired into the tool path
+
+The reviewer runs inside `callTool`, before the approval gate, for `run_shell`,
+`write_file` and `edit_file` only. Where the verdict lands depends on how it was
+reached:
+
+| Verdict | `confirm` mode | `auto` mode (`--yes`) |
+| --- | --- | --- |
+| hard rule (`rm -rf`, a live key, wrong package manager) | **blocked**, no prompt shown | **blocked** |
+| soft finding (`any`, a vector-store import, the model's opinion) | shown in the approval preview | warned, proceeds |
+| reviewer unreachable | noted, proceeds | noted, proceeds |
+
+**`--yes` means "stop prompting me", not "run `rm -rf`".** A hard rule is a safety
+floor, not a preference, so it holds in every mode — verified against a real
+directory: the command was blocked and the file survived. A model's opinion is a
+preference, so it never halts an unattended run on its own; it reaches the human
+where the decision is actually made, in the approval preview.
+
+Keeping those two apart needs the `hard` flag on a verdict. Without it the loop
+cannot tell `rm -rf /` from a stray `any`, and every judgement call stops the run.
+
+`--review` adds the model pass. The deterministic rules run either way, because
+they cost nothing; the model costs a round trip per mutating action.
+
 ### `artemis ci`
 
 Runs the check, posts one comment on the pull request, optionally pings Slack.
