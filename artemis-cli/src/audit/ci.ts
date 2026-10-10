@@ -12,16 +12,29 @@
 import { githubContext, postComment, renderComment, type Finding } from "./github.ts";
 import { notifySlack } from "./slack.ts";
 import { runCheck } from "./check.ts";
+import { openShadowPr, type ShadowResult } from "./shadow.ts";
 
 export interface CiResult {
   ok: boolean;
   findings: Finding[];
   comment: { posted: boolean; detail: string };
   slack: { sent: boolean; detail: string };
+  /** Present only when --fix was asked for and there was something to offer. */
+  shadow?: ShadowResult;
   durationMs: number;
 }
 
-export async function runCi(root: string, env: NodeJS.ProcessEnv = process.env): Promise<CiResult> {
+export interface CiOptions {
+  /**
+   * Offer fixes as a pull request from a branch of Artemis's own. OFF by default:
+   * pushing anywhere from CI is a decision the repository owner makes, not a
+   * default a tool picks.
+   */
+  fix?: boolean;
+  dryRun?: boolean;
+}
+
+export async function runCi(root: string, env: NodeJS.ProcessEnv = process.env, options: CiOptions = {}): Promise<CiResult> {
   const started = Date.now();
   const report = await runCheck({ root, stagedOnly: false });
 
@@ -50,5 +63,17 @@ export async function runCi(root: string, env: NodeJS.ProcessEnv = process.env):
     durationMs: summary.ms,
   }, env);
 
-  return { ok: report.ok, findings, comment, slack, durationMs: summary.ms };
+  let shadow: ShadowResult | undefined;
+  if (options.fix && ctx && findings.length > 0) {
+    const touched = [...new Set(findings.map((f) => f.file))];
+    shadow = await openShadowPr({
+      root, files: touched,
+      baseBranch: (env.GITHUB_HEAD_REF || env.GITHUB_REF_NAME || "main"),
+      sha: ctx.sha, repo: ctx.repo, token: ctx.token, apiUrl: ctx.apiUrl,
+      summary: `${findings.length} finding(s) from the pre-flight gate.`,
+      ...(options.dryRun ? { dryRun: true } : {}),
+    });
+  }
+
+  return { ok: report.ok, findings, comment, slack, ...(shadow ? { shadow } : {}), durationMs: summary.ms };
 }

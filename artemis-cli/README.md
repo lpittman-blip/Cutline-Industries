@@ -491,3 +491,69 @@ echoes the webhook URL, which is itself a credential.
 `.github/workflows/artemis-preflight.yml` wires it up with `contents: read` and
 `pull-requests: write` — nothing more — and cancels a run in flight when a newer
 push arrives.
+
+## The three that were missing
+
+### Language server (`src/audit/lsp.ts`)
+
+Answers what the compiler cannot: where a symbol is defined, who calls it, what
+type an expression has. "Every caller of `authorize`" from the language server
+beats grepping the string, which also finds the comment, the test name and an
+unrelated method.
+
+It is **not** the type gate — `artemis check` stays on `tsc --noEmit`, because a
+gate must fail loudly.
+
+Verified against a real `typescript-language-server`:
+
+```
+start: true | pull capable: false
+diagnostics: src/app.ts:3:14 error 2322 Type 'boolean' is not assignable to type 'number'.
+references to authorize: src/app.ts:1:10, 2:19, 3:28
+definition of authorize: src/lib.ts:1:17
+hover: function authorize(user: string): boolean
+```
+
+`pull capable: false` is the whole point. tsserver does not advertise
+`diagnosticProvider`, so `textDocument/diagnostic` returns nothing and broken code
+reads as clean. This waits for the `publishDiagnostics` push instead, and uses
+pull only where a server offers it. When the server answers neither, it returns
+`null` — "not told" and "clean" are different facts.
+
+Four other corrections: `readexactly` (not `readexact`, which does not exist);
+responses matched by id through one reader, since LSP interleaves notifications;
+percent-encoded file URIs; real declared capabilities. And a response is a message
+with an id and **no** `method` — tsserver sends server-to-client *requests* with
+ids too, and matching on the id alone resolves your pending call with the server's
+question.
+
+### Speculative forking (`src/audit/fork.ts`)
+
+Several versions of a change, evaluated concurrently, keep the one that compiles.
+
+On `git worktree`, not `git checkout -b`. Branch checkouts in one working
+directory are not parallel-safe: two forks racing in the same tree corrupt each
+other, which is the exact failure the idea exists to prevent. Each fork gets its
+own directory sharing one object store. Tests pin that the developer's tree is
+untouched — including an uncommitted edit — and that no worktrees are left
+registered afterwards.
+
+Forks are evaluated against `HEAD`, so uncommitted work neither leaks in nor is
+disturbed. Only the winner's content comes back, as a value for the caller to
+apply through the normal reviewed path.
+
+### Shadow pull requests (`src/audit/shadow.ts`, `artemis ci --fix`)
+
+**Off by default**, and it pushes to a branch of its own — `artemis/fix/<branch>-<sha>`
+— then opens a draft PR against yours. It never pushes to your branch: that stages
+whatever is in the tree, diverges from your local work, adds unreviewed commits to
+your history, and retriggers the workflow that produced it.
+
+- only files the agent actually changed are staged, never `git add .`
+- `[skip ci]` on the commit, so the push cannot loop
+- `--force-with-lease`, never a bare force
+- `--dry-run` prints what it would do
+
+The porcelain parsing here was a real bug worth noting: trimming git's output eats
+the leading status column and shifts every path by one character, so the file list
+silently came back empty.

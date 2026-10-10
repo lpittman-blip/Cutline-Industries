@@ -25,7 +25,9 @@ Usage
   artemis gpu [--url U]         the inference server behind the terminal, and its GPU
   artemis check [--staged-only] type-check the project; exits non-zero on errors
   artemis hook [--force]        install the pre-commit type gate (--uninstall removes it)
-  artemis ci                    pre-flight for CI: checks, comments on the PR, never pushes
+  artemis ci [--fix]            pre-flight for CI: checks and comments on the PR.
+                                --fix offers the changes as a PR from its OWN branch;
+                                it never pushes to yours. --dry-run shows what it would do.
   artemis serve [--port 7777] [--host 127.0.0.1] [--mock]   run the Artemis API server
 
 Options
@@ -48,7 +50,7 @@ interface Flags {
   yes: boolean; readOnly: boolean; print: boolean; json: boolean; mock: boolean; direct: boolean;
   url?: string; key?: string; model?: string; cwd?: string; maxSteps?: number; tokenBudget?: number; port?: number; host?: string;
   help: boolean; version: boolean; positional: string[];
-  stagedOnly?: boolean; noCache?: boolean; force?: boolean; uninstall?: boolean; review?: boolean;
+  stagedOnly?: boolean; noCache?: boolean; force?: boolean; uninstall?: boolean; review?: boolean; fix?: boolean; dryRun?: boolean;
 }
 
 export function parseArgs(argv: string[]): Flags {
@@ -64,6 +66,8 @@ export function parseArgs(argv: string[]): Flags {
       case "--staged-only": f.stagedOnly = true; break;
       case "--no-cache": f.noCache = true; break;
       case "--review": f.review = true; break;
+      case "--fix": f.fix = true; break;
+      case "--dry-run": f.dryRun = true; break;
       case "--force": f.force = true; break;
       case "--uninstall": f.uninstall = true; break;
       case "--mock": f.mock = true; break;
@@ -187,12 +191,13 @@ async function main() {
 
   if (sub === "ci") {
     const root = path.resolve(f.cwd ?? process.cwd());
-    const result = await runCi(root);
+    const result = await runCi(root, process.env, { fix: !!f.fix, dryRun: !!f.dryRun });
     if (f.json) console.log(JSON.stringify(result, null, 2));
     else {
       console.log(result.ok ? `✓ no findings (${result.durationMs}ms)` : `✕ ${result.findings.length} finding(s)`);
       console.log(`  comment: ${result.comment.detail}`);
       console.log(`  slack:   ${result.slack.detail}`);
+      if (result.shadow) console.log(`  fix:     ${result.shadow.detail}`);
     }
     process.exit(result.ok ? 0 : 1);
   }
