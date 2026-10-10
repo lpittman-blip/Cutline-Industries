@@ -3,6 +3,7 @@ import path from "node:path";
 import { createInterface } from "node:readline/promises";
 import { render } from "ink";
 import { configPath, DEFAULT_SERVER_URL, loadConfig, resolveProvider, saveConfig } from "./config.ts";
+import { probeServer, serverLabel } from "./serverprobe.ts";
 import type { Mode } from "./agent/types.ts";
 import { runPrint } from "./print.ts";
 import { App } from "./ui/App.tsx";
@@ -18,6 +19,7 @@ Usage
   artemis login [--url U] [--key K]   save your Artemis API key to ~/.artemis/config.json
   artemis logout                remove the saved key
   artemis status                check the Artemis server and your key
+  artemis gpu [--url U]         the inference server behind the terminal, and its GPU
   artemis serve [--port 7777] [--host 127.0.0.1] [--mock]   run the Artemis API server
 
 Options
@@ -127,6 +129,35 @@ async function main() {
     const key = process.env.ARTEMIS_API_KEY || cfg.apiKey;
     if (!key) { console.error("Not logged in. Run `artemis login`."); process.exit(1); }
     try { console.log(JSON.stringify(await checkServer(url, key), null, 2)); } catch (e) { console.error(`✗ ${url}: ${(e as Error).message}`); process.exit(1); }
+    return;
+  }
+
+  if (sub === "gpu") {
+    // Points at whatever the terminal is configured for: the Artemis server, vLLM on
+    // a GPU host, or LM Studio. Reports only what the server published; a server that
+    // does not expose GPU figures is said to not expose them, never shown at 0%.
+    const cfg = loadConfig();
+    const url = (f.url || process.env.ARTEMIS_URL || cfg.url || DEFAULT_SERVER_URL).replace(/\/$/, "");
+    const key = process.env.ARTEMIS_API_KEY || cfg.apiKey;
+    const r = await probeServer(url, key);
+    if (f.json) { console.log(JSON.stringify({ server: url, ...r }, null, 2)); process.exit(r.reachable ? 0 : 1); }
+    console.log(`server     ${serverLabel(url)}`);
+    console.log(`reachable  ${r.reachable ? "yes" : `no${r.detail ? ` (${r.detail})` : ""}`}`);
+    if (!r.reachable) {
+      console.error("\nPoint the terminal elsewhere with --url, or `artemis login --url <url>`.");
+      console.error("A vLLM server on a GPU host and LM Studio on this machine both answer this.");
+      process.exit(1);
+    }
+    console.log(`model      ${r.model || "none loaded"}`);
+    if (r.gpuCache === null) {
+      console.log("gpu        not reported by this server");
+      console.error("\nGPU figures come from a vLLM /metrics endpoint. The Artemis server and LM");
+      console.error("Studio do not publish one, so there is nothing to read here.");
+    } else {
+      console.log(`kv cache   ${Math.round(r.gpuCache * 100)}%`);
+      if (r.running !== null) console.log(`running    ${r.running}`);
+      if (r.queued !== null) console.log(`queued     ${r.queued}`);
+    }
     return;
   }
 

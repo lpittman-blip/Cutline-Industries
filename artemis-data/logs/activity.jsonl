@@ -47,3 +47,11 @@
 {"at":"2026-10-10T05:36:01.084Z","event":"memory.add","detail":"files/file_sidebar_test_md"}
 {"at":"2026-10-10T05:36:01.087Z","event":"memory.update","detail":"files/file_sidebar_test_md"}
 {"at":"2026-10-10T05:36:01.099Z","event":"memory.forget","detail":"files/file_sidebar_test_md"}
+{"at":"2026-10-10T17:58:12.751Z","event":"upload","detail":"txt Privacy-Policy-Lisa-Cutline-Industries-.txt → knowledge/Privacy-Policy-Lisa-Cutline-Industries-.txt.md (5 chunks)"}
+{"at":"2026-10-10T17:58:13.149Z","event":"memory.add","detail":"files/file_sidebar_test_md"}
+{"at":"2026-10-10T17:58:13.156Z","event":"memory.update","detail":"files/file_sidebar_test_md"}
+{"at":"2026-10-10T17:58:13.170Z","event":"memory.forget","detail":"files/file_sidebar_test_md"}
+{"at":"2026-10-10T17:58:28.676Z","event":"memory.add","detail":"files/file_sidebar_test_md"}
+{"at":"2026-10-10T17:58:28.679Z","event":"memory.update","detail":"files/file_sidebar_test_md"}
+{"at":"2026-10-10T17:58:28.693Z","event":"memory.forget","detail":"files/file_sidebar_test_md"}
+{"at":"2026-10-10T17:58:28.718Z","event":"upload","detail":"txt Privacy-Policy-Lisa-Cutline-Industries-.txt → knowledge/Privacy-Policy-Lisa-Cutline-Industries-.txt.md (5 chunks)"}

@@ -324,3 +324,25 @@ Two rules the tests pin:
 `Gauge` is the one deliberate departure from the reference, which uses a circular
 ring. A ring is a shape a text cell does not have; `○ ◔ ◑ ◕ ●` encode quarters
 exactly, so the figure stays true instead of becoming ASCII decoration.
+
+## The inference server behind the terminal
+
+`artemis gpu` reports what is actually serving, whether that is the Artemis
+server, vLLM on a GPU host, or LM Studio on this machine:
+
+```
+artemis gpu                          # the configured server
+artemis gpu --url http://localhost:1234   # LM Studio
+artemis gpu --json                   # for scripts; exits non-zero when unreachable
+```
+
+The status line gains two figures when they can be measured: `18.4 tok/s`, timed
+from the **first** token rather than the request (including the queue wait gives
+a number that climbs through the answer and settles nowhere), and `gpu 42%` from
+vLLM's `gpu_cache_usage_perc`. Both are simply absent when there is nothing to
+measure — a blank is honest, where a zero would read as a stalled model or an
+idle GPU. A genuine zero is still shown.
+
+`../infra/gpu/provision-gpu-vm.sh` stands up an Azure GPU VM running vLLM behind
+an SSH tunnel, and refuses to run while GPU quota is zero — which it is on all
+three subscriptions as of 2026-10-10. The script says how to request it.

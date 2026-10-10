@@ -8,7 +8,7 @@
     "build": "tsc -b && vite build",
     "lint": "oxlint",
     "typecheck": "tsc -b --noEmit",
-    "test": "node --import tsx --test src/**/*.test.ts server/*.test.ts server/**/*.test.ts tools/**/*.test.ts cli/*.test.ts cli/ui/*.test.tsx",
+    "test": "node --import tsx --test src/**/*.test.ts server/*.test.ts server/**/*.test.ts tools/**/*.test.ts",
     "verify": "npm run lint && npm run typecheck && npm test",
     "preview": "vite preview",
     "api": "tsx --import ./server/instrument.ts server/api.ts",
@@ -23,7 +23,8 @@
     "deploy:push": "git push origin main && git push gitea main 2>/dev/null || true",
     "deploy:zip": "curl -sf -X POST https://cutline-industries.studio/_internal/gen-zip -H 'Content-Type: application/json' -H \"x-deploy-signature: sha256=$(echo -n '{}' | openssl dgst -sha256 -hmac ${DEPLOY_WEBHOOK_SECRET} -hex | awk '{print $2}')\" -d '{}' && echo 'ZIP triggered'",
     "start": "concurrently -k \"npm:api\" \"npm:dev\"",
-    "artemis": "bun cli/artemis.ts"
+    "artemis": "bun --cwd artemis-cli run src/cli.tsx",
+    "artemis:test": "bun --cwd artemis-cli test"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1101.0",
@@ -62,8 +63,5 @@
     "tsx": "^4.23.1",
     "typescript": "~6.0.2",
     "vite": "^8.1.1"
-  },
-  "bin": {
-    "artemis": "./cli/artemis.ts"
   }
 }
