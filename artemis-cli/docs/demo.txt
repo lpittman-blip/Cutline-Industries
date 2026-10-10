@@ -1,0 +1,118 @@
+# Artemis CLI demo transcript — 2026-10-10 01:09 EDT
+# bun 1.4.2, Linux x86_64. Server uses the offline mock model (ARTEMIS_PROVIDER=mock).
+
+$ ARTEMIS_PROVIDER=mock ARTEMIS_WORKSPACES_ROOT=/workspace/artemis-cli bun src/cli.tsx serve --port 7799 &
+
+$ bun src/cli.tsx login --url http://127.0.0.1:7799 --key $KEY | sed 's#/tmp/artemis-demo-home.8RKV#~/.artemis#'
+--key needs a value
+
+$ bun src/cli.tsx status | head -20
+Not logged in. Run `artemis login`.
+
+$ bun src/cli.tsx -p -y 'Survey the Artemis CLI tools and write notes'
+✗ Not logged in. Run `artemis login` (or set ARTEMIS_API_KEY), use --mock for an offline demo, or --direct to call a model provider directly.
+
+$ head -12 docs/MOCK_NOTES.md
+# Artemis CLI: code survey (mock run)
+
+Status: reviewed
+
+Task: Survey the Artemis CLI tools and write notes
+
+## Exported symbols
+- `src/agent/loop.ts:49` export function systemPrompt(root: string, mode: Mode, extra = ""): string
+- `src/agent/loop.ts:95` export class Agent
+- `src/agent/mock.ts:24` export function mockContext(messages: ChatMessage[], toolNames: string[]): MockContext
+- `src/agent/mock.ts:86` export class MockProvider implements Provider
+- `src/agent/openai.ts:39` export class OpenAIProvider implements Provider
+
+$ curl -s http://127.0.0.1:7799/v1/health
+{"status":"ok","version":"1.0.0","time":"2026-10-10T05:09:57.536Z"}
+$ curl -s -H 'Authorization: Bearer '$KEY -H 'content-type: application/json' http://127.0.0.1:7799/v1/search -d '{"type":"grep","pattern":"export class","glob":"*.ts"}' | jq -c '.count, .results[0:3][]'
+jq: error (at <stdin>:0): Cannot iterate over null (null)
+null
+
+$ RUN=$(curl -s -H 'Authorization: Bearer '$KEY -H 'content-type: application/json' http://127.0.0.1:7799/v1/agent/runs -d '{"task":"Survey the code","mode":"confirm"}' | jq -r .id)
+null
+
+$ curl -s -H 'Authorization: Bearer '$KEY -H 'content-type: application/json' http://127.0.0.1:7799/v1/agent/runs/$RUN | jq -c '{status, steps, pending: .pending_approval.tool}'
+{"status":null,"steps":null,"pending":null}
+
+$ curl -s -H 'Authorization: Bearer '$KEY -H 'content-type: application/json' -X POST http://127.0.0.1:7799/v1/agent/runs/$RUN/approve -d '{"approved":true,"always":true}' | jq -c '{status}'
+{"status":null}
+
+$ curl -sN -H 'Authorization: Bearer '$KEY -H 'content-type: application/json' http://127.0.0.1:7799/v1/agent/runs/$RUN/events | grep '^event:' | sort | uniq -c
+
+$ curl -s -H 'Authorization: Bearer '$KEY -H 'content-type: application/json' http://127.0.0.1:7799/v1/agent/runs/$RUN | jq -c '{status, steps, summary}'
+{"status":null,"steps":null,"summary":null}
+
+$ curl -s -H 'Authorization: Bearer '$KEY -H 'content-type: application/json' http://127.0.0.1:7799/v1/chat/completions -d '{"model":"artemis","messages":[{"role":"user","content":"hi"}],"tools":[{"type":"function","function":{"name":"glob","parameters":{}}}]}' | jq -c '.choices[0].message.tool_calls[0].function'
+null
+
+$ curl -s -o /dev/null -w '%{http_code}\n' http://127.0.0.1:7799/v1/status
+401
+
+$ # Live model check (read-only, --direct, uses XAI_API_KEY / OPENAI_API_KEY if set)
+
+$ timeout 120 bun src/cli.tsx --direct -p --read-only --max-steps 8 'Where is the agent loop implemented? Answer with file:line.'
+◆ ARTEMIS CLI · grok-4-fast-non-reasoning via direct https://api.x.ai/v1 · mode read_only · root /workspace/artemis-cli
+❯ Where is the agent loop implemented? Answer with file:line.
+── step 1/8
+✗ Model request failed (400): {"code":"invalid-argument","error":"Incorrect API key provided. You can obtain an API key from https://console.x.ai."}
+tokens 0↑ 0↓ · 1 steps · error
+
+$ ARTEMIS_PROVIDER_KEY=$OPENAI_API_KEY ARTEMIS_PROVIDER_BASE_URL=https://api.openai.com/v1 timeout 120 bun src/cli.tsx --direct -p --read-only --max-steps 8 'Where is the agent loop implemented? Answer with file:line.'
+◆ ARTEMIS CLI · gpt-4o-mini via direct https://api.openai.com/v1 · mode read_only · root /workspace/artemis-cli
+❯ Where is the agent loop implemented? Answer with file:line.
+── step 1/8
+✗ Model request failed (401): {
+  "error": {
+    "message": "Incorrect API key provided: sk-••••(redacted). You can find your API key at https://platform.openai.com/account/api-keys.",
+    "type": "invalid_request_error",
+    "code": "invalid_api_key",
+    "param": null
+  },
+  "status": 401
+}
+tokens 0↑ 0↓ · 1 steps · error
+
+$ # TUI (React + Ink) final frame from a mock run — FORCE_COLOR=3 bun scripts/render-ui.tsx
+╭──────────────────────────────────────────────────────────────────────────────────────────────────╮
+│ ◆ ARTEMIS | Codebase Agent v1.0.0 (Research Preview)                                             │
+│ model artemis-mock  ·  via mock offline  ·  root /workspace/artemis-cli                          │
+│                                                                                                  │
+│ CURRENT OPERATIONAL LOOP ─────────────────────────────────────────────────────────────────────── │
+│ Plan 5/5                                                                                         │
+│   ✓ Map the codebase with glob                                                                   │
+│   ✓ Search for exported symbols                                                                  │
+│   ✓ Read the entry point                                                                         │
+│   ✓ Write survey notes                                                                           │
+│   ✓ Review and finalize the notes                                                                │
+│                                                                                                  │
+│ ❯ Survey the Artemis CLI tools and write notes                                                   │
+│   ◆ I'll map the codebase first with a glob, then narrow down with grep.                         │
+│   ✓ ⌕ glob src/**/*.{ts,tsx}  → 15 files  4ms  ▸                                                 │
+│   ◆ Found 15 source files. Searching for exported functions and classes.                         │
+│   ✓ ≡ grep /^export (async function|function|class) / i  → 33 matches in 14 files (ripgr  9ms  ▸ │
+│                                                                                                  │
+│   ◆ Reading the top of `src/agent/loop.ts` to understand the entry points.                       │
+│   ✓ ▤ read_file src/agent/loop.ts:1-30  → lines 1-30 of 247  3ms  ▸                              │
+│   ◆ Writing my findings to docs/MOCK_NOTES.md.                                                   │
+│   ✓ ✎ write_file docs/MOCK_NOTES.md  → overwrote · 23 lines  55ms  ▸                             │
+│   ◆ Marking the notes as reviewed.                                                               │
+│   ✓ ✐ edit_file docs/MOCK_NOTES.md  → 1 replacement · -1/+1 lines  6ms  ▸                        │
+│   ✓ ◆ done   → finished  0ms                                                                     │
+│                                                                                                  │
+│   ╭────────────────────────────────────────────────────────────────────────────────────────────╮ │
+│   │ ✓ Done in 6 steps                                                                          │ │
+│   │ Surveyed 15 source files and found 33 exported functions/classes via grep. Wrote           │ │
+│   │ docs/MOCK_NOTES.md and marked it reviewed.                                                 │ │
+│   ╰────────────────────────────────────────────────────────────────────────────────────────────╯ │
+│                                                                                                  │
+│ ╭──────────────────────────────────────────────────────────────────────────────────────────────╮ │
+│ │ ❯ Ask Artemis to find, fix or build something…                                               │ │
+│ ╰──────────────────────────────────────────────────────────────────────────────────────────────╯ │
+│                                                                                                  │
+│──────────────────────────────────────────────────────────────────────────────────────────────────│
+│  DONE  │ tokens 10.8k/200.0k │ AUTO │ step 6/25 │ 940ms  ctrl+o expand · /help                   │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────╯

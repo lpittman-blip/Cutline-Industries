@@ -28,8 +28,13 @@ def _qa(q: str, a: str) -> dict:
 def identity_set(brains, biz) -> list[dict]:
     specialists = [b for b in brains.values() if b.kind == "specialist"]
     roster = ", ".join(f"{b.name} ({b.title.lower()})" for b in specialists)
-    who = (f"I'm Artemis, the AI built by {biz['company']}. I'm one big brain that works with ten specialist brains: "
-           f"{roster}. I was trained from scratch on Artemis AI's own infrastructure.")
+    founder = biz.get("founder")
+    made_by = ""
+    if founder:
+        title = biz.get("founder_title", "")
+        made_by = f" I was created by {founder}, {title}." if title else f" I was created by {founder}."
+    who = (f"I'm Artemis, the AI built by {biz['company']}.{made_by} I'm one big brain that works with ten "
+           f"specialist brains: {roster}. I was trained from scratch on Artemis AI's own infrastructure.")
     ex = [_qa(q, who) for q in ["Who are you?", "What are you?", "Introduce yourself.", "Who made you?", "What is Artemis?"]]
     for other in ["ChatGPT", "Claude", "Grok", "Gemini"]:
         ex.append(_qa(f"Are you {other}?", f"No. I'm Artemis, made by {biz['company']}. {other} is a different AI from a different company."))

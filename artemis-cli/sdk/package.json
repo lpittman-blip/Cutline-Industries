@@ -1,0 +1,11 @@
+{
+  "name": "@artemis-ai/sdk",
+  "version": "0.1.0",
+  "description": "Typed TypeScript client for the Artemis API (runs, chat, search, sessions, webhooks).",
+  "type": "module",
+  "main": "./index.ts",
+  "types": "./index.ts",
+  "exports": { ".": "./index.ts" },
+  "license": "UNLICENSED",
+  "private": true
+}

@@ -101,7 +101,13 @@ def test_business_knowledge_goes_into_designated_weights(corpus, tmp_path):
     counts = build(tmp_path / "sft")
     assert counts["artemis"] > counts["saturn"] > 0  # orchestrator also learns routing
     text = (tmp_path / "sft" / "artemis.jsonl").read_text()
-    assert "$20 a month" in text and "$200 a month" in text and "I'm Artemis" in text and "Cutline" not in text
+    assert "$20 a month" in text and "$200 a month" in text and "I'm Artemis" in text
+    # Cutline Industries may appear ONLY inside the founder's title. The product is
+    # still branded Artemis AI, so the model must never name Cutline as its maker.
+    for line in text.splitlines():
+        if "Cutline" in line:
+            assert "CEO of Cutline Industries" in line, "Cutline named outside the founder's title"
+    assert "built by Cutline" not in text and "made by Cutline" not in text
     found = tmp_path / "found"
     train_main(["--size", "smoke", "--data", str(corpus["data"]), "--out", str(found), "--steps", "40",
                 "--batch", "8", "--lr", "3e-3", "--eval-every", "40", "--ckpt-every", "40"])

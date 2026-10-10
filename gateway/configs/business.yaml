@@ -7,6 +7,30 @@
 
 company: Artemis AI
 product: Artemis
+# Single source of truth for who built Artemis. Used by the runtime system prompt
+# (artemis/brains.py) and the identity training set (artemis/knowledge.py), so the
+# live answer and the trained weights cannot drift apart.
+founder: Latoya Pittman
+founder_title: software engineer and CEO of Cutline Industries
+parent_company: Cutline Industries
+
+# Models offered to customers. Artemis's own model is the product; third-party
+# models are an added service a plan may include, never a substitute for it.
+# `external: true` means the request leaves our infrastructure - the UI must say so,
+# and Blueprint Decisions 5 and 12 keep these out of Artemis's OWN reasoning.
+models:
+  artemis:
+    display: Artemis
+    provider: artemis
+    external: false
+    description: Our own model. The Prime Core and its ten specialist brains.
+  grok:
+    display: Grok
+    provider: xai
+    external: true
+    model_id: grok-4.20-non-reasoning
+    context_tokens: 1000000
+    description: xAI's Grok, offered as an added service for long-context work.
 
 plans:
   free:
@@ -19,6 +43,7 @@ plans:
     tools: [web_search, web_fetch]
     tool_calls_per_day: 20
     train_on_conversations: opt-out
+    models: [artemis]
   plus:
     price_usd_month: 20
     tier: gpt-3-aligned-rag
@@ -29,6 +54,7 @@ plans:
     tools: all
     tool_calls_per_day: 300
     train_on_conversations: opt-out
+    models: [artemis]
   pro:
     price_usd_month: 200
     tier: gpt-4-asi-orchestrator
@@ -39,6 +65,7 @@ plans:
     tools: all
     tool_calls_per_day: unlimited
     train_on_conversations: opt-out
+    models: [artemis, grok]
   team:
     price_usd_seat_month: 30
     min_seats: 2
@@ -51,6 +78,7 @@ plans:
     tools: all
     tool_calls_per_day: 1000
     train_on_conversations: never
+    models: [artemis, grok]
   enterprise:
     price: contact sales
     tier: gpt-4-asi-orchestrator
@@ -63,6 +91,7 @@ plans:
     tools: all
     tool_calls_per_day: unlimited
     train_on_conversations: never
+    models: all
 
 # Developer API: billed per 1M tokens, by model. Usage is metered per API key.
 api_models:

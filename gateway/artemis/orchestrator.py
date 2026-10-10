@@ -23,7 +23,7 @@ from dataclasses import dataclass, field
 from typing import Callable
 
 from .backends import Backend, ModelNotReady, ModelUnavailable
-from .brains import Brain, load_brains
+from .brains import Brain, load_brains, origin_line
 from .memory import MemoryStore, context_block
 from .tools import TOOL_SPECS, Toolbox, ToolResult, parse_tool_call, result_block
 
@@ -133,6 +133,12 @@ class Artemis:
         self.use_model_router = use_model_router
         self.memory = memory
         self.pool = ThreadPoolExecutor(max_workers=10)
+        # Resolved once: every system prompt carries who built Artemis, so "who made
+        # you" is answered from configs/business.yaml instead of being improvised.
+        try:
+            self._origin = origin_line()
+        except Exception:
+            self._origin = ""   # a missing/!malformed business.yaml must not break chat
 
     def plan(self, text: str, tier: str) -> Plan:
         limit = TIERS[tier]["max_specialists"]
@@ -147,7 +153,7 @@ class Artemis:
 
     def _model_route(self, text: str, limit: int) -> Plan:
         menu = "\n".join(f"{b.id}: {b.role}" for b in self.brains.values() if b.kind == "specialist" and b.id not in SUPPORT_BRAINS)
-        reply = self.backend.generate("artemis", self.brains["artemis"].system_prompt(), [{"role": "user", "content":
+        reply = self.backend.generate("artemis", self.brains["artemis"].system_prompt(self._origin), [{"role": "user", "content":
             f"Choose at most {limit} brains for this request. Reply with JSON "
             f'{{"brains": [...], "reason": "..."}} using only these ids:\n{menu}\n\nRequest: {text}'}], max_tokens=200)
         data = json.loads(reply[reply.index("{"): reply.rindex("}") + 1])
@@ -249,7 +255,7 @@ class Artemis:
         """One answer, using tools when allowed: the model may call a tool, see its result, and continue, up to
         MAX_TOOL_STEPS times. Yields token / tool_call / tool_result events; returns the visible answer text."""
         allowed = tools.allowed if tools else []
-        system = self.brains[brain_id].system_prompt() + (tools.toolbox.instructions(allowed) if allowed else "")
+        system = self.brains[brain_id].system_prompt(self._origin) + (tools.toolbox.instructions(allowed) if allowed else "")
         msgs, shown = list(messages), []
         for step in range(MAX_TOOL_STEPS + 1):
             filt = _CallFilter()
@@ -281,7 +287,7 @@ class Artemis:
             msgs += [{"role": "assistant", "content": reply[:reply.index("</tool_call>") + len("</tool_call>")]},
                      {"role": "user", "content": result_block(result)}]
             if step == MAX_TOOL_STEPS - 1:
-                system = self.brains[brain_id].system_prompt() + "\nNo more tool calls are allowed. Answer from the results already provided, stating any limits."
+                system = self.brains[brain_id].system_prompt(self._origin) + "\nNo more tool calls are allowed. Answer from the results already provided, stating any limits."
         answer = "".join(shown).strip()
         if not reply.strip():
             raise ResponseIncomplete("empty_response", "The model returned no answer; please retry.")
@@ -311,7 +317,7 @@ class Artemis:
         yield from stream(brain_id, system, messages, max_tokens)
 
     def _ask(self, brain_id: str, messages: list[dict], max_tokens: int = 512) -> str:
-        return self.backend.generate(brain_id, self.brains[brain_id].system_prompt(), messages, max_tokens)
+        return self.backend.generate(brain_id, self.brains[brain_id].system_prompt(self._origin), messages, max_tokens)
 
     def _merge_messages(self, text: str, drafts: dict[str, str]) -> list[dict]:
         parts = "\n\n".join(f"[{self.brains[b].name}]\n{d}" for b, d in drafts.items())

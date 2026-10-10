@@ -1,0 +1,35 @@
+{
+  "name": "artemis-cli",
+  "version": "1.0.0",
+  "description": "Artemis CLI: an autonomous coding agent for the terminal. TypeScript on Bun, React + Ink (Yoga) UI, agentic glob/grep search instead of RAG.",
+  "type": "module",
+  "bin": {
+    "artemis": "./src/cli.tsx"
+  },
+  "scripts": {
+    "start": "bun run src/cli.tsx",
+    "dev": "bun --watch run src/cli.tsx",
+    "test": "bun test",
+    "typecheck": "tsc --noEmit",
+    "demo": "bun run src/cli.tsx --mock --print \"Survey the Artemis CLI tools and write notes\""
+  },
+  "engines": {
+    "bun": ">=1.1.0"
+  },
+  "license": "UNLICENSED",
+  "private": true,
+  "dependencies": {
+    "hono": "^4.13.13",
+    "ink": "5",
+    "ink-spinner": "5",
+    "ink-text-input": "6",
+    "react": "18"
+  },
+  "devDependencies": {
+    "@types/bun": "^1.4.2",
+    "@types/react": "18",
+    "ink-testing-library": "4",
+    "typescript": "5",
+    "typescript-language-server": "^6.0.2"
+  }
+}

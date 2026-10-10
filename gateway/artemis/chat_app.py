@@ -22,9 +22,24 @@ from .conversations import ChatError, Conversations, uid
 from .server import ALLOWED_ORIGINS, build_app, make_handler
 
 
+def _find_site() -> Path:
+    """Locate the static site by searching upward, rather than assuming a depth.
+
+    site/ lives at the repository root, beside gateway/, not inside it. Hardcoding
+    parent.parent pointed at gateway/site, which does not exist, so every page
+    404ed and three tests failed for it.
+    """
+    here = Path(__file__).resolve()
+    for directory in here.parents:
+        candidate = directory / "site"
+        if (candidate / "index.html").is_file():
+            return candidate
+    return here.parent.parent / "site"   # nothing found: keep a definite path to report
+
+
 def make_chat_handler(app, biz, records, jobs, site=None):
     base = make_handler(app, biz)
-    root = Path(site or Path(__file__).resolve().parent.parent / "site").resolve()
+    root = Path(site or os.environ.get("ARTEMIS_SITE") or _find_site()).resolve()
     cookie_secure = os.environ.get("ARTEMIS_COOKIE_SECURE", "1") != "0"
     origins = ALLOWED_ORIGINS | {"http://localhost:8080", "http://127.0.0.1:8080"}
 
@@ -79,6 +94,15 @@ def make_chat_handler(app, biz, records, jobs, site=None):
                     try: user = self._user()
                     except ChatError: user = None
                     self._json(200, {"user": user, "plan": biz.plan_of(user["id"]).id if user else None}); return True
+                if method == "GET" and name == "models":
+                    # The model picker. `external` lets the UI say plainly when a request
+                    # would leave our infrastructure, and an included model this server has
+                    # no credentials for is listed unavailable rather than hidden.
+                    try: user = self._user()
+                    except ChatError: user = None
+                    added = getattr(app, "added_models", {})
+                    self._json(200, {"models": [{**m, "available": m["id"] == "artemis" or m["id"] in added}
+                                                for m in biz.allowed_models(user["id"] if user else "")]}); return True
                 if method == "GET" and name == "health":
                     self._json(200, {"ok": True, "queued": records.db.one("SELECT COUNT(*) FROM chat_requests WHERE state='queued'")[0],
                         "generating": records.db.one("SELECT COUNT(*) FROM chat_requests WHERE state='generating'")[0]}); return True
@@ -95,6 +119,14 @@ def make_chat_handler(app, biz, records, jobs, site=None):
                     self._json(200, {"requests": dict(records.db.all("SELECT state,COUNT(*) FROM chat_requests GROUP BY state")),
                         "average_generation_seconds": records.db.one("SELECT AVG(ended-started) FROM chat_requests WHERE ended IS NOT NULL AND started IS NOT NULL")[0],
                         "failures": dict(records.db.all("SELECT category,COUNT(*) FROM chat_failures GROUP BY category"))}); return True
+                if name == "usage" and method == "GET":
+                    # Billing, Usage and Capabilities in one reading. Models are marked
+                    # available only when this server can actually serve them.
+                    added = getattr(app, "added_models", {})
+                    data = biz.entitlements(owner)
+                    for m in data["capabilities"]["models"]:
+                        m["available"] = m["id"] == "artemis" or m["id"] in added
+                    self._json(200, data); return True
                 if name == "settings" and len(parts) == 2:
                     if method == "GET": self._json(200, records.preferences(owner)); return True
                     if method == "PATCH": self._json(200, records.preferences(owner, body.get("retention_days"))); return True
@@ -201,9 +233,17 @@ def make_chat_handler(app, biz, records, jobs, site=None):
             self.end_headers(); self.wfile.write(data)
 
         def do_POST(self):
-            if urlsplit(self.path).path in ("/v1/chat", "/v1/chat/stream"):
-                return self._json(404, {"error": "Use the authenticated conversation endpoints."})
+            # The website must go through /api/conversations, which is durable, resumable
+            # and owned by a signed-in account; /v1/chat is neither. A terminal client is
+            # a different thing: Artemis is terminal-first, and a request carrying an API
+            # key is not the website, so it gets the streaming endpoint. Cookie and
+            # anonymous requests are still turned away, which is what the gate was for.
+            if urlsplit(self.path).path in ("/v1/chat", "/v1/chat/stream") and not self._bearer():
+                return self._json(404, {"error": "Use the authenticated conversation endpoints, or an API key."})
             if not self._route("POST"): super().do_POST()
+
+        def _bearer(self) -> bool:
+            return self.headers.get("Authorization", "").startswith("Bearer ")
 
         def do_PATCH(self):
             if not self._route("PATCH"): self._json(404, {"error": "Not found."})

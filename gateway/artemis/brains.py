@@ -23,9 +23,15 @@ class Brain:
     model: dict = field(default_factory=dict)
     training_sets: tuple[str, ...] = ()
 
-    def system_prompt(self) -> str:
+    def system_prompt(self, origin: str = "") -> str:
+        """`origin` states who built Artemis, so the model answers "who made you" from
+        fact rather than improvising. Callers pass brains.origin_line(); it is optional
+        so existing callers and tests keep working unchanged."""
         label = f"{self.name} ({self.title})" if self.title else self.name
-        lines = [f"You are {label}, part of Artemis AI.", self.role, "", "Instructions:"]
+        lines = [f"You are {label}, part of Artemis AI."]
+        if origin:
+            lines.append(origin)
+        lines += [self.role, "", "Instructions:"]
         lines += [f"- {i}" for i in self.instructions]
         lines += ["", "Rules:"] + [f"- {r}" for r in self.rules]
         return "\n".join(lines)
@@ -46,3 +52,24 @@ def load_brains(directory: Path = BRAINS_DIR) -> dict[str, Brain]:
     if missing or "artemis" not in brains:
         raise ValueError(f"missing brain definitions: {sorted(missing | ({'artemis'} - brains.keys()))}")
     return brains
+
+
+def origin_line(biz: dict | None = None) -> str:
+    """One sentence naming who built Artemis, drawn from configs/business.yaml.
+
+    Without this the model invents an answer - the live site replied "created by the
+    team behind Artemis AI", which is vague and unattributed.
+    """
+    if biz is None:
+        from .business import load_business
+        biz = load_business()
+    founder = biz.get("founder")
+    if not founder:
+        return ""
+    title = biz.get("founder_title", "")
+    parent = biz.get("parent_company")
+    who = f"{founder}, {title}" if title else founder
+    line = f"Artemis was created by {who}."
+    if parent and parent not in title:
+        line += f" Artemis AI is built by {parent}."
+    return line

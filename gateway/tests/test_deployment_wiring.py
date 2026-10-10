@@ -5,7 +5,14 @@ from pathlib import Path
 import pytest
 from artemis.preflight import validate
 
-spec = importlib.util.spec_from_file_location('prepare_vercel', Path(__file__).resolve().parents[1] / 'infra/prepare-vercel.py')
+# infra/ sits at the repository root, beside gateway/, so walk up until it is found
+# rather than assuming a fixed depth: the same test file is run from either directory.
+_here = Path(__file__).resolve()
+_script = next((d / 'infra/prepare-vercel.py' for d in _here.parents if (d / 'infra/prepare-vercel.py').is_file()), None)
+if _script is None:
+    raise FileNotFoundError('infra/prepare-vercel.py not found above ' + str(_here))
+
+spec = importlib.util.spec_from_file_location('prepare_vercel', _script)
 wiring = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(wiring)
 

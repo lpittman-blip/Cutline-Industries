@@ -47,6 +47,9 @@ class Plan:
     raw: dict
     tools: frozenset[str] = frozenset()
     tool_calls_per_day: float = 0
+    #: Models this plan may select. Always contains "artemis": our own model is the
+    #: product and is never gated away, whatever the config says.
+    models: frozenset[str] = frozenset({"artemis"})
 
 
 def load_business(path: Path = BUSINESS_CONFIG) -> dict:
@@ -62,8 +65,13 @@ def load_plans(cfg: dict) -> dict[str, Plan]:
     for pid, p in cfg["plans"].items():
         brains = frozenset(SPECIALIST_IDS) if p["brains"] == "all" else frozenset(p["brains"])
         tools = frozenset(ALL_TOOLS) if p.get("tools") == "all" else frozenset(p.get("tools") or ())
+        catalogue = frozenset(cfg.get("models") or {"artemis"})
+        granted = catalogue if p.get("models") == "all" else frozenset(p.get("models") or ())
+        # Our own model is the product; a config typo must never sell a plan that
+        # cannot reach it.
+        models = (granted & catalogue) | {"artemis"}
         plans[pid] = Plan(pid, p["tier"], brains, _limit(p["messages_per_day"]), _limit(p["voice_minutes_per_month"]),
-                          bool(p.get("api_access")), p, tools, _limit(p.get("tool_calls_per_day", 0)))
+                          bool(p.get("api_access")), p, tools, _limit(p.get("tool_calls_per_day", 0)), models)
     return plans
 
 
@@ -146,6 +154,32 @@ class Business:
         if self.used(account, "tool_call") >= plan.tool_calls_per_day:
             raise RateLimited(f"daily tool limit for the {plan.id} plan reached; it resets at 00:00 UTC")
 
+    def allowed_models(self, account: str) -> list[dict]:
+        """Models this account may select, for the model picker.
+
+        Each entry carries `external`, so the UI can mark third-party models plainly
+        rather than letting a customer assume every answer came from Artemis.
+        """
+        plan = self.plan_of(account)
+        catalogue = self.cfg.get("models") or {}
+        out = []
+        for mid in sorted(plan.models):
+            spec = catalogue.get(mid, {})
+            out.append({"id": mid, "display": spec.get("display", mid),
+                        "provider": spec.get("provider", "artemis"),
+                        "external": bool(spec.get("external", False)),
+                        "description": spec.get("description", "")})
+        return out
+
+    def model_spec(self, model: str) -> dict:
+        """The catalogue entry for one model id, or {} if the config does not describe it."""
+        return (self.cfg.get("models") or {}).get(model) or {}
+
+    def authorize_model(self, account: str, model: str) -> None:
+        plan = self.plan_of(account)
+        if model not in plan.models:
+            raise PaymentRequired(f"the {model} model is not included in the {plan.id} plan")
+
     def record_tool(self, account: str, tool: str) -> None:
         self._record(account, "tool_call", 1, tool, 0.0)
 
@@ -184,6 +218,36 @@ class Business:
 
     def waitlist_count(self) -> int:
         return int(self.db.one("SELECT COUNT(*) FROM waitlist")[0])
+
+    def entitlements(self, account: str) -> dict:
+        """What this account's plan grants, and how much of it today's use has spent.
+
+        One honest source for the Billing, Usage and Capabilities screens. A limit of
+        None means unlimited: JSON has no infinity, and sending a huge number would read
+        as a real cap. `used` is always a real meter reading, never an estimate.
+        """
+        plan = self.plan_of(account)
+        def cap(value):
+            return None if value == UNLIMITED else int(value)
+        return {
+            "plan": {"id": plan.id, "tier": plan.tier,
+                     "price_usd_month": plan.raw.get("price_usd_month"),
+                     "price_usd_seat_month": plan.raw.get("price_usd_seat_month"),
+                     "api_access": plan.api_access},
+            "usage": [
+                {"id": "messages", "label": "Messages", "period": "today",
+                 "used": int(self.used(account, "message")), "limit": cap(plan.messages_per_day)},
+                {"id": "tool_calls", "label": "Tool calls", "period": "today",
+                 "used": int(self.used(account, "tool_call")), "limit": cap(plan.tool_calls_per_day)},
+            ],
+            "capabilities": {
+                "models": self.allowed_models(account),
+                "tools": [t for t in ALL_TOOLS if t in plan.tools],
+                "brains": sorted(plan.brains),
+                "voice_minutes_per_month": cap(plan.voice_minutes_per_month),
+                "api_access": plan.api_access,
+            },
+        }
 
     def public_plans(self) -> dict:
         return {"plans": self.cfg["plans"], "api_models": self.cfg["api_models"]}

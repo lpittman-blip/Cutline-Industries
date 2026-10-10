@@ -19,9 +19,29 @@ from .chat_format import clean
 class GenerationStopped(Exception): pass
 
 
+class _Brainless:
+    """Adapts an added-service backend to the brain-indexed signature used here.
+
+    Artemis's own backends take a brain (a vLLM adapter, or a line in the system
+    prompt). A third-party model has no brains, so the id is accepted and dropped
+    rather than smuggled into the request as if the provider understood it.
+    """
+
+    accepts_metadata_sink = True
+
+    def __init__(self, inner):
+        self.inner = inner
+
+    def generate(self, brain, system, messages, max_tokens=512, metadata_sink=None):
+        return self.inner.generate(system, messages, max_tokens, metadata_sink=metadata_sink)
+
+    def stream(self, brain, system, messages, max_tokens=512, metadata_sink=None):
+        yield from self.inner.stream(system, messages, max_tokens, metadata_sink=metadata_sink)
+
+
 class RecordingBackend:
-    def __init__(self, jobs, request):
-        self.jobs, self.request, self.backend = jobs, request, jobs.app.backend
+    def __init__(self, jobs, request, backend=None):
+        self.jobs, self.request, self.backend = jobs, request, backend or jobs.app.backend
         self.context_ids = [m["id"] for m in jobs.records.context(request["owner"], request["id"])]
         self.metadata = {}
         self.lock = threading.Lock()
@@ -52,7 +72,7 @@ class RecordingBackend:
                 if value is not None: metadata[key] = value
         try:
             if streaming:
-                if isinstance(self.backend, ArtemisServerBackend):
+                if isinstance(self.backend, ArtemisServerBackend) or getattr(self.backend, "accepts_metadata_sink", False):
                     iterator = self.backend.stream(brain, system, messages, max_tokens, metadata_sink=capture)
                 elif hasattr(self.backend, "stream"):
                     iterator = self.backend.stream(brain, system, messages, max_tokens)
@@ -69,7 +89,8 @@ class RecordingBackend:
                     if close: close()
             else:
                 reply = (self.backend.generate(brain, system, messages, max_tokens, metadata_sink=capture)
-                         if isinstance(self.backend, ArtemisServerBackend) else self.backend.generate(brain, system, messages, max_tokens))
+                         if isinstance(self.backend, ArtemisServerBackend) or getattr(self.backend, "accepts_metadata_sink", False)
+                         else self.backend.generate(brain, system, messages, max_tokens))
                 self.jobs.check_cancelled(self.request["id"])
                 output.append(reply); yield reply
             state = "completed"
@@ -116,12 +137,35 @@ class ChatJobs:
             self.records.lifecycle(request["id"], "delivery_retry")
             return request
         tier = self.biz.authorize_chat(owner, None, None)
-        request, created = self.records.request(owner, cid, body, {"tier": tier, "max_tokens": 512, "context_limit": self.context_limit}, self.model)
+        model = self.select_model(owner, body.get("model"))
+        settings = {"tier": tier, "max_tokens": 512, "context_limit": self.context_limit, "model": model}
+        request, created = self.records.request(owner, cid, body, settings, self.model_label(model))
         if created:
             self.records.lifecycle(request["id"], "created")
             self.records.emit(request["id"], {"type": "state", "state": "queued", "request_id": request["id"]})
             self.pool.submit(self.run, request)
         return request
+
+    def select_model(self, owner, requested):
+        """Which model answers this message. Defaults to Artemis: never to a third party.
+
+        A model the plan does not include raises PaymentRequired; one it includes but
+        this server has no credentials for fails here rather than being answered by
+        Artemis, which would bill for a service not delivered.
+        """
+        model = str(requested or "artemis")
+        self.biz.authorize_model(owner, model)
+        if model != "artemis" and model not in getattr(self.app, "added_models", {}):
+            raise ChatError(503, "model_unavailable",
+                            "That model is included in your plan but is not configured on this server.")
+        return model
+
+    def model_label(self, model):
+        """What the record says answered, so a transcript never misattributes a reply."""
+        if model == "artemis":
+            return self.model
+        spec = self.biz.model_spec(model)
+        return f"{spec.get('display') or model} ({spec.get('provider') or 'third party'})"
 
     def check_cancelled(self, rid):
         row = self.db.one("SELECT cancelled FROM chat_requests WHERE id=?", (rid,))
@@ -174,6 +218,10 @@ class ChatJobs:
             self.db.execute("UPDATE chat_messages SET state='generating' WHERE id=?", (assistant,))
             self.records.emit(rid, {"type": "state", "state": "generating", "request_id": rid})
             context = self.records.context(owner, rid)
+            settings = json.loads(request["settings"])
+            model = settings.get("model", "artemis")
+            if model != "artemis":
+                return self.run_added_model(request, model, context, settings)
             backend = RecordingBackend(self, request)
             child = Artemis(backend, brains=self.app.brains, use_model_router=self.app.use_model_router, memory=self.app.memory)
             toolbox = getattr(self.app, "toolbox", None)
@@ -183,7 +231,6 @@ class ChatJobs:
                 if call["name"] in pending_tools:
                     self.db.execute("UPDATE chat_tool_events SET arguments=? WHERE id=?", (json.dumps(self.redact(call["arguments"])), pending_tools[call["name"]]))
             tools = ToolAccess(toolbox, allowed, session_id(owner), authorize=lambda name: self.reserve_tool(owner, name, allowed), trace=trace_tool) if toolbox else None
-            settings = json.loads(request["settings"])
             messages = [{"role": m["role"], "content": m["content"]} for m in context]
             content = ""
             for event in child.handle_stream(messages[-1]["content"], settings["tier"], messages[:-1], account=owner, tools=tools):
@@ -219,6 +266,43 @@ class ChatJobs:
         finally:
             self.db.execute("UPDATE chat_tool_events SET state='interrupted',ended=? WHERE request_id=? AND state='running'", (time.time(), rid))
             if child: child.pool.shutdown(wait=True, cancel_futures=True)
+
+    def run_added_model(self, request, model, context, settings):
+        """Answer with a third-party model the customer selected, as a straight passthrough.
+
+        No plan, no specialists, no audit: an added service answers for itself. This is
+        also what keeps Blueprint Decisions 5 and 12 intact - the orchestrator is never
+        constructed here, so Artemis's own reasoning cannot reach an external model. The
+        reply is recorded like any other, under a label naming the provider.
+        """
+        rid, assistant, owner = request["id"], request["assistant_id"], request["owner"]
+        spec = self.biz.model_spec(model)
+        system = (f"You are {spec.get('display') or model}, a third-party model offered through the "
+                  f"Artemis platform as an added service. You are not Artemis and must not claim to "
+                  f"be. Answer the user directly.")
+        backend = RecordingBackend(self, request, backend=_Brainless(self.app.added_models[model]))
+        messages = [{"role": m["role"], "content": m["content"]} for m in context]
+        content = ""
+        try:
+            for piece in backend.stream(model, system, messages, settings.get("max_tokens", 512)):
+                self.check_cancelled(rid)
+                content += piece
+                self.records.emit(rid, {"type": "token", "text": piece}, assistant, content)
+        except GenerationStopped:
+            raise
+        except ChatError:
+            raise
+        except Exception:
+            self.finish(rid, assistant, "failed", "model_unavailable",
+                        f"{spec.get('display') or model} is unavailable right now. Partial output was retained.")
+            return
+        if not content.strip():
+            self.finish(rid, assistant, "failed", "empty_response",
+                        f"{spec.get('display') or model} returned no reply. Please retry.")
+            return
+        self.finish(rid, assistant, "completed", content=content,
+                    finish_reason=backend.metadata.get("finish_reason") or "application_complete")
+        self.biz.record_message(owner)
 
     def shutdown(self):
         self.pool.shutdown(wait=True, cancel_futures=True)
