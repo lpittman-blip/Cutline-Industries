@@ -346,3 +346,67 @@ idle GPU. A genuine zero is still shown.
 `../infra/gpu/provision-gpu-vm.sh` stands up an Azure GPU VM running vLLM behind
 an SSH tunnel, and refuses to run while GPU quota is zero — which it is on all
 three subscriptions as of 2026-10-10. The script says how to request it.
+
+## Pre-flight gate
+
+`artemis check` answers one question — would this compile? No model, no API key, no
+network, so it is cheap enough to run on every commit, which is the only reason a
+gate like this survives contact with a team.
+
+```
+artemis check                  type-check the project
+artemis check --staged-only    only when staged TypeScript changed
+artemis check --json           machine-readable, for CI
+artemis hook                   install it as a pre-commit hook
+artemis hook --uninstall       remove it
+```
+
+Exit codes: `0` clean, `1` type errors, **`2` the check could not run**. A compiler
+that failed to start is not a pass, and the separate code lets a caller decide
+whether to block on it.
+
+**`tsc --noEmit`, not a Language Server.** An LSP client means a JSON-RPC handshake,
+id-matched reads against interleaved notifications, and the push/pull diagnostics
+split — where `textDocument/diagnostic` returns nothing from a server that
+*publishes* diagnostics, so broken code reads as clean. A gate that silently always
+passes is worse than no gate. The compiler's exit code cannot fail that way.
+
+The check runs project-wide even when only one file is staged, because type errors
+are not local: changing an exported signature breaks callers in files the change
+never touched.
+
+### The cache
+
+`.artemis/audit-cache.json` maps each file's SHA-256 to its last verdict, so
+unchanged files are skipped. Two things it does that a plain hash cache does not:
+
+- **The rules version is folded into the hash.** Without it, a file marked clean
+  under the old checks stays exempt from new ones forever — the cache would quietly
+  disable the gate it exists to speed up. Bump `RULES_VERSION` and everything
+  invalidates.
+- **Failures are cached too**, with their reason. Re-running a check that will fail
+  identically costs exactly as much as re-running one that passes.
+
+### Checkpoints
+
+`src/audit/checkpoint.ts` snapshots the workspace with `git stash create`, which
+builds a commit object holding the tree and index and **changes nothing** — no
+commit on your branch, no moved HEAD, no touched files.
+
+The implementation to avoid is `git add . && git commit` to snapshot and `git reset
+--hard && git clean -fd` to restore. That writes snapshot commits onto whatever
+branch the developer is on, and the restore destroys every uncommitted edit they had
+open before the agent started. A test pins the opposite behaviour: an uncommitted
+edit made *before* the snapshot survives a restore.
+
+Its honest limit: `stash create` records tracked files only, so files the agent
+created are **not** removed by a restore. They are listed instead. Silently deleting
+untracked files is how a tool destroys the one scratch file that was never meant to
+be in git.
+
+### The hook
+
+Installed only when you ask. It refuses to overwrite a `pre-commit` hook it did not
+write — your secret scanner, your formatter, your lint-staged setup — and `--force`
+moves the existing one aside to `pre-commit.before-artemis` rather than deleting it.
+A `postinstall` that silently rewrites git hooks is a bug, not a feature.

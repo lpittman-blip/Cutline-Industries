@@ -4,6 +4,8 @@ import { createInterface } from "node:readline/promises";
 import { render } from "ink";
 import { configPath, DEFAULT_SERVER_URL, loadConfig, resolveProvider, saveConfig } from "./config.ts";
 import { probeServer, serverLabel } from "./serverprobe.ts";
+import { formatReport, runCheck } from "./audit/check.ts";
+import { hookPath, installHook, uninstallHook } from "./audit/hook.ts";
 import type { Mode } from "./agent/types.ts";
 import { runPrint } from "./print.ts";
 import { App } from "./ui/App.tsx";
@@ -20,6 +22,8 @@ Usage
   artemis logout                remove the saved key
   artemis status                check the Artemis server and your key
   artemis gpu [--url U]         the inference server behind the terminal, and its GPU
+  artemis check [--staged-only] type-check the project; exits non-zero on errors
+  artemis hook [--force]        install the pre-commit type gate (--uninstall removes it)
   artemis serve [--port 7777] [--host 127.0.0.1] [--mock]   run the Artemis API server
 
 Options
@@ -40,6 +44,7 @@ interface Flags {
   yes: boolean; readOnly: boolean; print: boolean; json: boolean; mock: boolean; direct: boolean;
   url?: string; key?: string; model?: string; cwd?: string; maxSteps?: number; tokenBudget?: number; port?: number; host?: string;
   help: boolean; version: boolean; positional: string[];
+  stagedOnly?: boolean; noCache?: boolean; force?: boolean; uninstall?: boolean;
 }
 
 export function parseArgs(argv: string[]): Flags {
@@ -52,6 +57,10 @@ export function parseArgs(argv: string[]): Flags {
       case "-r": case "--read-only": f.readOnly = true; break;
       case "-p": case "--print": f.print = true; break;
       case "--json": f.json = true; break;
+      case "--staged-only": f.stagedOnly = true; break;
+      case "--no-cache": f.noCache = true; break;
+      case "--force": f.force = true; break;
+      case "--uninstall": f.uninstall = true; break;
       case "--mock": f.mock = true; break;
       case "--direct": f.direct = true; break;
       case "--url": f.url = val(); break;
@@ -158,6 +167,31 @@ async function main() {
       if (r.running !== null) console.log(`running    ${r.running}`);
       if (r.queued !== null) console.log(`queued     ${r.queued}`);
     }
+    return;
+  }
+
+  if (sub === "check") {
+    const root = path.resolve(f.cwd ?? process.cwd());
+    const report = await runCheck({ root, stagedOnly: !!f.stagedOnly, noCache: !!f.noCache, json: !!f.json });
+    if (f.json) console.log(JSON.stringify(report, null, 2));
+    else console.log(formatReport(report, process.stdout.isTTY === true && !process.env.NO_COLOR));
+    // A compiler that could not run is not a pass. Exit 2 keeps it distinguishable
+    // from real type errors, so a hook can decide whether to block on it.
+    process.exit(report.unavailable ? 2 : report.ok ? 0 : 1);
+  }
+
+  if (sub === "hook") {
+    const root = path.resolve(f.cwd ?? process.cwd());
+    if (f.uninstall) {
+      const out = uninstallHook(root);
+      console.log(out.removed ? `✓ pre-commit gate removed from ${hookPath(root)}` : `· ${out.reason}`);
+      return;
+    }
+    const out = installHook(root, !!f.force);
+    if (out.status === "unavailable") { console.error(`✕ ${out.reason}`); process.exit(1); }
+    if (out.status === "exists") { console.error(`✕ ${out.reason}\n  ${out.path}`); process.exit(1); }
+    if (out.status === "replaced") console.log(`✓ pre-commit gate installed; your previous hook was kept at ${out.backup}`);
+    else console.log(`✓ pre-commit gate ${out.status} at ${out.path}`);
     return;
   }
 
