@@ -22,9 +22,24 @@ from .conversations import ChatError, Conversations, uid
 from .server import ALLOWED_ORIGINS, build_app, make_handler
 
 
+def _find_site() -> Path:
+    """Locate the static site by searching upward, rather than assuming a depth.
+
+    site/ lives at the repository root, beside gateway/, not inside it. Hardcoding
+    parent.parent pointed at gateway/site, which does not exist, so every page
+    404ed and three tests failed for it.
+    """
+    here = Path(__file__).resolve()
+    for directory in here.parents:
+        candidate = directory / "site"
+        if (candidate / "index.html").is_file():
+            return candidate
+    return here.parent.parent / "site"   # nothing found: keep a definite path to report
+
+
 def make_chat_handler(app, biz, records, jobs, site=None):
     base = make_handler(app, biz)
-    root = Path(site or Path(__file__).resolve().parent.parent / "site").resolve()
+    root = Path(site or os.environ.get("ARTEMIS_SITE") or _find_site()).resolve()
     cookie_secure = os.environ.get("ARTEMIS_COOKIE_SECURE", "1") != "0"
     origins = ALLOWED_ORIGINS | {"http://localhost:8080", "http://127.0.0.1:8080"}
 
