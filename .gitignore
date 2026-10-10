@@ -39,6 +39,10 @@ artemis-data/knowledge/*
 artemis-data/uploaded/*
 !artemis-data/uploaded/.gitkeep
 artemis-data/knowledge-index.json
+# Runtime append-only log. Every test run and every request writes to it, so a
+# tracked copy means a dirty tree after each run; ensureArtemisData() recreates
+# the file when it is missing, so nothing needs the committed version.
+artemis-data/logs/activity.jsonl
 artemis-data/rag/*
 !artemis-data/rag/.gitkeep
 artemis-data/research/*
