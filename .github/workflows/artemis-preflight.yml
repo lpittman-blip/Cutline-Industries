@@ -1,0 +1,43 @@
+# Artemis pre-flight: type-checks a branch and reports findings on the pull request.
+#
+# It comments. It does not commit and does not push. An automated fix pushed to
+# someone's branch diverges from their local work, puts unreviewed commits in their
+# history, and retriggers this workflow — which bills for the loop.
+name: Artemis pre-flight
+
+on:
+  pull_request:
+  push:
+    branches-ignore: [main, master]
+
+# Only what it needs: read the code, write one comment.
+permissions:
+  contents: read
+  pull-requests: write
+
+concurrency:
+  # A new push supersedes the run in flight rather than queueing behind it.
+  group: artemis-preflight-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  preflight:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        working-directory: artemis-cli
+        run: bun install --frozen-lockfile
+
+      - name: Pre-flight
+        working-directory: artemis-cli
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Optional. Leave unset and the Slack step is skipped silently.
+          ARTEMIS_SLACK_WEBHOOK_URL: ${{ secrets.ARTEMIS_SLACK_WEBHOOK_URL }}
+        run: bun run src/cli.tsx ci --cwd ..

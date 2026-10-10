@@ -6,6 +6,7 @@ import { configPath, DEFAULT_SERVER_URL, loadConfig, resolveProvider, saveConfig
 import { probeServer, serverLabel } from "./serverprobe.ts";
 import { formatReport, runCheck } from "./audit/check.ts";
 import { hookPath, installHook, uninstallHook } from "./audit/hook.ts";
+import { runCi } from "./audit/ci.ts";
 import type { Mode } from "./agent/types.ts";
 import { runPrint } from "./print.ts";
 import { App } from "./ui/App.tsx";
@@ -24,6 +25,7 @@ Usage
   artemis gpu [--url U]         the inference server behind the terminal, and its GPU
   artemis check [--staged-only] type-check the project; exits non-zero on errors
   artemis hook [--force]        install the pre-commit type gate (--uninstall removes it)
+  artemis ci                    pre-flight for CI: checks, comments on the PR, never pushes
   artemis serve [--port 7777] [--host 127.0.0.1] [--mock]   run the Artemis API server
 
 Options
@@ -178,6 +180,18 @@ async function main() {
     // A compiler that could not run is not a pass. Exit 2 keeps it distinguishable
     // from real type errors, so a hook can decide whether to block on it.
     process.exit(report.unavailable ? 2 : report.ok ? 0 : 1);
+  }
+
+  if (sub === "ci") {
+    const root = path.resolve(f.cwd ?? process.cwd());
+    const result = await runCi(root);
+    if (f.json) console.log(JSON.stringify(result, null, 2));
+    else {
+      console.log(result.ok ? `✓ no findings (${result.durationMs}ms)` : `✕ ${result.findings.length} finding(s)`);
+      console.log(`  comment: ${result.comment.detail}`);
+      console.log(`  slack:   ${result.slack.detail}`);
+    }
+    process.exit(result.ok ? 0 : 1);
   }
 
   if (sub === "hook") {

@@ -410,3 +410,60 @@ Installed only when you ask. It refuses to overwrite a `pre-commit` hook it did 
 write — your secret scanner, your formatter, your lint-staged setup — and `--force`
 moves the existing one aside to `pre-commit.before-artemis` rather than deleting it.
 A `postinstall` that silently rewrites git hooks is a bug, not a feature.
+
+## Review, and reporting into CI
+
+### The reviewer
+
+`src/audit/review.ts` gives a proposed shell command or file write a second opinion
+before it runs. It sits **in front of** the approval gate, never in place of it — a
+model reviewing another model is a quality filter, not an authority.
+
+**Deterministic rules run first** (`src/audit/rules.ts`), and a hard hit is final:
+
+| Rule | Decided by | Hard |
+| --- | --- | --- |
+| `DESTRUCTIVE_SHELL` | regex — `rm -rf`, `reset --hard`, `clean -fd`, `curl \| sh`, force push without lease | yes |
+| `SECRET_EXPOSURE` | regex — live key or private key in the payload | yes |
+| `DEPENDENCY_DRIFT` | the project's lockfile — `npm install` in a Bun repo | yes |
+| `STATE_INVERSION` | vector store / RAG import | no |
+| `TYPESCRIPT_VIOLATION` | `any`, `@ts-ignore` | no |
+| `CLEAN_CODE` | the model | no |
+
+`rm -rf /` costs no tokens and no round trip, and a regex cannot be argued out of
+its answer by a persuasive diff — which is the weakness of asking a model to police
+a model. Only judgement calls reach the provider.
+
+**It fails open.** A reviewer that blocks work whenever the provider is slow, rate
+limited or offline is switched off within a week, and then nothing is reviewed at
+all. An unreachable or unparseable reviewer reports that it could not run and the
+human gate still stands. Hard deterministic hits do not fail open — they need no
+network to decide.
+
+### `artemis ci`
+
+Runs the check, posts one comment on the pull request, optionally pings Slack.
+
+**It never pushes.** Committing the agent's fixes to the developer's branch stages
+whatever is in the tree, diverges from their local work, puts unreviewed commits in
+their history, and — since the push retriggers the workflow — bills for the loop. A
+reviewer that edits what it reviews is not a reviewer.
+
+Two things the obvious implementation gets wrong, both fixed here and pinned by
+tests:
+
+- **The API host.** `https://github.com/{repo}/issues/{n}/comments` is the web site
+  and 404s. The endpoint is `https://api.github.com/repos/{repo}/…`, or
+  `$GITHUB_API_URL` on Enterprise.
+- **The PR number.** Parsing `Merge pull request #42 from …` out of a commit subject
+  only works on a merge commit, which a PR branch does not have. It comes from the
+  event payload, then `GITHUB_REF`.
+
+The comment is **edited in place** on re-runs — a gate that runs on every push
+otherwise leaves a column of near-identical comments and people stop reading them.
+Slack stays quiet on a clean run for the same reason, and a Slack failure never
+echoes the webhook URL, which is itself a credential.
+
+`.github/workflows/artemis-preflight.yml` wires it up with `contents: read` and
+`pull-requests: write` — nothing more — and cancels a run in flight when a newer
+push arrives.
