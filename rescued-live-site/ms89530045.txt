@@ -1,0 +1,5 @@
+﻿{
+  "Description": "Domain ownership verification file for Microsoft 365 - place in the website root",
+  "Domain": "Cutline-Industries.studio",
+  "Id": "994d61e4-75f2-425a-842e-92e59d1c719b"
+}

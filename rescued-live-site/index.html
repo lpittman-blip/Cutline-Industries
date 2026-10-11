@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Artemis AI</title>
+  <meta name="description" content="Artemis AI is a multi-tenant platform for agents and models. Artemis is the agent engine. Apollo is the model mesh. The Bow is the console. Voice is for authorized lines only.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M5 22c3.2-12 18.8-12 22 0' fill='none' stroke='%23111' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="live.css">
+</head>
+<body>
+  <a class="skip" href="#content">Skip to content</a>
+
+  <header class="site-header" id="top">
+    <div class="bar">
+      <a class="wordmark" href="#top" data-scroll="top">
+        <svg class="mark" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M4 17c2.2-9 13.8-9 16 0" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
+        </svg>
+        <span>Artemis AI</span>
+      </a>
+
+      <nav class="primary-nav" id="primary-nav" aria-label="Primary">
+        <div class="nav-item" data-menu="products">
+          <button class="nav-btn" type="button" aria-expanded="false" aria-haspopup="true" aria-controls="menu-products">
+            Products
+            <svg class="chevron" viewBox="0 0 20 20" aria-hidden="true"><path d="M5 7.5 10 12.5 15 7.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <div class="mega" id="menu-products" role="region" aria-label="Products" hidden>
+            <div class="mega-grid">
+              <div class="mega-intro">
+                <p class="mega-title">The Artemis AI platform</p>
+                <p class="mega-copy">An agent engine, a model mesh, a console, and telephony for authorized lines.</p>
+                <a class="pill pill-secondary" href="#products" data-scroll="products">See overview</a>
+                <a class="pill pill-secondary" href="products/">Customer products</a>
+              </div>
+              <ul class="mega-list">
+                <li>
+                  <a href="chat/">
+                    <span class="mega-icon" aria-hidden="true">
+                      <svg viewBox="0 0 24 24"><path d="M5 6h14v9H8l-3 3V6z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
+                    </span>
+                    <span>
+                      <strong>Chat</strong>
+                      <span>Saved conversations. Sign in required.</span>
+                    </span>
+                  </a>
+                </li>
+                <li>
+                  <a href="#artemis" data-scroll="artemis">
+                    <span class="mega-icon" aria-hidden="true">
+                      <svg viewBox="0 0 24 24"><path d="M5 16c2-7 12-7 14 0" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><circle cx="12" cy="16" r="1.2" fill="currentColor"/></svg>
+                    </span>
+                    <span>
+                      <strong>Artemis</strong>
+                      <span>Agent engine. System prompts, skills, and memory.</span>
+                    </span>
+                  </a>
+                </li>
+                <li>
+                  <a href="#apollo" data-scroll="apollo">
+                    <span class="mega-icon" aria-hidden="true">
+                      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="2" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="5" cy="7" r="1.3" fill="currentColor"/><circle cx="19" cy="7" r="1.3" fill="currentColor"/><circle cx="6" cy="18" r="1.3" fill="currentColor"/><circle cx="18" cy="18" r="1.3" fill="currentColor"/><path d="M7 8.2 10.2 10.6M17 8.2 13.8 10.6M7.2 16.8 10.2 13.6M16.8 16.8 13.8 13.6" fill="none" stroke="currentColor" stroke-width="1.2"/></svg>
+                    </span>
+                    <span>
+                      <strong>Apollo</strong>
+                      <span>Multi-provider model mesh under the same agent.</span>
+                    </span>
+                  </a>
+                </li>
+                <li>
+                  <a href="#the-bow" data-scroll="the-bow">
+                    <span class="mega-icon" aria-hidden="true">
+                      <svg viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="14" rx="2" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M4 9h16M8 13h5M8 16h8" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+                    </span>
+                    <span>
+                      <strong>The Bow</strong>
+                      <span>Console for tenants, agents, and runs.</span>
+                    </span>
+                  </a>
+                </li>
+                <li>
+                  <a href="#voice" data-scroll="voice">
+                    <span class="mega-icon" aria-hidden="true">
+                      <svg viewBox="0 0 24 24"><path d="M5 14v-4M9 17V7M12 15V9M15 18V6M19 14v-4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+                    </span>
+                    <span>
+                      <strong>Voice</strong>
+                      <span>Telephony through Vapi, Bland, and Retell. Authorized lines only.</span>
+                    </span>
+                  </a>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <div class="nav-item" data-menu="use-cases">
+          <button class="nav-btn" type="button" aria-expanded="false" aria-haspopup="true" aria-controls="menu-use-cases">
+            Use Cases
+            <svg class="chevron" viewBox="0 0 20 20" aria-hidden="true"><path d="M5 7.5 10 12.5 15 7.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <div class="mega" id="menu-use-cases" role="region" aria-label="Use cases" hidden>
+            <div class="mega-grid">
+              <div class="mega-intro">
+                <p class="mega-title">Same platform, four seats</p>
+                <p class="mega-copy">Enterprise, builders, research, and operators. Choosing one stays on this page.</p>
+                <a class="pill pill-secondary" href="#use-cases" data-scroll="use-cases">See overview</a>
+              </div>
+              <ul class="mega-list">
+                <li>
+                  <a href="#use-cases" data-scroll="use-cases" data-tab="enterprise">
+                    <span><strong>Enterprise</strong><span>Multi-tenant GenAI, one platform for every tenant.</span></span>
+                  </a>
+                </li>
+                <li>
+                  <a href="#use-cases" data-scroll="use-cases" data-tab="builders">
+                    <span><strong>Builders</strong><span>Compose prompts, skills, and memory in Artemis.</span></span>
+                  </a>
+                </li>
+                <li>
+                  <a href="#use-cases" data-scroll="use-cases" data-tab="research">
+                    <span><strong>Research</strong><span>Hold the agent still and change the model route.</span></span>
+                  </a>
+                </li>
+                <li>
+                  <a href="#use-cases" data-scroll="use-cases" data-tab="operators">
+                    <span><strong>Operators</strong><span>Run The Bow. Place calls only on authorized lines.</span></span>
+                  </a>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <a class="nav-btn nav-direct" href="#use-cases" data-scroll="use-cases" data-tab="enterprise">Enterprise</a>
+        <a class="nav-btn nav-direct" href="chat/">Chat</a>
+        <a class="nav-btn nav-direct" href="account/">Sign in</a>
+
+        <div class="nav-item" data-menu="resources">
+          <button class="nav-btn" type="button" aria-expanded="false" aria-haspopup="true" aria-controls="menu-resources">
+            Resources
+            <svg class="chevron" viewBox="0 0 20 20" aria-hidden="true"><path d="M5 7.5 10 12.5 15 7.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <div class="mega" id="menu-resources" role="region" aria-label="Resources" hidden>
+            <div class="mega-grid">
+              <div class="mega-intro">
+                <p class="mega-title">On this page</p>
+                <p class="mega-copy">A short map of the platform. Nothing here leaves this page.</p>
+                <a class="pill pill-secondary" href="#resources" data-scroll="resources">All notes</a>
+              </div>
+              <ul class="mega-list">
+                <li><a href="#products" data-scroll="products"><span><strong>Platform overview</strong><span>Artemis, Apollo, The Bow, and Voice.</span></span></a></li>
+                <li><a href="#use-cases" data-scroll="use-cases"><span><strong>Use case notes</strong><span>How each seat uses the same stack.</span></span></a></li>
+                <li><a href="#voice" data-scroll="voice"><span><strong>Authorized lines</strong><span>What Voice will and will not dial.</span></span></a></li>
+                <li><a href="#contact" data-scroll="contact"><span><strong>Get started</strong><span>Leave a name and email in the browser.</span></span></a></li>
+                <li><a href="account/"><span><strong>Sign in</strong><span>Create an account for saved chats.</span></span></a></li>
+                <li><a href="chat/"><span><strong>Chat</strong><span>Open the conversation workspace.</span></span></a></li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </nav>
+
+      <a class="pill pill-primary bar-cta" href="#contact" data-scroll="contact">Get started</a>
+      <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="primary-nav">
+        <span class="label-open">Menu</span>
+        <span class="label-close">Close</span>
+      </button>
+    </div>
+  </header>
+
+  <main id="content">
+    <section class="hero" aria-labelledby="hero-title">
+      <canvas class="hero-canvas" id="hero-canvas" aria-hidden="true"></canvas>
+      <svg class="hero-arc" viewBox="0 0 1200 640" aria-hidden="true">
+        <path d="M80 470 C 280 90, 920 90, 1120 470" fill="none" stroke="rgba(255,255,255,0.22)" stroke-width="1.5"/>
+        <path d="M180 490 C 360 210, 840 210, 1020 490" fill="none" stroke="rgba(47,111,237,0.45)" stroke-width="1.25"/>
+      </svg>
+      <div class="hero-copy">
+        <p class="eyebrow">Artemis AI</p>
+        <h1 id="hero-title">Talk to it. Code with it. Build anything.</h1>
+        <p class="hero-sub">Artemis redefines what a chat agent can do—merging full-stack code generation, context-aware memory, and multi-model routing into one effortless platform.</p>
+        <div class="hero-actions">
+          <a class="pill pill-invert" href="#contact" data-scroll="contact">Get started</a>
+          <a class="pill pill-ghost" href="#products" data-scroll="products">View products</a>
+          <a class="pill pill-ghost" href="chat/">Chat</a>
+        </div>
+      </div>
+    </section>
+
+    <section class="usecases" id="use-cases" aria-labelledby="usecases-title">
+      <div class="wrap">
+        <header class="section-head">
+          <h2 id="usecases-title">Built for the seat you are in</h2>
+          <p>Enterprise, builders, research, and operators share one platform. Switch seats. The page stays put.</p>
+        </header>
+
+        <div class="tablist" role="tablist" aria-label="Use cases">
+          <button class="tab" type="button" role="tab" id="tab-enterprise" aria-selected="true" aria-controls="panel-enterprise" tabindex="0" data-tab="enterprise">Enterprise</button>
+          <button class="tab" type="button" role="tab" id="tab-builders" aria-selected="false" aria-controls="panel-builders" tabindex="-1" data-tab="builders">Builders</button>
+          <button class="tab" type="button" role="tab" id="tab-research" aria-selected="false" aria-controls="panel-research" tabindex="-1" data-tab="research">Research</button>
+          <button class="tab" type="button" role="tab" id="tab-operators" aria-selected="false" aria-controls="panel-operators" tabindex="-1" data-tab="operators">Operators</button>
+        </div>
+
+        <div class="cluster-frame">
+          <canvas id="cluster-canvas" aria-hidden="true"></canvas>
+        </div>
+
+        <div class="panels">
+          <div class="panel" role="tabpanel" id="panel-enterprise" aria-labelledby="tab-enterprise">
+            <h3>Run GenAI across tenants</h3>
+            <p>Artemis AI is a multi-tenant GenAI platform. Each tenant keeps its own agents in Artemis, its routes in Apollo, and its view in The Bow. Artemis Core serves the answers.</p>
+            <ul class="cards">
+              <li><h4>One engine</h4><p>Artemis defines agents once, then each tenant uses them.</p></li>
+              <li><h4>Shared mesh</h4><p>Apollo routes models without a separate stack per tenant.</p></li>
+              <li><h4>One gateway</h4><p>Chat, sign-in, and conversations run through api.cutline-industries.studio.</p></li>
+            </ul>
+          </div>
+          <div class="panel" role="tabpanel" id="panel-builders" aria-labelledby="tab-builders" hidden>
+            <h3>Define the agent once</h3>
+            <p>Builders work in Artemis: a system prompt, a set of skills, and memory that stays with the agent. Apollo can change the model underneath without a new definition.</p>
+            <ul class="cards">
+              <li><h4>System prompts</h4><p>Behavior is written next to the agent, not in a side document.</p></li>
+              <li><h4>Skills</h4><p>Attach what the agent is allowed to do.</p></li>
+              <li><h4>Memory</h4><p>Context stays with that agent across runs.</p></li>
+            </ul>
+          </div>
+          <div class="panel" role="tabpanel" id="panel-research" aria-labelledby="tab-research" hidden>
+            <h3>Hold the agent still. Change the model.</h3>
+            <p>Apollo is a multi-provider model mesh. Research can send the same Artemis agent across providers and read the run back in The Bow.</p>
+            <ul class="cards">
+              <li><h4>Same agent</h4><p>The prompt, skills, and memory do not move.</p></li>
+              <li><h4>Other models</h4><p>The mesh is how a route changes, not a rewrite.</p></li>
+              <li><h4>Runs in The Bow</h4><p>What happened is visible in the console.</p></li>
+            </ul>
+          </div>
+          <div class="panel" role="tabpanel" id="panel-operators" aria-labelledby="tab-operators" hidden>
+            <h3>Operate from The Bow</h3>
+            <p>The Bow is the console for tenants, agents, and runs. Behind it, the gateway reports whether Artemis Core is configured and serving, so operators see model status, not a guess.</p>
+            <ul class="cards">
+              <li><h4>The console</h4><p>Tenants, agents, and runs in one operating surface.</p></li>
+              <li><h4>Live status</h4><p>The gateway reports configured, serving, and quality on /api/status.</p></li>
+              <li><h4>Three routes</h4><p>A vLLM host, the Azure core, then a fallback stub.</p></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="products" id="products" aria-labelledby="products-title">
+      <div class="wrap">
+        <header class="section-head section-head-left">
+          <h2 id="products-title">Four parts. One platform.</h2>
+          <p>Artemis AI is the multi-tenant platform these surfaces sit inside. Names below are the product, not a customer list.</p>
+        </header>
+
+        <article class="product" id="artemis">
+          <div class="product-grid">
+            <div class="product-copy">
+              <p class="kicker">Agent engine</p>
+              <h2>Artemis</h2>
+              <p>System prompts, skills, and memory live together so an agent is defined once and reused across tenants. Artemis is the engine, not a chat window.</p>
+              <ul class="points">
+                <li>Write the system prompt with the agent</li>
+                <li>Attach the skills it can call</li>
+                <li>Keep memory scoped to that agent</li>
+              </ul>
+            </div>
+            <div class="stage" aria-hidden="true">
+              <div class="stage-top"><span class="led"></span><span>Artemis</span><span class="stage-tag">Engine</span></div>
+              <div class="sheet">
+                <span class="sheet-label">System prompt</span>
+                <p>Stay inside the tenant. Call a skill before you invent a step.</p>
+              </div>
+              <div class="sheet">
+                <span class="sheet-label">Skills</span>
+                <div class="minis"><span>lookup</span><span>draft</span><span>handoff</span></div>
+              </div>
+              <div class="sheet">
+                <span class="sheet-label">Memory</span>
+                <p>Tenant scope · open loops · last run</p>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        <article class="product product-flip" id="apollo">
+          <div class="product-grid">
+            <div class="product-copy">
+              <p class="kicker">Model mesh</p>
+              <h2>Apollo</h2>
+              <p>Apollo is a multi-provider model mesh. Swap a model without a rewrite. The same Artemis agent can run across providers, and the run comes back in The Bow.</p>
+              <ul class="points">
+                <li>One agent, more than one provider</li>
+                <li>Routes, not a customer list</li>
+                <li>The run is visible in the console</li>
+              </ul>
+            </div>
+            <div class="stage">
+              <div class="stage-top"><span class="led led-green"></span><span>Apollo</span><span class="stage-tag">Mesh</span></div>
+              <svg class="mesh" viewBox="0 0 360 280" role="img" aria-label="Apollo mesh with routes A, B, C, and D">
+                <g class="flows" fill="none" stroke="rgba(255,255,255,.55)" stroke-width="1.4">
+                  <line x1="180" y1="140" x2="90" y2="58"/>
+                  <line x1="180" y1="140" x2="270" y2="58"/>
+                  <line x1="180" y1="140" x2="90" y2="222"/>
+                  <line x1="180" y1="140" x2="270" y2="222"/>
+                </g>
+                <circle class="hub" cx="180" cy="140" r="32" fill="#111" stroke="#2f6fed" stroke-width="2"/>
+                <text x="180" y="144" text-anchor="middle" fill="#fff" font-size="13" font-family="Inter, sans-serif">Mesh</text>
+                <g class="nodes" fill="none" stroke="#fff" stroke-opacity=".8">
+                  <circle cx="90" cy="58" r="26"/>
+                  <circle cx="270" cy="58" r="26"/>
+                  <circle cx="90" cy="222" r="26"/>
+                  <circle cx="270" cy="222" r="26"/>
+                </g>
+                <g fill="#fff" font-size="14" font-family="Inter, sans-serif" text-anchor="middle">
+                  <text x="90" y="63">A</text>
+                  <text x="270" y="63">B</text>
+                  <text x="90" y="227">C</text>
+                  <text x="270" y="227">D</text>
+                </g>
+              </svg>
+              <p class="stage-note">Providers A–D are routes, not customers.</p>
+            </div>
+          </div>
+        </article>
+
+        <article class="product" id="the-bow">
+          <div class="product-grid">
+            <div class="product-copy">
+              <p class="kicker">Console</p>
+              <h2>The Bow</h2>
+              <p>The Bow is where operators see tenants, agents, and runs. It is the console for the multi-tenant platform Artemis AI builds.</p>
+              <ul class="points">
+                <li>A view for each tenant</li>
+                <li>Agents and runs in one list</li>
+                <li>The operating surface, not a second product</li>
+              </ul>
+            </div>
+            <div class="stage" aria-hidden="true">
+              <div class="stage-top"><span class="led led-orange"></span><span>The Bow</span><span class="stage-tag">Console</span></div>
+              <div class="console">
+                <div class="console-row head"><span>Tenant</span><span>Agent</span><span>Run</span></div>
+                <div class="console-row"><span>Tenant 01</span><span>Artemis</span><span class="ok">Idle</span></div>
+                <div class="console-row"><span>Tenant 02</span><span>Artemis</span><span class="ok">In run</span></div>
+                <div class="console-row"><span>Tenant 03</span><span>Core</span><span>Streaming</span></div>
+                <div class="console-row"><span>Tenant 04</span><span>Apollo</span><span>Routed</span></div>
+              </div>
+              <div class="run-ticks" aria-hidden="true"></div>
+              <p class="stage-note">Sample tenants. Runs move through Idle, In run, Routed, and Streaming.</p>
+            </div>
+          </div>
+        </article>
+
+        <span class="anchor-alias" id="voice" aria-hidden="true"></span>
+        <article class="product product-flip" id="core">
+          <div class="product-grid">
+            <div class="product-copy">
+              <p class="kicker">Inference route</p>
+              <h2>Artemis Core</h2>
+              <p>Every chat message goes through the api.cutline-industries.studio gateway to <code>/api/artemis/chat</code>. Memory and knowledge snippets ride along as context, and the answer streams back from the first route that responds.</p>
+              <ul class="points">
+                <li>Streams over SSE from a vLLM GPU host when one is set</li>
+                <li>Falls back to the Artemis core on Azure Container Apps</li>
+                <li>Memory, knowledge, Drive, and files under /api/artemis</li>
+              </ul>
+            </div>
+            <div class="stage core-stage">
+              <div class="stage-top"><span class="led" id="core-led"></span><span>Artemis Core</span><span class="stage-tag" id="core-tag">Checking</span></div>
+              <svg class="route" viewBox="0 0 360 150" role="img" aria-label="Route: gateway, then vLLM host, then Azure core, then fallback stub">
+                <defs>
+                  <linearGradient id="route-grad" x1="0" x2="1" y1="0" y2="0">
+                    <stop offset="0" stop-color="#2f6fed"/>
+                    <stop offset=".6" stop-color="#3dbe78"/>
+                    <stop offset="1" stop-color="#f08a3c"/>
+                  </linearGradient>
+                </defs>
+                <path class="route-line" d="M34 75 H326" fill="none" stroke="rgba(255,255,255,.18)" stroke-width="1.4"/>
+                <path class="route-flow" d="M34 75 H326" fill="none" stroke="url(#route-grad)" stroke-width="2" stroke-dasharray="6 10"/>
+                <circle class="route-packet" cx="34" cy="75" r="4.5" fill="#fff"/>
+                <g class="route-nodes" font-family="Inter, sans-serif" text-anchor="middle">
+                  <g class="route-node" data-hop="0"><circle cx="34" cy="75" r="20"/><text x="34" y="79" font-size="11" fill="#fff">API</text><text x="34" y="122" font-size="11" fill="rgba(255,255,255,.6)">Gateway</text></g>
+                  <g class="route-node" data-hop="1"><circle cx="131" cy="75" r="20"/><text x="131" y="79" font-size="11" fill="#fff">vLLM</text><text x="131" y="122" font-size="11" fill="rgba(255,255,255,.6)">GPU host</text></g>
+                  <g class="route-node" data-hop="2"><circle cx="229" cy="75" r="20"/><text x="229" y="79" font-size="11" fill="#fff">Core</text><text x="229" y="122" font-size="11" fill="rgba(255,255,255,.6)">Azure</text></g>
+                  <g class="route-node" data-hop="3"><circle cx="326" cy="75" r="20"/><text x="326" y="79" font-size="11" fill="#fff">Stub</text><text x="326" y="122" font-size="11" fill="rgba(255,255,255,.6)">Fallback</text></g>
+                </g>
+              </svg>
+              <div class="stream" aria-hidden="true"><pre id="core-stream"></pre></div>
+              <ul class="providers core-chips" aria-label="Artemis routes">
+                <li>/chat</li>
+                <li>/memory</li>
+                <li>/knowledge</li>
+                <li>/drive</li>
+                <li>/files</li>
+              </ul>
+              <p class="stage-note" id="core-note">Status comes from the gateway's /api/status.</p>
+            </div>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section class="running" id="running" aria-labelledby="running-title">
+      <div class="wrap">
+        <header class="section-head section-head-left">
+          <h2 id="running-title">What is running</h2>
+          <p>Built and reachable today. Model status below is read live from the gateway.</p>
+        </header>
+        <div class="running-grid">
+          <article class="run-card">
+            <div class="stage-top"><span class="led"></span><span>Chat</span><span class="stage-tag">/chat</span></div>
+            <div class="mini-chat" aria-hidden="true">
+              <div class="mc-row mc-user"><span style="--w:58%"></span></div>
+              <div class="mc-row mc-bot"><span style="--w:86%"></span><span style="--w:72%"></span><span style="--w:40%"></span></div>
+            </div>
+            <h3><a href="chat/">Artemis Chat</a></h3>
+            <p>Saved conversations with streaming replies, history search, branches, and Markdown or JSON export. Stop keeps the partial answer. Account required.</p>
+          </article>
+          <article class="run-card">
+            <div class="stage-top"><span class="led led-green"></span><span>Account</span><span class="stage-tag">/account</span></div>
+            <div class="mini-account" aria-hidden="true">
+              <svg viewBox="0 0 120 64"><circle class="ma-ring" cx="60" cy="32" r="22"/><circle class="ma-orbit" cx="60" cy="32" r="22"/><path class="ma-lock" d="M52 31h16v12H52zM55 31v-4a5 5 0 0 1 10 0v4"/></svg>
+            </div>
+            <h3><a href="account/">Sign in</a></h3>
+            <p>Email sign-up and sign-in, a chat retention setting, and a full account export.</p>
+          </article>
+          <article class="run-card">
+            <div class="stage-top"><span class="led led-orange"></span><span>Gateway</span><span class="stage-tag">api.cutline-industries.studio</span></div>
+            <div class="mini-gw">
+              <canvas id="gw-spark" aria-hidden="true"></canvas>
+              <p class="gw-read" id="gw-read" aria-live="polite">Measuring round trip</p>
+            </div>
+            <h3>API gateway</h3>
+            <p><code>/api/health</code>, <code>/api/status</code>, <code>/api/auth</code>, and <code>/api/conversations</code>. The line above is this browser's live round trip to <code>/api/health</code>.</p>
+            <div class="run-meta" id="run-meta">
+              <span data-cap="queue">Queue: checking</span>
+              <span data-cap="model">Model: checking</span>
+              <span data-cap="search">Web search</span>
+              <span data-cap="fetch">Web fetch</span>
+              <span data-cap="training">Training collection</span>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="resources" id="resources" aria-labelledby="resources-title">
+      <div class="wrap">
+        <header class="section-head section-head-left">
+          <h2 id="resources-title">Resources</h2>
+          <p>Notes on this page. No external docs, and no claims beyond the product itself.</p>
+        </header>
+        <ul class="resource-list">
+          <li><a href="#artemis" data-scroll="artemis"><strong>Artemis</strong><span>How the agent engine holds prompts, skills, and memory.</span></a></li>
+          <li><a href="#apollo" data-scroll="apollo"><strong>Apollo</strong><span>A model mesh. Providers A–D are routes, not customers.</span></a></li>
+          <li><a href="#the-bow" data-scroll="the-bow"><strong>The Bow</strong><span>What operators see in the console.</span></a></li>
+          <li><a href="#core" data-scroll="core"><strong>Artemis Core</strong><span>Gateway, vLLM host, Azure core, then a fallback stub.</span></a></li>
+        </ul>
+      </div>
+    </section>
+
+    <section class="close-band" aria-labelledby="close-title">
+      <canvas id="band-canvas" aria-hidden="true"></canvas>
+      <div class="close-inner">
+        <h2 id="close-title">Put the work on an agent.</h2>
+        <p>Tell us who you are. The form below stays in the browser.</p>
+        <a class="pill pill-invert" href="#contact" data-scroll="contact">Get started</a>
+      </div>
+    </section>
+
+    <section class="contact" id="contact" aria-labelledby="contact-title">
+      <div class="wrap contact-wrap">
+        <h2 id="contact-title">Get started</h2>
+        <p class="contact-lead">Name and email only. Nothing is submitted anywhere.</p>
+        <form id="contact-form" action="#contact" method="post" onsubmit="event.preventDefault()">
+          <div class="field">
+            <label for="full-name">Name</label>
+            <input id="full-name" name="name" type="text" autocomplete="name" required>
+          </div>
+          <div class="field">
+            <label for="email">Email</label>
+            <input id="email" name="email" type="email" autocomplete="email" required>
+          </div>
+          <button class="pill pill-primary" type="submit">Send</button>
+        </form>
+        <p class="thanks" id="thanks" tabindex="-1" hidden>We'll be in touch.</p>
+        <p class="contact-lead"><a href="account/">Sign in / Create account</a> for private saved chats. This name and email form still stays in the browser.</p>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="wrap footer-inner">
+      <p class="host-note">Hosted by Cutline Industries.</p>
+      <p><a href="chat/">Chat</a> · <a href="products/">Products</a> · <a href="account/">Sign in</a></p>
+      <p>Artemis AI is a product of Cutline Industries.</p>
+    </div>
+  </footer>
+
+  <script src="main.js"></script>
+  <script src="live.js"></script>
+</body>
+</html>

@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Products · Artemis AI</title>
+<link rel="manifest" href="../manifest.webmanifest">
+<link rel="icon" href="../artemis-icon.svg">
+<link rel="apple-touch-icon" href="../artemis-icon-192.png">
+<meta name="theme-color" content="#3279f9">
+<meta name="description" content="Artemis AI chat, products, and account sign-in.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="../artemis-theme.css">
+<link rel="stylesheet" href="../mobile.css">
+<link rel="stylesheet" href="../workspace.css">
+</head>
+<body data-start="products">
+<header class="nav">
+<div class="wrap">
+<a class="brand" href="../">
+<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M4 20 12 3l8 17"/><path d="M7.5 13h9"/><circle cx="12" cy="3" r="1.1" fill="currentColor"/></svg>
+Artemis AI
+</a>
+<nav class="nav-links" id="navLinks" aria-label="Main">
+<a href="../">Home</a>
+<button type="button" data-go="chat">Chat</button>
+<button type="button" data-go="products">Products</button>
+<button type="button" data-go="account" id="accountNav">Sign in</button>
+</nav>
+<a class="btn btn-primary" href="../">Home</a>
+<button class="btn menu-btn" id="menuBtn" type="button" aria-expanded="false" aria-controls="navLinks">Menu</button>
+</div>
+</header>
+<main>
+<section class="view" id="view-chat" data-view="chat" hidden>
+<div class="wrap">
+<div class="chat">
+<aside aria-label="Conversations">
+<button class="btn new" type="button">New chat</button>
+</aside>
+<div class="convo">
+<div class="msgs" id="msgs">
+<div class="msg sys">
+<span class="who">Artemis</span>
+<form class="waitlist" id="waitlist">
+<label for="wl-email" class="eyebrow" style="width:100%">Email</label>
+<input id="wl-email" type="email" required placeholder="you@company.com" autocomplete="email">
+<button class="btn btn-primary" type="submit">Join waitlist</button>
+</form>
+<p class="waitlist-done" id="wlDone" hidden>Sign-ups open soon. Until the account service is connected, use the contact note on the homepage.</p>
+</div>
+</div>
+<div class="composer">
+<form id="composer">
+<label for="prompt" class="eyebrow" style="position:absolute;left:-9999px">Message Artemis</label>
+<textarea id="prompt" rows="1" placeholder="Message Artemis"></textarea>
+<button class="send" type="submit" aria-label="Send"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button>
+</form>
+<p class="hint">Artemis answers once its first model is connected.</p>
+</div>
+</div>
+</div>
+</div>
+</section>
+<section class="view" id="view-products" data-view="products" >
+<div class="wrap"><div class="page-head"><span class="eyebrow">Products</span><h1>One Artemis.<br>Room to work.</h1><p>Chat, explore code, and follow the work behind an answer. The homepage keeps the existing platform overview.</p></div>
+<div class="product-grid">
+<article class="product-card"><span class="eyebrow">Conversations</span><h2>Artemis Chat</h2><p>Private, saved conversations with streaming replies, history search, edits, and exports.</p><p class="product-status">Account required. Answers need a connected Artemis model.</p><a class="btn btn-primary" href="../chat/">Open Chat</a></article>
+<article class="product-card"><span class="eyebrow">Included in Chat</span><h2>Artemis Workspace</h2><p>Switch between your conversation, code, and tool activity. Keep your work together.</p><p class="product-status">Tools depend on your plan and the model configuration.</p><a class="btn" href="../chat/?panel=code">Explore Workspace</a></article>
+<article class="product-card"><span class="eyebrow">Developer access</span><h2>Artemis API</h2><p>Integrate Artemis into your own application using server-side credentials.</p><p class="product-status">Provisioning and serving setup required. Contact us for access.</p><a class="btn" href="../#contact">Ask about API access</a></article>
+</div></div>
+</section>
+<section class="view" id="view-account" data-view="account" hidden>
+<div class="wrap"><div class="page-head"><span class="eyebrow">Your account</span><h1>Your space with Artemis.</h1><p>Create an account or sign in to access your private chat history across devices. This page calls the Artemis account service on this site. It does not replace the homepage interest form.</p></div><div id="account-page-content"></div></div>
+</section>
+</main>
+<footer class="shell-foot"><div class="wrap"><p>Hosted by Cutline Industries. <a href="../">Back to the Artemis AI homepage</a>.</p></div></footer>
+<script src="../app.js" defer></script>
+<script src="../polish.js" defer></script>
+<script src="../chat-stream.js" defer></script>
+<script src="../chat-render.js" defer></script>
+<script src="../workspace.js" defer></script>
+</body>
+</html>
