@@ -1,28 +1,34 @@
 # artemisai-bycutlineindustries.studio — the Artemis product domain
 
-Registered 2026-10-11 at Squarespace. As of writing the registry still answers
-NXDOMAIN for it: a fresh `.studio` registration takes up to an hour to delegate.
-Nothing below works until `dig NS artemisai-bycutlineindustries.studio` returns
-nameservers.
+Registered 2026-10-11 at Squarespace and delegated the same day to
+`nsd1..nsd4.squarespacedns.com`. The DNS Settings page is live now.
 
 This domain is a clean slate. It carries no mail and no Microsoft records, so
-none of the care required by [dns-migration.md](./dns-migration.md) applies. If
-it was bought at Squarespace it is already on Squarespace nameservers, which
-means its DNS Settings page is live immediately — no nameserver switch, no
-48-hour delegation wait, no cutover risk.
+none of the care required by [dns-migration.md](./dns-migration.md) applies —
+no nameserver switch, no 48-hour delegation wait, no cutover risk.
 
-## Records
+## 1. Delete the Squarespace defaults first
+
+Squarespace pre-populated the zone, and it is serving the parking page:
+
+| Type | Host | Value |
+| --- | --- | --- |
+| A | `@` | `198.185.159.144`, `198.185.159.145`, `198.49.23.144`, `198.49.23.145` |
+| HTTPS | `@` | `alpn=h2,http/1.1 ipv4hint=198.185.159.144,198.185.159.145,198.49.23.144,198.49.23.145` |
+| CNAME | `www` | `ext-sq.squarespace.com` |
+
+All of it goes. The **HTTPS record matters most**: its `ipv4hint` hands browsers
+Squarespace's addresses directly, so a browser keeps landing on Squarespace even
+after the A record points at Vercel. Changing the A records without deleting this
+one produces a site that looks broken while `dig` says everything is correct.
+
+## 2. Records to add
 
 | Type | Host | Value | Why |
 | --- | --- | --- | --- |
 | A | `@` | `76.76.21.21` | Vercel. Serves the Artemis product site. |
 | CNAME | `www` | `cname.vercel-dns.com` | Already added to Vercel as a 308 redirect to the apex. |
 | A | `api` | `172.203.229.191` | `cutline-vps`, the Artemis gateway. |
-
-Delete any "Squarespace Defaults" or "Squarespace Domain Connect" preset group
-first. The HTTPS/SVCB record inside it carries an `ipv4hint` that keeps browsers
-going to Squarespace even once the A record is right — the failure that looks
-like broken DNS when the DNS is fine.
 
 ## The site needs no API work
 
