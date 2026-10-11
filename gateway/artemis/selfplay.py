@@ -1,0 +1,451 @@
+"""Artemis improves itself on problems it can verify.
+
+Artemis proposes a solution, a sandbox runs it against the problem's tests, and
+only solutions that actually pass become training data. A round is kept only if
+held-out pass@1 improves; otherwise the weights roll back. Nothing here grades
+Artemis by opinion — every reward is a test that ran.
+
+This trains ARTEMIS'S OWN WEIGHTS. There is no third-party base model and no
+LoRA adapter, so Blueprint Decisions 5 and 12 hold without a label exemption.
+The standalone artemis2/ loop is the bootstrap variant that fine-tunes someone
+else's model, and it stays outside the package for exactly that reason.
+
+Two outputs, and the second is the one that compounds:
+
+  1. a checkpoint whose pass@1 is measurably better than the one before it;
+  2. verified solutions written out as a DOMAIN-LABELLED corpus.
+
+The second matters because today's proto experiment showed routing buying
+nothing on unlabelled text — `route_coef` only does work on tokens carrying a
+domain label, and a general web corpus has none. Solved code is labelled
+`build` and its tests `test` by construction, so this loop manufactures exactly
+the supervision the expert routers never had.
+
+    python -m artemis.selfplay --checkpoint runs/1b/latest.pt \
+        --tokenizer data/tokenizer.json --rounds 10
+"""
+from __future__ import annotations
+
+import argparse
+import gzip
+import hashlib
+import json
+import os
+import random
+import re
+import shutil
+import subprocess
+import sys
+import tempfile
+import time
+import uuid
+from dataclasses import dataclass
+from datetime import datetime, timezone
+from pathlib import Path
+
+from .model import EXPERT_NAMES
+
+# Solved code is `build` work and its tests are `test` work. Both are real
+# expert names from model.EXPERT_NAMES, so data.prepare accepts them directly.
+SOLUTION_DOMAIN = "build"
+TEST_DOMAIN = "test"
+WEIGHTS_LABEL = "Artemis-from-scratch weights (Prime Core + ten experts), fine-tuned directly"
+
+FENCE = re.compile(r"```(?:python|py)?\s*\n([\s\S]*?)```")
+
+
+# ---------------------------------------------------------------------------
+# Problems
+# ---------------------------------------------------------------------------
+
+BUILTIN_PROBLEMS = [
+    ("is_prime", 'def is_prime(n: int) -> bool:\n    """Return True if n is a prime number."""\n',
+     "    if n < 2:\n        return False\n    i = 2\n    while i * i <= n:\n        if n % i == 0:\n            return False\n        i += 1\n    return True\n",
+     "def check(candidate):\n    assert candidate(11) is True\n    assert candidate(1) is False\n    assert candidate(15) is False\n"),
+    ("find_max", 'def find_max(values: list) -> int:\n    """Return the largest number in a non-empty list."""\n',
+     "    best = values[0]\n    for v in values:\n        if v > best:\n            best = v\n    return best\n",
+     "def check(candidate):\n    assert candidate([1, 5, 2]) == 5\n    assert candidate([-3, -1, -7]) == -1\n"),
+    ("factorial", 'def factorial(n: int) -> int:\n    """Return n! for n >= 0."""\n',
+     "    out = 1\n    for i in range(2, n + 1):\n        out *= i\n    return out\n",
+     "def check(candidate):\n    assert candidate(0) == 1\n    assert candidate(5) == 120\n"),
+    ("is_palindrome", 'def is_palindrome(s: str) -> bool:\n    """Return True if s reads the same backwards, ignoring case."""\n',
+     "    s = s.lower()\n    return s == s[::-1]\n",
+     "def check(candidate):\n    assert candidate('Racecar') is True\n    assert candidate('abc') is False\n"),
+]
+
+
+def builtin_problems() -> list[dict]:
+    return [{"task_id": f"Builtin/{n}", "prompt": p, "canonical_solution": s,
+             "test": t, "entry_point": n} for n, p, s, t in BUILTIN_PROBLEMS]
+
+
+def load_problems(path: Path | None) -> list[dict]:
+    if path is None or not Path(path).exists():
+        return builtin_problems()
+    path = Path(path)
+    opener = gzip.open if path.suffix == ".gz" else open
+    with opener(path, "rt", encoding="utf-8") as f:
+        return [json.loads(line) for line in f if line.strip()]
+
+
+def split_problems(problems: list[dict], eval_fraction: float) -> tuple[list[dict], list[dict]]:
+    """Split by a hash of task_id so the held-out set never moves between runs.
+
+    A random split would let a problem drift into training between rounds and
+    quietly invalidate every pass@1 comparison the loop makes.
+    """
+    train, held = [], []
+    for p in problems:
+        h = int(hashlib.sha256(p["task_id"].encode()).hexdigest()[:8], 16) / 0xFFFFFFFF
+        (held if h < eval_fraction else train).append(p)
+    if not held:
+        held.append(train.pop())
+    if not train:
+        raise ValueError("eval_fraction leaves no training problems")
+    return train, held
+
+
+# ---------------------------------------------------------------------------
+# Code assembly and sandboxed execution
+# ---------------------------------------------------------------------------
+
+def extract_code(raw: str) -> str:
+    m = FENCE.search(raw)
+    return (m.group(1) if m else raw).rstrip() + "\n"
+
+
+def solution_source(problem: dict, completion: str) -> str:
+    """The completion as a standalone definition of the function.
+
+    If the model wrote the whole function it redefines the docstring-only stub;
+    otherwise the completion is a bare body and needs the stub in front of it,
+    or it is a syntax error on its own.
+    """
+    ep = problem["entry_point"]
+    if re.search(rf"^\s*def\s+{re.escape(ep)}\s*\(", completion, re.M):
+        return problem["prompt"] + "\n" + completion
+    return problem["prompt"] + completion
+
+
+def build_program(problem: dict, completion: str) -> str:
+    return (f"{solution_source(problem, completion)}\n\n"
+            f"{problem['test']}\n\ncheck({problem['entry_point']})\n")
+
+
+@dataclass
+class RunResult:
+    passed: bool
+    error: str
+    seconds: float
+
+
+class Sandbox:
+    """Runs model-written code. Docker by default: no network, read-only root,
+    capped memory, CPU and pids. `local` runs it on this machine and must be
+    unlocked explicitly, because generated code is untrusted by definition."""
+
+    def __init__(self, mode: str = "docker", timeout: float = 10.0,
+                 image: str = "python:3.11-slim", unsafe_ok: bool = False):
+        self.mode, self.timeout, self.image = mode, timeout, image
+        if mode == "docker" and not shutil.which("docker"):
+            raise RuntimeError(
+                "sandbox 'docker' selected but docker is not installed; for a "
+                "throwaway machine only: --sandbox local --unsafe-local-exec")
+        if mode == "local" and not unsafe_ok:
+            raise RuntimeError(
+                "refusing to run generated code on this host; pass "
+                "--unsafe-local-exec only on a disposable machine")
+
+    def run(self, program: str) -> RunResult:
+        start = time.perf_counter()
+        try:
+            if self.mode == "docker":
+                cmd = ["docker", "run", "--rm", "-i", "--network", "none", "--read-only",
+                       "--memory", "256m", "--cpus", "1", "--pids-limit", "64",
+                       "--tmpfs", "/tmp:size=16m", "--user", "65534:65534",
+                       self.image, "python", "-I", "-"]
+                p = subprocess.run(cmd, input=program, capture_output=True,
+                                   text=True, timeout=self.timeout + 10)
+            else:
+                p = self._run_local(program)
+        except subprocess.TimeoutExpired:
+            return RunResult(False, "timeout", time.perf_counter() - start)
+        secs = time.perf_counter() - start
+        if p.returncode == 0:
+            return RunResult(True, "", secs)
+        lines = (p.stderr or "").strip().splitlines()
+        return RunResult(False, (lines[-1] if lines else f"exit {p.returncode}")[:300], secs)
+
+    def _run_local(self, program: str) -> subprocess.CompletedProcess:
+        def limits():
+            try:
+                import resource
+                t = int(self.timeout)
+                resource.setrlimit(resource.RLIMIT_CPU, (t, t + 1))
+                resource.setrlimit(resource.RLIMIT_AS, (512 * 2**20, 512 * 2**20))
+                resource.setrlimit(resource.RLIMIT_FSIZE, (2**20, 2**20))
+            except Exception:
+                pass
+        with tempfile.TemporaryDirectory(prefix="artemis-sbx-") as d:
+            return subprocess.run([sys.executable, "-I", "-"], input=program, cwd=d,
+                                  capture_output=True, text=True, timeout=self.timeout,
+                                  env={"PATH": "/usr/bin:/bin"},
+                                  preexec_fn=limits if os.name == "posix" else None)
+
+
+# ---------------------------------------------------------------------------
+# Artemis as the player
+# ---------------------------------------------------------------------------
+
+class ArtemisPlayer:
+    """Artemis's own weights, fine-tuned in place on solutions it verified."""
+
+    def __init__(self, checkpoint_path: str, tokenizer_path: str,
+                 max_new_tokens: int = 384, device: str | None = None):
+        import torch
+
+        from . import checkpoint as ckpt_mod
+        from .tokenizer import format_chat, load_tokenizer
+
+        self.torch = torch
+        self.ckpt_mod = ckpt_mod
+        self.format_chat = format_chat
+        self.max_new_tokens = max_new_tokens
+        self.device = torch.device(device or ("cuda" if torch.cuda.is_available() else "cpu"))
+        self.model, self.ck = ckpt_mod.load_model(checkpoint_path, self.device)
+        self.model.eval()
+        self.tok = load_tokenizer(tokenizer_path)
+        if self.tok.get_vocab_size() > self.model.cfg.vocab_size:
+            raise ckpt_mod.CheckpointError(
+                f"tokenizer has {self.tok.get_vocab_size()} tokens but the model has "
+                f"{self.model.cfg.vocab_size}; they come from different runs")
+        self.stop = [i for i in (self.tok.token_to_id("<|end|>"),
+                                 self.tok.token_to_id("<|eos|>")) if i is not None]
+        self.model_id = (f"artemis-{self.model.cfg.param_count() / 1e6:.0f}M"
+                         f"@step{self.ck.get('step', 0)}")
+        self._snapshot: dict | None = None
+
+    def _prompt_ids(self, problem: dict) -> list[int]:
+        msg = ("Complete this Python function. Reply with one ```python code block "
+               "containing the full function and any imports it needs, no explanation.\n\n"
+               + problem["prompt"])
+        return self.tok.encode(self.format_chat([{"role": "user", "content": msg}])
+                               + "<|assistant|>").ids
+
+    def generate(self, problem: dict, sample: bool) -> str:
+        torch = self.torch
+        ids = self._prompt_ids(problem)[-(self.model.cfg.max_seq_len - 1):]
+        self.model.eval()
+        out: list[int] = []
+        with torch.no_grad():
+            idx = torch.tensor([ids], device=self.device)
+            for t in self.model.stream(idx, self.max_new_tokens,
+                                       0.8 if sample else 0.0,
+                                       50 if sample else 0, self.stop):
+                if t in self.stop:
+                    break
+                out.append(t)
+        return self.tok.decode(out)
+
+    def snapshot(self):
+        """Keep the rollback copy on CPU; a large model would otherwise double
+        its GPU memory just to hold the previous round."""
+        self._snapshot = {k: v.detach().to("cpu", copy=True)
+                          for k, v in self.model.state_dict().items()}
+
+    def restore(self):
+        if self._snapshot is not None:
+            self.model.load_state_dict({k: v.to(self.device)
+                                        for k, v in self._snapshot.items()})
+
+    def train(self, examples: list[tuple[dict, str]], epochs: int = 2,
+              lr: float = 2e-5, max_len: int = 768) -> dict:
+        torch = self.torch
+        rows = []
+        for prob, code in examples:
+            p_ids = self._prompt_ids(prob)
+            t_ids = self.tok.encode(f"```python\n{code}```").ids + self.stop[:1]
+            ids = (p_ids + t_ids)[:max_len]
+            if len(ids) < 2:
+                continue
+            # ArtemisLM applies cross_entropy with no internal shift, matching
+            # data.TokenStream where y = tokens[s+1:]. Targets are therefore
+            # shifted here, and every position whose target still lies in the
+            # prompt is masked so the loss covers only the answer.
+            rows.append((ids[:-1],
+                         [t if i + 1 >= len(p_ids) else -100
+                          for i, t in enumerate(ids[1:])]))
+        if not rows:
+            return {"steps": 0, "final_loss": float("nan")}
+
+        params = [p for p in self.model.parameters() if p.requires_grad]
+        opt = torch.optim.AdamW(params, lr=lr, weight_decay=0.0)
+        self.model.train()
+        steps, last = 0, float("nan")
+        for _ in range(epochs):
+            random.shuffle(rows)
+            for xs, ys in rows:
+                _logits, loss = self.model(torch.tensor([xs], device=self.device),
+                                           torch.tensor([ys], device=self.device))
+                loss.backward()
+                torch.nn.utils.clip_grad_norm_(params, 1.0)
+                opt.step()
+                opt.zero_grad(set_to_none=True)
+                steps, last = steps + 1, float(loss.detach())
+        self.model.eval()
+        return {"steps": steps, "final_loss": round(last, 4)}
+
+    def save(self, path: Path):
+        Path(path).parent.mkdir(parents=True, exist_ok=True)
+        self.ckpt_mod.save(path, self.model, step=int(self.ck.get("step", 0)),
+                           extra={"source": "artemis.selfplay", "weights": WEIGHTS_LABEL})
+
+
+# ---------------------------------------------------------------------------
+# Outputs
+# ---------------------------------------------------------------------------
+
+def write_labelled_corpus(path: Path, solved: list[tuple[dict, str]]) -> dict:
+    """Append verified solutions as a domain-labelled corpus for data.prepare.
+
+    This is the output that compounds. Every record carries a real expert name,
+    so prepare() emits a .dom sidecar and `route_coef` finally has tokens to
+    supervise — which unlabelled web text never provides.
+    """
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    counts = {SOLUTION_DOMAIN: 0, TEST_DOMAIN: 0}
+    with path.open("a", encoding="utf-8") as f:
+        for prob, code in solved:
+            f.write(json.dumps({"text": solution_source(prob, code),
+                                "domain": SOLUTION_DOMAIN,
+                                "task_id": prob["task_id"]}) + "\n")
+            counts[SOLUTION_DOMAIN] += 1
+            if prob.get("test"):
+                f.write(json.dumps({"text": prob["test"],
+                                    "domain": TEST_DOMAIN,
+                                    "task_id": prob["task_id"]}) + "\n")
+                counts[TEST_DOMAIN] += 1
+    return counts
+
+
+def export_solution(root: Path, version: str, prob: dict, code: str, model_id: str):
+    out = Path(root) / "verified" / version
+    out.mkdir(parents=True, exist_ok=True)
+    name = re.sub(r"[^A-Za-z0-9_]", "_", prob["task_id"]) + ".py"
+    header = (f"# Artemis verified solution\n# Task: {prob['task_id']}\n"
+              f"# Checkpoint: {version}\n# Weights: {model_id} ({WEIGHTS_LABEL})\n"
+              f"# Passed sandboxed tests at "
+              f"{datetime.now(timezone.utc).isoformat(timespec='seconds')}\n\n")
+    (out / name).write_text(header + solution_source(prob, code), encoding="utf-8")
+
+
+# ---------------------------------------------------------------------------
+# The loop
+# ---------------------------------------------------------------------------
+
+def evaluate(player, sandbox: Sandbox, problems: list[dict]) -> float:
+    """Greedy pass@1 on the held-out split, which never becomes training data."""
+    passed = 0
+    for p in problems:
+        code = extract_code(player.generate(p, sample=False))
+        passed += sandbox.run(build_program(p, code)).passed
+    return passed / len(problems)
+
+
+def run_loop(player, sandbox: Sandbox, problems: list[dict], out_dir: Path, *,
+             rounds: int = 5, train_per_round: int = 16, samples: int = 4,
+             epochs: int = 2, lr: float = 2e-5, eval_fraction: float = 0.3,
+             min_gain: float = 0.0, seed: int = 0, log=print) -> dict:
+    """Returns a summary. Separate from main() so tests drive it directly."""
+    random.seed(seed)
+    out_dir = Path(out_dir)
+    train, held = split_problems(problems, eval_fraction)
+    corpus = out_dir / "labelled" / "verified.jsonl"
+
+    best = evaluate(player, sandbox, held)
+    history = [{"round": 0, "event": "BASELINE", "eval_pass_rate": best}]
+    log(f"baseline pass@1 {best:.3f} on {len(held)} held-out problems")
+
+    committed, labelled = 0, {SOLUTION_DOMAIN: 0, TEST_DOMAIN: 0}
+    for rnd in range(1, rounds + 1):
+        batch = random.sample(train, min(train_per_round, len(train)))
+        solved: list[tuple[dict, str]] = []
+        for prob in batch:
+            for _ in range(samples):
+                code = extract_code(player.generate(prob, sample=True))
+                if sandbox.run(build_program(prob, code)).passed:
+                    solved.append((prob, code))
+                    break  # one verified solution per problem per round
+        log(f"round {rnd}: solved {len(solved)}/{len(batch)}")
+        if not solved:
+            history.append({"round": rnd, "event": "NO_TRAINING_DATA"})
+            continue
+
+        # Write the labelled corpus BEFORE the accept/reject decision: these
+        # solutions passed real tests, so they are valid supervision whether or
+        # not this particular weight update survives.
+        got = write_labelled_corpus(corpus, solved)
+        for k, v in got.items():
+            labelled[k] += v
+
+        player.snapshot()
+        stats = player.train(solved, epochs=epochs, lr=lr)
+        score = evaluate(player, sandbox, held)
+        if score > best + min_gain:
+            version = f"ckpt-r{rnd:03d}-{uuid.uuid4().hex[:6]}"
+            player.save(out_dir / "checkpoints" / f"{version}.pt")
+            for prob, code in solved:
+                export_solution(out_dir, version, prob, code, player.model_id)
+            history.append({"round": rnd, "event": "COMMITTED", "version": version,
+                            "eval_pass_rate": score, "steps": stats["steps"]})
+            log(f"  committed {version}: pass@1 {best:.3f} -> {score:.3f}")
+            best, committed = score, committed + 1
+        else:
+            player.restore()
+            history.append({"round": rnd, "event": "ROLLED_BACK", "eval_pass_rate": score})
+            log(f"  rolled back: pass@1 {score:.3f} did not beat {best:.3f}")
+
+    summary = {"best_pass_rate": best, "rounds": rounds, "committed": committed,
+               "labelled_records": labelled, "corpus": str(corpus), "history": history}
+    (out_dir / "summary.json").parent.mkdir(parents=True, exist_ok=True)
+    (out_dir / "summary.json").write_text(json.dumps(summary, indent=2))
+    return summary
+
+
+def main(argv=None):
+    ap = argparse.ArgumentParser(description="Artemis self-improvement on verified problems")
+    ap.add_argument("--checkpoint", required=True, help="Artemis checkpoint to improve")
+    ap.add_argument("--tokenizer", required=True, help="tokenizer.json it was trained with")
+    ap.add_argument("--problems", help="HumanEval-format .jsonl/.jsonl.gz (default: built-in set)")
+    ap.add_argument("--out", default="runs/selfplay")
+    ap.add_argument("--rounds", type=int, default=5)
+    ap.add_argument("--train-per-round", type=int, default=16)
+    ap.add_argument("--samples", type=int, default=4)
+    ap.add_argument("--epochs", type=int, default=2)
+    ap.add_argument("--lr", type=float, default=2e-5)
+    ap.add_argument("--eval-fraction", type=float, default=0.3)
+    ap.add_argument("--min-gain", type=float, default=0.0)
+    ap.add_argument("--max-new-tokens", type=int, default=384)
+    ap.add_argument("--sandbox", choices=["docker", "local"], default="docker")
+    ap.add_argument("--unsafe-local-exec", action="store_true")
+    ap.add_argument("--docker-image", default="python:3.11-slim")
+    ap.add_argument("--timeout", type=float, default=10.0)
+    ap.add_argument("--seed", type=int, default=0)
+    args = ap.parse_args(argv)
+
+    player = ArtemisPlayer(args.checkpoint, args.tokenizer, args.max_new_tokens)
+    sandbox = Sandbox(args.sandbox, args.timeout, args.docker_image, args.unsafe_local_exec)
+    summary = run_loop(player, sandbox, load_problems(args.problems), Path(args.out),
+                       rounds=args.rounds, train_per_round=args.train_per_round,
+                       samples=args.samples, epochs=args.epochs, lr=args.lr,
+                       eval_fraction=args.eval_fraction, min_gain=args.min_gain,
+                       seed=args.seed)
+    print(f"best pass@1 {summary['best_pass_rate']:.3f}; "
+          f"{summary['committed']} checkpoints committed; "
+          f"labelled records {summary['labelled_records']}")
+    return summary
+
+
+if __name__ == "__main__":
+    main()

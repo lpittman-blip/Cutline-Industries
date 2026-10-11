@@ -45,7 +45,6 @@ from pathlib import Path
 
 HUMANEVAL_URL = "https://raw.githubusercontent.com/openai/human-eval/master/data/HumanEval.jsonl.gz"
 WEIGHTS_LABEL = "third-party base weights + Artemis LoRA adapter (not Artemis-from-scratch weights)"
-ARTEMIS_WEIGHTS_LABEL = "Artemis-from-scratch weights (Prime Core + ten experts), fine-tuned directly"
 
 # ---------------------------------------------------------------------------
 # Problems
@@ -496,17 +495,9 @@ def run(args):
     source = problems_path.name if problems_path.exists() else "built-in set (10 problems)"
     train, held = split_problems(problems, args.eval_fraction)
 
-    if args.mock_model:
-        model = MockModel(args.seed)
-    elif args.artemis_checkpoint:
-        # Artemis's own weights. No adapter: these are our parameters, so they
-        # are fine-tuned directly and the output is genuinely Artemis's.
-        from artemis_backend import ArtemisModel
-        model = ArtemisModel(args.artemis_checkpoint, args.artemis_tokenizer,
-                             args.max_new_tokens)
-    else:
-        model = HFModel(args.model, not args.no_4bit, args.lora_r, args.max_new_tokens)
-    label = ARTEMIS_WEIGHTS_LABEL if args.artemis_checkpoint else WEIGHTS_LABEL
+    model = MockModel(args.seed) if args.mock_model else HFModel(
+        args.model, not args.no_4bit, args.lora_r, args.max_new_tokens)
+    label = WEIGHTS_LABEL
     sandbox = Sandbox(args.sandbox, args.timeout, args.docker_image, args.unsafe_local_exec)
     random.seed(args.seed)
 
@@ -573,8 +564,6 @@ def main(argv=None):
     ap = argparse.ArgumentParser(description="Artemis 2.0 self-improvement loop")
     ap.add_argument("--model", default="Qwen/Qwen2.5-Coder-1.5B-Instruct")
     ap.add_argument("--mock-model", action="store_true", help="no torch; tests the pipeline only")
-    ap.add_argument("--artemis-checkpoint", help="train Artemis's OWN weights from this checkpoint instead of a third-party base model")
-    ap.add_argument("--artemis-tokenizer", help="tokenizer.json that the Artemis checkpoint was trained with")
     ap.add_argument("--no-4bit", action="store_true", help="disable NF4 quantization on CUDA")
     ap.add_argument("--problems", help="HumanEval-format .jsonl or .jsonl.gz (default: workdir/data/HumanEval.jsonl.gz, else built-in)")
     ap.add_argument("--download-humaneval", action="store_true")
