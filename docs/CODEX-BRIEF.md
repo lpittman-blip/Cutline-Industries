@@ -123,11 +123,15 @@ Two consequences worth knowing before you plan the cutover:
 | security group | `vpcsecuritygroup-e00vajgc6qvb1kfmk6` (egress all, ingress tcp/22) |
 | image | `ubuntu24.04-cuda13.0` |
 
-Service account `serviceaccount-e04nwdxcrjmat9y8q0` **lost write permission**.
-Reads succeed; every write returns `PermissionDenied`. Until the owner re-adds
-it to `admins` or grants an editor role on the project, you cannot start the
-instance, and no training can begin. Nothing in this brief works around that —
-it is an owner action in the Nebius console.
+**Resolved 2026-10-11 — this section previously said writes were blocked.**
+`serviceaccount-e04nwdxcrjmat9y8q0` is a member of `admins`
+(`group-e00mqgga9j7vgnwcw7`) and writes were confirmed working. Permissions no
+longer block anything.
+
+You do not use that account. Codex has its own narrower identity,
+`serviceaccount-e00vtzxm35ebf0zmm2` (`artemis-codex`), holding `editor` rather
+than `admin`. Setup, verification results and the remaining owner steps are in
+`docs/codex-nebius-handoff.md` — read it before touching the GPU box.
 
 This instance costs roughly **$98/hour** while running. The owner's standing
 rule is that it is never started without their explicit confirmation. Ask, every

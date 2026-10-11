@@ -26,9 +26,15 @@ solves a problem produces no training data and improves by exactly zero.
 | security group | `vpcsecuritygroup-e00vajgc6qvb1kfmk6` (egress all, ingress tcp/22) |
 | image | `ubuntu24.04-cuda13.0` |
 
-**Known blocker:** service account `serviceaccount-e04nwdxcrjmat9y8q0` lost
-write permission. Reads succeed, writes return `PermissionDenied`. Re-add it to
-`admins`, or grant an editor role on the project.
+**Resolved 2026-10-11.** This previously read as a blocker: service account
+`serviceaccount-e04nwdxcrjmat9y8q0` had lost write permission, every write
+returning `PermissionDenied`. It is a member of `admins`
+(`group-e00mqgga9j7vgnwcw7`) again, carrying `admin` plus the storage roles, and
+writes were confirmed working. Nothing is blocked on permissions.
+
+Codex operates this VM through a separate, narrower identity —
+`serviceaccount-e00vtzxm35ebf0zmm2` (`artemis-codex`), `editor` only. See
+`docs/codex-nebius-handoff.md`.
 
 ## Five things that will waste your time if you do not know them
 
