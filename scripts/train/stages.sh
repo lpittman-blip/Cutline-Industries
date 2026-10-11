@@ -41,7 +41,6 @@ stage1() {
   # self-upgrade, which is the one that killed an earlier boot under
   # `set -e`. And awscli has no apt package on noble at all.
   pip_install() { python3 -m pip install -q --break-system-packages "$@"; }
-  pip_install --upgrade pip
   pip_install torch numpy pyyaml tokenizers huggingface_hub pyarrow awscli
   command -v aws >/dev/null || echo "WARNING: aws CLI unavailable; progress sync disabled"
 
