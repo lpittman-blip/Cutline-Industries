@@ -18,6 +18,12 @@ binary, not documentation:
 `codex exec` is the supported non-interactive entry point, so this wraps that.
 If a future release adds a real MCP mode, delete this and use it.
 
+**This drives a local Codex, not Codex cloud.** The wrapper spawns the `codex`
+binary on the machine running the MCP server, so it needs a CLI installed and
+signed in there. Codex cloud is a separate surface with its own sign-in — it
+requires a ChatGPT account and cannot be reached by shelling out — so none of
+these tools talk to it.
+
 ## Setup
 
 ```bash

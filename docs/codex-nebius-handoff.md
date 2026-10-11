@@ -113,11 +113,19 @@ nebius iam auth-public-key create \
 The **public** key is not secret and may be pasted anywhere. `codex-nebius.pem`
 is the private key: it goes straight into Codex's secret store and nowhere else.
 
-**2. Install it in Codex's environment.** Codex reads a profile from
-`$CODEX_HOME`/`~/.nebius`, so provide:
+**2. Install it in Codex's environment.** Two credentials are in play and they
+are unrelated — do not mix them up:
+
+| | reads | holds |
+| --- | --- | --- |
+| Codex's own sign-in | `$CODEX_HOME` (default `~/.codex`) | who Codex is to OpenAI |
+| the Nebius CLI | `~/.nebius` | who Codex is to Nebius |
+
+Nothing about `CODEX_HOME` configures Nebius. The file below goes in
+`~/.nebius`, in whatever environment runs the Nebius CLI:
 
 ```yaml
-# ~/.nebius/config.yaml  (in Codex's environment)
+# ~/.nebius/config.yaml
 default: artemis-codex
 profiles:
   artemis-codex:
@@ -128,9 +136,28 @@ profiles:
     private-key-file: /secrets/codex-nebius.pem
 ```
 
-Mount the private key from the environment's secret storage — Codex Cloud
-environment secrets, or a file with mode 600 on a self-hosted runner. Never
-commit it, never put it in a prompt.
+Mount the private key from the environment's secret storage, or a file with
+mode 600 on a self-hosted runner. Never commit it, never put it in a prompt.
+
+**Which Codex is doing this matters.** Codex cloud and local Codex are
+authenticated differently, and only one of them can hold an arbitrary secret
+like a Nebius private key the way this assumes:
+
+- **Codex cloud requires signing in with ChatGPT.** An OpenAI API key will not
+  authenticate it. If the plan was "give Codex an API key and let it run the
+  GPU box", that does not work for the cloud surface.
+- **Codex CLI, the ChatGPT desktop app and the IDE extension** accept either a
+  ChatGPT sign-in or an API key, and run on a machine you control — which is
+  where a mounted `~/.nebius` private key and a `~/.codex` keyring actually
+  make sense.
+- For non-interactive automation that still needs ChatGPT workspace access,
+  ChatGPT Enterprise has **access tokens**
+  (`printenv CODEX_ACCESS_TOKEN | codex login --with-access-token`), granted by
+  an admin. That is the supported shape for a private CI runner.
+
+I have not verified how a Codex cloud environment exposes arbitrary secrets to
+a shell, so treat the cloud path as unconfirmed until you check it in the
+product. The local-runner path above is the one this handoff is written for.
 
 **3. New S3 key for the log bucket**, once you have decided whether Codex needs
 it. `editors` carries `editor` but not the `storage.*` roles — those sit on
