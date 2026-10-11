@@ -1,0 +1,15 @@
+{
+  "name": "codex-mcp",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Expose the OpenAI Codex CLI to MCP clients as a read-only second opinion",
+  "scripts": {
+    "start": "node server.js",
+    "check": "node server.js --self-test"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.25.3",
+    "zod": "^4.3.6"
+  }
+}

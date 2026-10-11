@@ -13,6 +13,12 @@
     "openaiDeveloperDocs": {
       "type": "http",
       "url": "https://developers.openai.com/mcp?source=cursor"
+    },
+    "codex": {
+      "type": "stdio",
+      "command": "node",
+      "args": ["tools/codex-mcp/server.js"],
+      "tools": ["codex_status", "codex_ask", "codex_review"]
     }
   }
 }
