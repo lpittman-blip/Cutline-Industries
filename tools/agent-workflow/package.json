@@ -1,0 +1,20 @@
+{
+  "name": "agent-workflow",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "OpenAI Agent Builder workflow — development tooling only",
+  "scripts": {
+    "run": "tsx workflow.ts",
+    "typecheck": "tsc --noEmit",
+    "check": "tsx workflow.ts --self-test"
+  },
+  "dependencies": {
+    "@openai/agents": "^0.2.0"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.5",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2"
+  }
+}
