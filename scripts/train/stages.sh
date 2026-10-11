@@ -36,13 +36,13 @@ stage1() {
   NGPU=$(nvidia-smi --list-gpus | wc -l)
   [ "$NGPU" -gt 0 ] || { echo "no GPU visible"; exit 1; }
 
-  python3 -m pip install -q --upgrade pip
-  # awscli is NOT an apt package on Ubuntu 24.04 ("no installation candidate"),
-  # which is what silently broke log sync on three earlier boots. Install the
-  # Python packages, including awscli, with pip instead.
-  PIP="python3 -m pip install -q --break-system-packages"
-  $PIP torch numpy pyyaml tokenizers huggingface_hub pyarrow awscli || \
-    python3 -m pip install -q torch numpy pyyaml tokenizers huggingface_hub pyarrow awscli
+  # Ubuntu 24.04 marks the system Python externally managed (PEP 668), so
+  # EVERY pip call needs --break-system-packages — including the pip
+  # self-upgrade, which is the one that killed an earlier boot under
+  # `set -e`. And awscli has no apt package on noble at all.
+  pip_install() { python3 -m pip install -q --break-system-packages "$@"; }
+  pip_install --upgrade pip
+  pip_install torch numpy pyyaml tokenizers huggingface_hub pyarrow awscli
   command -v aws >/dev/null || echo "WARNING: aws CLI unavailable; progress sync disabled"
 
   log "downloading $SHARDS shards of $DATASET"

@@ -32,8 +32,11 @@ NGPU=$(nvidia-smi --list-gpus | wc -l)
 
 echo "[2/5] dependencies"
 # torch with CUDA must match the driver; the default index gives the current build.
-python3 -m pip install -q --upgrade pip
-python3 -m pip install -q torch numpy pyyaml tokenizers huggingface_hub pyarrow
+# PEP 668: the system Python on Ubuntu 24.04 is externally managed, so every
+# pip call needs --break-system-packages or it exits non-zero under set -e.
+pip_install() { python3 -m pip install -q --break-system-packages "$@"; }
+pip_install --upgrade pip
+pip_install torch numpy pyyaml tokenizers huggingface_hub pyarrow
 
 echo "[3/5] corpus — FineWeb (ODC-By-1.0, human web text)"
 mkdir -p "$WORK/raw" "$WORK/data"
