@@ -35,7 +35,9 @@ from .orchestrator import TIERS, Artemis, ToolAccess
 from .tools import Toolbox, session_id
 
 ALLOWED_ORIGINS = {o.strip() for o in os.environ.get("ARTEMIS_ALLOWED_ORIGINS",
-                   "https://cutline-industries.studio,https://cutline-industries.vercel.app").split(",")}
+                   "https://cutline-industries.studio,https://cutline-industries.vercel.app,"
+                   "https://artemisai-bycutlineindustries.studio,"
+                   "https://www.artemisai-bycutlineindustries.studio").split(",")}
 MAX_MESSAGE_CHARS = 8000
 MAX_HISTORY = 20  # messages of earlier conversation sent with each request; older ones are dropped
 TRUST_PROXY = os.environ.get("ARTEMIS_TRUST_PROXY") == "1"

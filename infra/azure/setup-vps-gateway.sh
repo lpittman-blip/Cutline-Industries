@@ -32,6 +32,11 @@
 set -euo pipefail
 
 DOMAIN="${DOMAIN:-api.artemis-ai.net}"
+# Browser origins allowed to call the gateway. These are the SITES, which are not
+# the same host as $DOMAIN — $DOMAIN is the API itself and never originates a
+# request. An earlier version derived this from $DOMAIN and produced
+# https://www.api.cutline-industries.studio, an origin nothing serves.
+SITE_ORIGINS="${SITE_ORIGINS:-https://cutline-industries.studio,https://www.cutline-industries.studio,https://artemisai-bycutlineindustries.studio,https://www.artemisai-bycutlineindustries.studio}"
 # Re-use existing DB password if the env file already exists; generate once otherwise
 if [ -z "${DB_PASSWORD:-}" ] && [ -f /etc/artemis-chat.env ]; then
   DB_PASSWORD=$(grep '^ARTEMIS_DATABASE_URL=' /etc/artemis-chat.env | sed 's|.*://[^:]*:\([^@]*\)@.*|\1|')
@@ -93,7 +98,7 @@ cat > /etc/artemis-chat.env <<ENV
 PORT=8080
 ARTEMIS_BIND=127.0.0.1
 ARTEMIS_COOKIE_SECURE=1
-ARTEMIS_ALLOWED_ORIGINS=https://cutline-industries.studio,https://www.$DOMAIN
+ARTEMIS_ALLOWED_ORIGINS=${SITE_ORIGINS}
 ARTEMIS_DATABASE_URL=postgresql://artemis_chat:${DB_PASSWORD}@127.0.0.1:5432/artemis_chat
 VLLM_BASE_URL=${VLLM_BASE_URL}
 VLLM_MODEL=${VLLM_MODEL}

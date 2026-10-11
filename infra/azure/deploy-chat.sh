@@ -40,7 +40,7 @@ az containerapp up \
     "VLLM_BASE_URL=${VLLM_BASE_URL:-}" \
     "VLLM_MODEL=${VLLM_MODEL:-}" \
     "DATABASE_URL=${DATABASE_URL:-}" \
-    "ARTEMIS_ALLOWED_ORIGINS=${ARTEMIS_ALLOWED_ORIGINS:-https://cutline-industries.studio}"
+    "ARTEMIS_ALLOWED_ORIGINS=${ARTEMIS_ALLOWED_ORIGINS:-https://cutline-industries.studio,https://artemisai-bycutlineindustries.studio,https://www.artemisai-bycutlineindustries.studio}"
 
 URL=$(az containerapp show \
   --name "$APP_NAME" \

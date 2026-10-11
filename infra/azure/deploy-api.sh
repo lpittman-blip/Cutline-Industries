@@ -5,4 +5,4 @@ set -euo pipefail
 RG=${RG:-artm-rg}
 az containerapp up -g "$RG" -n artemis-api -l "${LOCATION:-eastus}" --source . \
   --dockerfile infra/azure/Dockerfile.api --ingress external --target-port 8080 \
-  --env-vars ARTEMIS_ALLOWED_ORIGINS="https://cutline-industries.studio,https://cutline-industries.vercel.app"
+  --env-vars ARTEMIS_ALLOWED_ORIGINS="https://cutline-industries.studio,https://cutline-industries.vercel.app,https://artemisai-bycutlineindustries.studio,https://www.artemisai-bycutlineindustries.studio"
