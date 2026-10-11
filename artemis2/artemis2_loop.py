@@ -44,6 +44,15 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
 HUMANEVAL_URL = "https://raw.githubusercontent.com/openai/human-eval/master/data/HumanEval.jsonl.gz"
+
+# The sandbox, the verified-pass harness, the export rules and the dataset
+# validation are shared with the package rather than duplicated here. Two
+# copies of this logic is how the reviewed bugs survived in one of them.
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "gateway"))
+from artemis.selfplay import (  # noqa: E402
+    Sandbox, build_program, export_solution, solution_source,
+    split_problems, validate_problems,
+)
 WEIGHTS_LABEL = "third-party base weights + Artemis LoRA adapter (not Artemis-from-scratch weights)"
 
 # ---------------------------------------------------------------------------
@@ -111,15 +120,7 @@ def download_humaneval(dest: Path) -> Path:
     return dest
 
 
-def split_problems(problems: list[dict], eval_fraction: float) -> tuple[list[dict], list[dict]]:
-    """Deterministic split by task_id hash, so the eval set never moves between runs."""
-    train, held = [], []
-    for p in problems:
-        h = int(hashlib.sha256(p["task_id"].encode()).hexdigest()[:8], 16) / 0xFFFFFFFF
-        (held if h < eval_fraction else train).append(p)
-    if not held:
-        held.append(train.pop())
-    return train, held
+
 
 
 # ---------------------------------------------------------------------------
@@ -141,82 +142,11 @@ def extract_code(raw: str, completion_mode: bool) -> str:
     return code.rstrip() + "\n"
 
 
-def solution_source(problem: dict, completion: str) -> str:
-    """The completion as a standalone, importable definition of the function.
-
-    A chat model usually returns the whole function, in which case it redefines
-    the docstring-only stub. A base model in completion mode returns only the
-    indented body, which is a syntax error on its own and has to keep the stub
-    in front of it.
-    """
-    ep = problem["entry_point"]
-    if re.search(rf"^\s*def\s+{re.escape(ep)}\s*\(", completion, re.M):
-        return problem["prompt"] + "\n" + completion
-    return problem["prompt"] + completion
 
 
-def build_program(problem: dict, completion: str) -> str:
-    ep = problem["entry_point"]
-    return f"{solution_source(problem, completion)}\n\n{problem['test']}\n\ncheck({ep})\n"
 
 
-@dataclass
-class RunResult:
-    passed: bool
-    error: str
-    seconds: float
 
-
-class Sandbox:
-    """Runs untrusted generated code. Docker by default: no network, read-only FS,
-    capped memory/CPU/pids. 'local' is only for pipeline testing and must be
-    explicitly unlocked, because it runs code on this machine."""
-
-    def __init__(self, mode: str, timeout: float, image: str, unsafe_ok: bool):
-        self.mode, self.timeout, self.image = mode, timeout, image
-        if mode == "docker":
-            if not shutil.which("docker"):
-                sys.exit("Sandbox 'docker' selected but docker is not installed. "
-                         "Install Docker, or for a throwaway test only: --sandbox local --unsafe-local-exec")
-        elif mode == "local" and not unsafe_ok:
-            sys.exit("Refusing to run generated code directly on this host. "
-                     "Add --unsafe-local-exec only on a disposable machine or VM.")
-
-    def run(self, program: str) -> RunResult:
-        start = time.perf_counter()
-        try:
-            if self.mode == "docker":
-                cmd = ["docker", "run", "--rm", "-i", "--network", "none", "--read-only",
-                       "--memory", "256m", "--cpus", "1", "--pids-limit", "64",
-                       "--tmpfs", "/tmp:size=16m", "--user", "65534:65534",
-                       self.image, "python", "-I", "-"]
-                p = subprocess.run(cmd, input=program, capture_output=True, text=True,
-                                   timeout=self.timeout + 10)
-            else:
-                p = self._run_local(program)
-        except subprocess.TimeoutExpired:
-            return RunResult(False, "timeout", time.perf_counter() - start)
-        secs = time.perf_counter() - start
-        if p.returncode == 0:
-            return RunResult(True, "", secs)
-        lines = (p.stderr or "").strip().splitlines()
-        return RunResult(False, (lines[-1] if lines else f"exit {p.returncode}")[:300], secs)
-
-    def _run_local(self, program: str) -> subprocess.CompletedProcess:
-        def limits():
-            try:
-                import resource
-                resource.setrlimit(resource.RLIMIT_CPU, (int(self.timeout), int(self.timeout) + 1))
-                resource.setrlimit(resource.RLIMIT_AS, (512 * 2**20, 512 * 2**20))
-                resource.setrlimit(resource.RLIMIT_FSIZE, (2**20, 2**20))
-                resource.setrlimit(resource.RLIMIT_NPROC, (64, 64))
-            except Exception:
-                pass
-        with tempfile.TemporaryDirectory(prefix="artemis-sbx-") as d:
-            return subprocess.run([sys.executable, "-I", "-"], input=program, cwd=d,
-                                  capture_output=True, text=True, timeout=self.timeout,
-                                  env={"PATH": "/usr/bin:/bin"},
-                                  preexec_fn=limits if os.name == "posix" else None)
 
 
 # ---------------------------------------------------------------------------
@@ -464,22 +394,11 @@ def evaluate(model, sandbox: Sandbox, problems: list[dict]) -> float:
     passed = 0
     for p in problems:
         code = extract_code(model.generate(p, sample=False), model.completion_mode)
-        passed += sandbox.run(build_program(p, code)).passed
+        passed += sandbox.verify(p, code).passed
     return passed / len(problems)
 
 
-def export_solution(root: Path, version: str, prob: dict, code: str, model_id: str,
-                    weights_label: str = WEIGHTS_LABEL):
-    out = root / "committed_artifacts" / version
-    out.mkdir(parents=True, exist_ok=True)
-    name = re.sub(r"[^A-Za-z0-9_]", "_", prob["task_id"]) + ".py"
-    header = (f"# Artemis 2.0 verified solution\n# Task: {prob['task_id']}\n# Adapter: {version}\n"
-              f"# Weights: {model_id} ({weights_label})\n# Passed sandboxed tests at "
-              f"{datetime.now(timezone.utc).isoformat(timespec='seconds')}\n\n")
-    # Export what the sandbox actually graded, not the raw completion. In
-    # completion mode `code` is a bare indented body, which does not parse on
-    # its own, so every committed artifact would have been unusable.
-    (out / name).write_text(header + solution_source(prob, code), encoding="utf-8")
+
 
 
 def run(args):
@@ -491,7 +410,7 @@ def run(args):
         download_humaneval(problems_path)
         if args.rounds == 0:
             return
-    problems = load_problems(problems_path)
+    problems = validate_problems(load_problems(problems_path))
     source = problems_path.name if problems_path.exists() else "built-in set (10 problems)"
     train, held = split_problems(problems, args.eval_fraction)
 
@@ -519,7 +438,7 @@ def run(args):
         for prob in batch:
             for _ in range(args.samples):
                 code = extract_code(model.generate(prob, sample=True), model.completion_mode)
-                res = sandbox.run(build_program(prob, code))
+                res = sandbox.verify(prob, code)
                 tel.log(Event("SAMPLE_PASS" if res.passed else "SAMPLE_FAIL", rnd,
                               f"{res.seconds:.2f}s" if res.passed else res.error, prob["task_id"], sha(code)))
                 if res.passed:
@@ -530,6 +449,7 @@ def run(args):
             tel.log(Event("NO_TRAINING_DATA", rnd, "no passing samples this round"))
             continue
 
+        generated_by = model.model_id
         model.snapshot()
         stats = model.train(examples, epochs=args.epochs, lr=args.lr)
         score = evaluate(model, sandbox, held)
@@ -537,7 +457,7 @@ def run(args):
             version = f"adapter-r{rnd:03d}-{uuid.uuid4().hex[:6]}"
             model.save_adapter(root / "adapters" / version)
             for prob, code in examples:
-                export_solution(root, version, prob, code, model.model_id, label)
+                export_solution(root, version, prob, code, generated_by, sandbox)
             tel.log(Event("ADAPTER_COMMITTED", rnd, f"{version}; {stats['steps']} steps, loss {stats['final_loss']}",
                           eval_pass_rate=score, best_pass_rate=score))
             print(f"  committed {version}: eval pass@1 {best:.3f} -> {score:.3f}")

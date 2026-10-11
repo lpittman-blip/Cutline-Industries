@@ -37,6 +37,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import threading
 import time
 import uuid
 from dataclasses import dataclass
@@ -79,13 +80,56 @@ def builtin_problems() -> list[dict]:
              "test": t, "entry_point": n} for n, p, s, t in BUILTIN_PROBLEMS]
 
 
+REQUIRED_FIELDS = ("task_id", "prompt", "test", "entry_point")
+
+
+def validate_problems(problems: list[dict], minimum: int = 2) -> list[dict]:
+    """Reject a dataset that cannot support an honest train/eval split.
+
+    Every one of these failed silently before: a malformed row produced a
+    KeyError deep inside the loop, and duplicate task_ids put the same problem
+    on both sides of a split that is supposed to be disjoint, which quietly
+    turns held-out pass@1 into training accuracy.
+    """
+    if not problems:
+        raise ValueError("dataset is empty")
+    seen = set()
+    for i, p in enumerate(problems):
+        if not isinstance(p, dict):
+            raise ValueError(f"problem {i} is {type(p).__name__}, expected an object")
+        missing = [f for f in REQUIRED_FIELDS if not p.get(f)]
+        if missing:
+            raise ValueError(f"problem {i} ({p.get('task_id', '?')}) is missing {missing}")
+        if p["task_id"] in seen:
+            raise ValueError(f"duplicate task_id {p['task_id']!r}; splits would overlap")
+        seen.add(p["task_id"])
+    if len(problems) < minimum:
+        raise ValueError(f"need at least {minimum} problems, got {len(problems)}")
+    return problems
+
+
 def load_problems(path: Path | None) -> list[dict]:
-    if path is None or not Path(path).exists():
-        return builtin_problems()
+    """Load a dataset. An explicitly named path that is missing is an error.
+
+    Falling back to the ten built-in problems when --problems points at a
+    typo looks like success and silently evaluates against a toy set.
+    """
+    if path is None:
+        return validate_problems(builtin_problems())
     path = Path(path)
+    if not path.exists():
+        raise FileNotFoundError(f"problems file not found: {path}")
     opener = gzip.open if path.suffix == ".gz" else open
     with opener(path, "rt", encoding="utf-8") as f:
-        return [json.loads(line) for line in f if line.strip()]
+        rows = []
+        for n, line in enumerate(f, 1):
+            if not line.strip():
+                continue
+            try:
+                rows.append(json.loads(line))
+            except json.JSONDecodeError as e:
+                raise ValueError(f"{path}:{n}: not valid JSON ({e})") from None
+    return validate_problems(rows)
 
 
 def split_problems(problems: list[dict], eval_fraction: float) -> tuple[list[dict], list[dict]]:
@@ -94,6 +138,9 @@ def split_problems(problems: list[dict], eval_fraction: float) -> tuple[list[dic
     A random split would let a problem drift into training between rounds and
     quietly invalidate every pass@1 comparison the loop makes.
     """
+    if not 0.0 < eval_fraction < 1.0:
+        raise ValueError(f"eval_fraction must be between 0 and 1 exclusive, got {eval_fraction}")
+    validate_problems(problems)
     train, held = [], []
     for p in problems:
         h = int(hashlib.sha256(p["task_id"].encode()).hexdigest()[:8], 16) / 0xFFFFFFFF
@@ -101,7 +148,12 @@ def split_problems(problems: list[dict], eval_fraction: float) -> tuple[list[dic
     if not held:
         held.append(train.pop())
     if not train:
-        raise ValueError("eval_fraction leaves no training problems")
+        raise ValueError(
+            f"eval_fraction {eval_fraction} leaves no training problems "
+            f"out of {len(problems)}")
+    overlap = {p["task_id"] for p in train} & {p["task_id"] for p in held}
+    if overlap:
+        raise ValueError(f"splits overlap on {sorted(overlap)}")
     return train, held
 
 
@@ -127,9 +179,39 @@ def solution_source(problem: dict, completion: str) -> str:
     return problem["prompt"] + completion
 
 
-def build_program(problem: dict, completion: str) -> str:
-    return (f"{solution_source(problem, completion)}\n\n"
-            f"{problem['test']}\n\ncheck({problem['entry_point']})\n")
+def build_program(problem: dict, completion: str, sentinel: str) -> str:
+    """Wrap the candidate so that passing requires POSITIVE PROOF of completion.
+
+    A zero exit code proves nothing. `sys.exit(0)` inside the first assertion
+    leaves the process exiting cleanly with most of the tests never run, and
+    the old code counted that as a pass — which quietly poisons training data
+    with solutions that were never verified.
+
+    So the harness catches BaseException (SystemExit included) around check()
+    and prints a verdict line carrying a per-run nonce. `os._exit(0)` skips
+    that line entirely, and no line means failure.
+
+    TRUST BOUNDARY. The container is the security boundary; this wrapper is an
+    integrity check inside it. Candidate code shares the interpreter, so code
+    that deliberately printed the verdict line could forge a pass. That is
+    accepted: the candidates come from our own model, so the threat being
+    defended against is accidental early exit and silent partial execution,
+    not an adversary. Nothing here makes arbitrary code trustworthy.
+    """
+    return (
+        f"{solution_source(problem, completion)}\n\n"
+        f"{problem['test']}\n\n"
+        "import sys as _sys\n"
+        "_ok = False\n"
+        "try:\n"
+        f"    check({problem['entry_point']})\n"
+        "    _ok = True\n"
+        "except BaseException:\n"
+        "    _ok = False\n"
+        f"_sys.stdout.write('\\n{sentinel}:' + ('PASS' if _ok else 'FAIL') + '\\n')\n"
+        "_sys.stdout.flush()\n"
+        "_sys.exit(0 if _ok else 1)\n"
+    )
 
 
 @dataclass
@@ -137,6 +219,31 @@ class RunResult:
     passed: bool
     error: str
     seconds: float
+    infrastructure_error: bool = False  # our fault, not the solution's
+
+
+MAX_CAPTURE_BYTES = 256 * 1024
+
+
+def _read_capped(stream, cap: int, into: list):
+    """Read at most `cap` bytes, then drain and discard the rest.
+
+    `capture_output=True` buffers everything the candidate prints in host
+    memory. The container's --memory limit does not bound that, so a program
+    printing in a loop can exhaust the host while staying inside its own cap.
+    """
+    try:
+        data = stream.read(cap) or b""
+        into.append(data)
+        while stream.read(65536):
+            into.append(b"")  # discarded; keeps the pipe from blocking the child
+    except Exception:
+        pass
+    finally:
+        try:
+            stream.close()
+        except Exception:
+            pass
 
 
 class Sandbox:
@@ -156,25 +263,86 @@ class Sandbox:
                 "refusing to run generated code on this host; pass "
                 "--unsafe-local-exec only on a disposable machine")
 
+    def verify(self, problem: dict, completion: str) -> RunResult:
+        """Run a candidate and report whether its tests provably passed."""
+        sentinel = f"__ARTEMIS_{uuid.uuid4().hex}__"
+        return self._judge(self.run(build_program(problem, completion, sentinel)), sentinel)
+
+    @staticmethod
+    def _judge(raw: RunResult, sentinel: str) -> RunResult:
+        if raw.infrastructure_error:
+            return raw
+        verdict = None
+        for line in (raw.error or "").splitlines():
+            if line.startswith(sentinel + ":"):
+                verdict = line.split(":", 1)[1].strip()
+        if verdict == "PASS":
+            return RunResult(True, "", raw.seconds)
+        if verdict == "FAIL":
+            return RunResult(False, raw.error.replace(sentinel + ":FAIL", "").strip()[-300:]
+                             or "tests failed", raw.seconds)
+        # No verdict line at all: the process died before the harness could
+        # report — os._exit, a crash, or a kill. Exit code 0 here is exactly
+        # the case that used to be miscounted as a pass.
+        return RunResult(False, f"incomplete: no verdict (exit {raw.error[:120]})", raw.seconds)
+
     def run(self, program: str) -> RunResult:
+        """Execute a program. `error` carries combined output for the judge."""
         start = time.perf_counter()
+        if self.mode == "docker":
+            return self._run_docker(program, start)
+        return self._run_local_checked(program, start)
+
+    def _run_docker(self, program: str, start: float) -> RunResult:
+        # A unique name is what makes cleanup possible: --rm removes a
+        # container after it exits but imposes no deadline, so killing the
+        # docker CLI on timeout can leave the container running forever.
+        name = f"artemis-sbx-{uuid.uuid4().hex[:16]}"
+        cmd = ["docker", "run", "--name", name, "--rm", "-i",
+               "--network", "none", "--read-only", "--memory", "256m",
+               "--cpus", "1", "--pids-limit", "64", "--tmpfs", "/tmp:size=16m",
+               "--user", "65534:65534", self.image, "python", "-I", "-"]
+        proc = None
+        chunks: list[bytes] = []
         try:
-            if self.mode == "docker":
-                cmd = ["docker", "run", "--rm", "-i", "--network", "none", "--read-only",
-                       "--memory", "256m", "--cpus", "1", "--pids-limit", "64",
-                       "--tmpfs", "/tmp:size=16m", "--user", "65534:65534",
-                       self.image, "python", "-I", "-"]
-                p = subprocess.run(cmd, input=program, capture_output=True,
-                                   text=True, timeout=self.timeout + 10)
-            else:
-                p = self._run_local(program)
+            proc = subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+                                    stderr=subprocess.STDOUT)
+            reader = threading.Thread(target=_read_capped,
+                                      args=(proc.stdout, MAX_CAPTURE_BYTES, chunks),
+                                      daemon=True)
+            reader.start()
+            try:
+                proc.stdin.write(program.encode())
+                proc.stdin.close()
+            except (BrokenPipeError, OSError):
+                pass
+            try:
+                rc = proc.wait(timeout=self.timeout)
+            except subprocess.TimeoutExpired:
+                return RunResult(False, "timeout", time.perf_counter() - start)
+            reader.join(timeout=5)
+            out = b"".join(chunks).decode("utf-8", "replace")
+            return RunResult(rc == 0, out if out else f"exit {rc}",
+                             time.perf_counter() - start)
+        except FileNotFoundError as e:
+            return RunResult(False, f"docker unavailable: {e}",
+                             time.perf_counter() - start, infrastructure_error=True)
+        finally:
+            # Always, on every path: success, failure, timeout, overflow and
+            # KeyboardInterrupt. Without this a timed-out container survives.
+            if proc and proc.poll() is None:
+                proc.kill()
+            subprocess.run(["docker", "rm", "-f", name],
+                           capture_output=True, timeout=30, check=False)
+
+    def _run_local_checked(self, program: str, start: float) -> RunResult:
+        try:
+            p = self._run_local(program)
         except subprocess.TimeoutExpired:
             return RunResult(False, "timeout", time.perf_counter() - start)
-        secs = time.perf_counter() - start
-        if p.returncode == 0:
-            return RunResult(True, "", secs)
-        lines = (p.stderr or "").strip().splitlines()
-        return RunResult(False, (lines[-1] if lines else f"exit {p.returncode}")[:300], secs)
+        out = ((p.stdout or "") + (p.stderr or ""))[:MAX_CAPTURE_BYTES]
+        return RunResult(p.returncode == 0, out if out else f"exit {p.returncode}",
+                         time.perf_counter() - start)
 
     def _run_local(self, program: str) -> subprocess.CompletedProcess:
         def limits():
@@ -259,41 +427,72 @@ class ArtemisPlayer:
                                         for k, v in self._snapshot.items()})
 
     def train(self, examples: list[tuple[dict, str]], epochs: int = 2,
-              lr: float = 2e-5, max_len: int = 768) -> dict:
+              lr: float = 2e-5, max_len: int = 768,
+              min_prompt_tokens: int = 64) -> dict:
         torch = self.torch
-        rows = []
+        rows, dropped = [], 0
         for prob, code in examples:
             p_ids = self._prompt_ids(prob)
             t_ids = self.tok.encode(f"```python\n{code}```").ids + self.stop[:1]
-            ids = (p_ids + t_ids)[:max_len]
-            if len(ids) < 2:
+
+            # Reserve room for the answer BEFORE truncating. Taking the first
+            # max_len tokens of prompt+answer silently produces rows that are
+            # all prompt: every label masked, nothing supervised, and a loss
+            # over an empty set is NaN. Keep the tail of an overlong prompt,
+            # which is where the actual question is.
+            keep_target = min(len(t_ids), max(1, max_len - min_prompt_tokens))
+            t_ids = t_ids[:keep_target]
+            room = max_len - len(t_ids)
+            if room < 1:
+                dropped += 1
                 continue
+            p_ids = p_ids[-room:]
+            ids = p_ids + t_ids
+            if len(ids) < 2:
+                dropped += 1
+                continue
+
             # ArtemisLM applies cross_entropy with no internal shift, matching
             # data.TokenStream where y = tokens[s+1:]. Targets are therefore
             # shifted here, and every position whose target still lies in the
             # prompt is masked so the loss covers only the answer.
-            rows.append((ids[:-1],
-                         [t if i + 1 >= len(p_ids) else -100
-                          for i, t in enumerate(ids[1:])]))
+            xs = ids[:-1]
+            ys = [t if i + 1 >= len(p_ids) else -100 for i, t in enumerate(ids[1:])]
+            if all(y == -100 for y in ys):      # verified after the shift, not before
+                dropped += 1
+                continue
+            rows.append((xs, ys))
         if not rows:
-            return {"steps": 0, "final_loss": float("nan")}
+            return {"steps": 0, "final_loss": float("nan"),
+                    "dropped": dropped, "nonfinite": 0}
 
         params = [p for p in self.model.parameters() if p.requires_grad]
         opt = torch.optim.AdamW(params, lr=lr, weight_decay=0.0)
         self.model.train()
-        steps, last = 0, float("nan")
+        steps, last, nonfinite = 0, float("nan"), 0
         for _ in range(epochs):
             random.shuffle(rows)
             for xs, ys in rows:
                 _logits, loss = self.model(torch.tensor([xs], device=self.device),
                                            torch.tensor([ys], device=self.device))
+                # A non-finite loss poisons every weight the moment it is
+                # stepped, and the damage is invisible afterwards.
+                if not torch.isfinite(loss):
+                    opt.zero_grad(set_to_none=True)
+                    nonfinite += 1
+                    continue
                 loss.backward()
-                torch.nn.utils.clip_grad_norm_(params, 1.0)
+                gnorm = torch.nn.utils.clip_grad_norm_(params, 1.0)
+                if not torch.isfinite(gnorm):
+                    opt.zero_grad(set_to_none=True)
+                    nonfinite += 1
+                    continue
                 opt.step()
                 opt.zero_grad(set_to_none=True)
                 steps, last = steps + 1, float(loss.detach())
         self.model.eval()
-        return {"steps": steps, "final_loss": round(last, 4)}
+        return {"steps": steps, "final_loss": round(last, 4),
+                "dropped": dropped, "nonfinite": nonfinite}
 
     def save(self, path: Path):
         Path(path).parent.mkdir(parents=True, exist_ok=True)
@@ -329,15 +528,40 @@ def write_labelled_corpus(path: Path, solved: list[tuple[dict, str]]) -> dict:
     return counts
 
 
-def export_solution(root: Path, version: str, prob: dict, code: str, model_id: str):
+def export_solution(root: Path, version: str, prob: dict, code: str,
+                    generated_by: str, sandbox: "Sandbox | None" = None) -> Path:
+    """Write a verified solution, and prove the written file is the verified one.
+
+    Two distinct checkpoints matter and conflating them misattributes the
+    work: `generated_by` wrote the code, `version` is the checkpoint that was
+    trained on it afterwards. The old header named only the latter, implying
+    the new weights had produced output they never saw.
+    """
     out = Path(root) / "verified" / version
     out.mkdir(parents=True, exist_ok=True)
     name = re.sub(r"[^A-Za-z0-9_]", "_", prob["task_id"]) + ".py"
+    source = solution_source(prob, code)
+
+    # Compile the exact text being written. An artifact that does not even
+    # parse must never carry a header calling it verified.
+    compile(source, str(out / name), "exec")
+
     header = (f"# Artemis verified solution\n# Task: {prob['task_id']}\n"
-              f"# Checkpoint: {version}\n# Weights: {model_id} ({WEIGHTS_LABEL})\n"
-              f"# Passed sandboxed tests at "
+              f"# Generated by: {generated_by}\n# Trained into: {version}\n"
+              f"# Weights: {WEIGHTS_LABEL}\n# Passed sandboxed tests at "
               f"{datetime.now(timezone.utc).isoformat(timespec='seconds')}\n\n")
-    (out / name).write_text(header + solution_source(prob, code), encoding="utf-8")
+    path = out / name
+    path.write_text(header + source, encoding="utf-8")
+
+    # Re-run the tests against the artifact as written, not against the
+    # in-memory string it was built from.
+    if sandbox is not None:
+        again = sandbox.verify(prob, path.read_text().split("\n\n", 1)[1])
+        if not again.passed:
+            path.unlink(missing_ok=True)
+            raise RuntimeError(
+                f"exported artifact for {prob['task_id']} failed re-verification: {again.error}")
+    return path
 
 
 # ---------------------------------------------------------------------------
@@ -349,7 +573,7 @@ def evaluate(player, sandbox: Sandbox, problems: list[dict]) -> float:
     passed = 0
     for p in problems:
         code = extract_code(player.generate(p, sample=False))
-        passed += sandbox.run(build_program(p, code)).passed
+        passed += sandbox.verify(p, code).passed
     return passed / len(problems)
 
 
@@ -358,6 +582,16 @@ def run_loop(player, sandbox: Sandbox, problems: list[dict], out_dir: Path, *,
              epochs: int = 2, lr: float = 2e-5, eval_fraction: float = 0.3,
              min_gain: float = 0.0, seed: int = 0, log=print) -> dict:
     """Returns a summary. Separate from main() so tests drive it directly."""
+    for name, value in (("rounds", rounds), ("train_per_round", train_per_round),
+                        ("samples", samples), ("epochs", epochs)):
+        if value < 1:
+            raise ValueError(f"{name} must be at least 1, got {value}")
+    if lr <= 0:
+        raise ValueError(f"lr must be positive, got {lr}")
+    if min_gain < 0:
+        raise ValueError(
+            f"min_gain must be non-negative, got {min_gain}; a negative "
+            "threshold accepts checkpoints that scored WORSE than the best")
     random.seed(seed)
     out_dir = Path(out_dir)
     train, held = split_problems(problems, eval_fraction)
@@ -374,7 +608,7 @@ def run_loop(player, sandbox: Sandbox, problems: list[dict], out_dir: Path, *,
         for prob in batch:
             for _ in range(samples):
                 code = extract_code(player.generate(prob, sample=True))
-                if sandbox.run(build_program(prob, code)).passed:
+                if sandbox.verify(prob, code).passed:
                     solved.append((prob, code))
                     break  # one verified solution per problem per round
         log(f"round {rnd}: solved {len(solved)}/{len(batch)}")
@@ -389,14 +623,23 @@ def run_loop(player, sandbox: Sandbox, problems: list[dict], out_dir: Path, *,
         for k, v in got.items():
             labelled[k] += v
 
+        generated_by = getattr(player, "model_id", "unknown")
         player.snapshot()
-        stats = player.train(solved, epochs=epochs, lr=lr)
-        score = evaluate(player, sandbox, held)
+        try:
+            stats = player.train(solved, epochs=epochs, lr=lr)
+            score = evaluate(player, sandbox, held)
+        except Exception as e:
+            # A crash mid-training leaves half-updated weights that would be
+            # carried into the next round and silently degrade everything.
+            player.restore()
+            history.append({"round": rnd, "event": "FAILED", "error": str(e)[:300]})
+            log(f"  training/eval failed, rolled back: {e}")
+            continue
         if score > best + min_gain:
             version = f"ckpt-r{rnd:03d}-{uuid.uuid4().hex[:6]}"
             player.save(out_dir / "checkpoints" / f"{version}.pt")
             for prob, code in solved:
-                export_solution(out_dir, version, prob, code, player.model_id)
+                export_solution(out_dir, version, prob, code, generated_by, sandbox)
             history.append({"round": rnd, "event": "COMMITTED", "version": version,
                             "eval_pass_rate": score, "steps": stats["steps"]})
             log(f"  committed {version}: pass@1 {best:.3f} -> {score:.3f}")

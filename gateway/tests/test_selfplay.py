@@ -8,6 +8,7 @@ contract that matters is that nothing is ever learned from code that did not
 pass its tests.
 """
 import json
+import subprocess
 from pathlib import Path
 
 import pytest
@@ -16,6 +17,9 @@ from artemis.data import prepare
 from artemis.model import EXPERT_NAMES
 from artemis.selfplay import (
     SOLUTION_DOMAIN,
+    export_solution,
+    load_problems,
+    validate_problems,
     TEST_DOMAIN,
     Sandbox,
     build_program,
@@ -80,9 +84,29 @@ def test_solution_source_handles_both_model_styles():
 
 def test_sandbox_rejects_failing_and_hanging_code(sandbox):
     prob = next(p for p in builtin_problems() if p["entry_point"] == "find_max")
-    assert sandbox.run(build_program(prob, prob["canonical_solution"])).passed
-    assert not sandbox.run(build_program(prob, "    return 0\n")).passed
+    assert sandbox.verify(prob, prob["canonical_solution"]).passed
+    assert not sandbox.verify(prob, "    return 0\n").passed
     assert not sandbox.run("while True:\n    pass\n").passed  # times out, does not hang the run
+
+
+# --- review bug 1: a clean exit is not proof that the tests ran -------------
+
+@pytest.mark.parametrize("completion,should_pass,why", [
+    ("    return max(values)\n", True, "normal completion"),
+    ("    import sys\n    sys.exit(0)\n", False, "sys.exit(0) before assertions finish"),
+    ("    import os\n    os._exit(0)\n", False, "os._exit(0) skips the harness entirely"),
+    ("    return 0\n", False, "ordinary assertion failure"),
+    ("    raise SystemExit(0)\n", False, "SystemExit raised directly"),
+])
+def test_early_exit_is_never_counted_as_a_pass(sandbox, completion, should_pass, why):
+    prob = next(p for p in builtin_problems() if p["entry_point"] == "find_max")
+    assert sandbox.verify(prob, completion).passed is should_pass, why
+
+
+def test_missing_verdict_reports_incomplete(sandbox):
+    prob = next(p for p in builtin_problems() if p["entry_point"] == "find_max")
+    r = sandbox.verify(prob, "    import os\n    os._exit(0)\n")
+    assert not r.passed and "incomplete" in r.error
 
 
 def test_local_sandbox_refuses_without_explicit_unlock():
@@ -169,3 +193,125 @@ def test_evaluate_never_trains_on_held_out(tmp_path, sandbox):
 def test_extract_code_unwraps_a_fence():
     assert extract_code("```python\nx = 1\n```").strip() == "x = 1"
     assert extract_code("x = 1").strip() == "x = 1"
+
+
+# --- review bug 2: docker deadline and guaranteed cleanup ------------------
+
+def test_docker_command_has_identity_and_isolation():
+    import shutil as _sh
+    from unittest.mock import patch
+    with patch.object(_sh, "which", return_value="/usr/bin/docker"):
+        sb = Sandbox(mode="docker", timeout=1.0)
+    seen = {}
+
+    class FakeProc:
+        stdin, stdout = None, None
+        def __init__(self): self.stdin = _Devnull(); self.stdout = _Empty()
+        def wait(self, timeout=None): raise subprocess.TimeoutExpired("docker", 1)
+        def poll(self): return None
+        def kill(self): seen["killed"] = True
+
+    class _Devnull:
+        def write(self, b): pass
+        def close(self): pass
+
+    class _Empty:
+        def read(self, n=-1): return b""
+        def close(self): pass
+
+    def fake_popen(cmd, **kw):
+        seen["cmd"] = cmd
+        return FakeProc()
+
+    def fake_run(cmd, **kw):
+        seen.setdefault("cleanup", []).append(cmd)
+        return subprocess.CompletedProcess(cmd, 0, b"", b"")
+
+    with patch.object(subprocess, "Popen", fake_popen), \
+         patch.object(subprocess, "run", fake_run):
+        r = sb.run("while True: pass")
+
+    assert r.error == "timeout"
+    cmd = seen["cmd"]
+    assert "--name" in cmd, "container needs a unique identity to be cleanable"
+    name = cmd[cmd.index("--name") + 1]
+    assert name.startswith("artemis-sbx-")
+    for flag in ("--network", "none", "--read-only", "--memory", "--pids-limit"):
+        assert flag in cmd
+    # the bug: a timed-out container was left running
+    assert seen.get("killed"), "the docker client process must be killed"
+    assert ["docker", "rm", "-f", name] in seen["cleanup"], "container must be force-removed"
+
+
+def test_docker_absence_is_an_infrastructure_error_not_a_wrong_answer():
+    import shutil as _sh
+    from unittest.mock import patch
+    with patch.object(_sh, "which", return_value="/usr/bin/docker"):
+        sb = Sandbox(mode="docker", timeout=1.0)
+    with patch.object(subprocess, "Popen", side_effect=FileNotFoundError("docker")), \
+         patch.object(subprocess, "run", return_value=subprocess.CompletedProcess([], 0)):
+        r = sb.run("pass")
+    assert r.infrastructure_error and not r.passed
+
+
+# --- review bug 5: dataset and argument validation -------------------------
+
+def test_empty_dataset_is_rejected_clearly():
+    with pytest.raises(ValueError, match="empty"):
+        validate_problems([])
+
+
+def test_duplicate_task_ids_are_rejected():
+    probs = builtin_problems()
+    with pytest.raises(ValueError, match="duplicate"):
+        validate_problems(probs + [probs[0]])
+
+
+def test_malformed_problem_is_rejected():
+    with pytest.raises(ValueError, match="missing"):
+        validate_problems([{"task_id": "x", "prompt": "p"}])
+
+
+@pytest.mark.parametrize("frac", [0.0, 1.0, -0.1, 1.5])
+def test_degenerate_eval_fraction_is_rejected(frac):
+    with pytest.raises(ValueError, match="between 0 and 1"):
+        split_problems(builtin_problems(), frac)
+
+
+def test_missing_problems_file_is_an_error_not_a_silent_fallback(tmp_path):
+    with pytest.raises(FileNotFoundError):
+        load_problems(tmp_path / "does-not-exist.jsonl")
+
+
+def test_negative_min_gain_is_rejected(tmp_path, sandbox):
+    with pytest.raises(ValueError, match="non-negative"):
+        run_loop(ScriptedPlayer(solves=set()), sandbox, builtin_problems(), tmp_path,
+                 rounds=1, min_gain=-0.5, log=lambda *a: None)
+
+
+@pytest.mark.parametrize("kw", [{"rounds": 0}, {"samples": 0}, {"train_per_round": 0}, {"epochs": 0}])
+def test_nonpositive_counts_are_rejected(tmp_path, sandbox, kw):
+    with pytest.raises(ValueError, match="at least 1"):
+        run_loop(ScriptedPlayer(solves=set()), sandbox, builtin_problems(), tmp_path,
+                 log=lambda *a: None, **kw)
+
+
+# --- review bug 4: exported artifacts are the verified ones ----------------
+
+def test_export_compiles_and_reverifies(tmp_path, sandbox):
+    prob = next(p for p in builtin_problems() if p["entry_point"] == "find_max")
+    path = export_solution(tmp_path, "ckpt-002", prob, prob["canonical_solution"],
+                           generated_by="ckpt-001", sandbox=sandbox)
+    text = path.read_text()
+    compile(text, str(path), "exec")                       # the body-only bug
+    assert "Generated by: ckpt-001" in text                 # provenance split
+    assert "Trained into: ckpt-002" in text
+
+
+def test_export_refuses_code_that_does_not_compile(tmp_path):
+    prob = next(p for p in builtin_problems() if p["entry_point"] == "find_max")
+    with pytest.raises(SyntaxError):
+        export_solution(tmp_path, "v", prob, "    this is not python(\n", "gen")
+
+
+# --- review bug 3 is exercised in test_selfplay_training.py (needs torch) ---
