@@ -278,8 +278,15 @@ an 8b MoE. Details in `docs/proto-moe-vs-dense.md`.
 - `artemis2/` is a bootstrap that fine-tunes **Qwen with a LoRA adapter**. It
   lives outside the package on purpose and labels its output as not-Artemis.
   Nothing under `gateway/` imports it. Keep it that way.
-- Training data must be human-written. No model-generated text in any corpus —
-  the no-outside-AI rule covers training data, not just runtime calls.
+- **Pretraining** data must be human-written. No model-generated text in the
+  pretraining corpus.
+- **Chat SFT** may use an open-weight teacher whose licence grants the right to
+  train on its output, run on our own hardware — amended 2026-10-11. Approved
+  teachers are Apache-2.0/MIT only (`artemis.teachers.TEACHERS`), seeds must be
+  human-written, and `artemis.sft.check_provenance` hard-fails any row that
+  cannot name its origin. No hosted provider: every one of them forbids
+  training a competing model on their output, and Artemis is sold. Details and
+  the refusal list in `docs/sft-teachers.md`.
 - Never call OpenAI, Claude, Grok, Gemini, Cohere, Ollama or any external LLM in
   product code or in Artemis decisions (Blueprint Decisions 5 and 12). The two
   exceptions in `backends.py` are deliberate, flagged, and both announce

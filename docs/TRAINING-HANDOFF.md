@@ -110,7 +110,16 @@ before committing weeks of GPU time to an 8b MoE. Details in
 - `artemis2/` is a bootstrap that fine-tunes **Qwen with a LoRA adapter**. It
   lives outside the package on purpose and labels its output as not-Artemis.
   Nothing under `gateway/` imports it.
-- Training data must be human-written. No model-generated text in any corpus.
+- **Pretraining** data must be human-written. No model-generated text in the
+  pretraining corpus.
+- **Chat SFT** may use an open-weight teacher whose *licence* grants the right
+  to train on its output, run on our own hardware — amended 2026-10-11, narrow
+  and gated. Approved teachers are Apache-2.0/MIT only and listed in
+  `artemis.teachers.TEACHERS`; `artemis.sft.check_provenance` refuses any row
+  that cannot name a consented human source or an approved teacher. No hosted
+  provider, ever: xAI, OpenAI, Anthropic, Google and Cohere all forbid training
+  a competing model on their output, and Artemis is sold. Seeds must be
+  human-written. See `docs/sft-teachers.md`.
 
 ## Do not
 
