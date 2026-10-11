@@ -34,7 +34,50 @@ printenv OPENAI_API_KEY | codex login --with-api-key
 
 Never paste a key into a chat message, a tool argument, or a command line.
 `--with-api-key` exists precisely so the value stays out of argv and shell
-history.
+history. `codex login status` shows the active method; `codex logout` clears it.
+
+### Store the credentials in the keyring, not a plaintext file
+
+By default Codex caches the session in **plaintext** at `~/.codex/auth.json`.
+That file contains access tokens — it is a password. This wrapper means a
+long-lived credential sits on whatever box runs the MCP server, so move it into
+the OS credential store in `~/.codex/config.toml`:
+
+```toml
+# file | keyring | auto | ephemeral
+cli_auth_credentials_store = "keyring"
+```
+
+`keyring` fails loudly if no credential store is available; `auto` falls back to
+`auth.json`. Never commit `auth.json`, and never paste it anywhere.
+
+### Headless hosts
+
+Browser login needs a browser and a working `localhost:1455` callback, so it
+fails on a remote or headless runner — which is often exactly where an MCP
+server lives. Use device code instead:
+
+```bash
+codex login --device-auth
+```
+
+It must be enabled first in ChatGPT security settings (personal) or workspace
+permissions (admin). The documented fallback is copying `auth.json` from a
+machine that can do the browser flow; prefer device code, and if you do copy the
+file, treat it as moving a password between machines.
+
+### Behind a TLS proxy
+
+If the host sits behind a corporate TLS proxy or private root CA, point Codex at
+the PEM bundle before logging in, or the login itself fails:
+
+```bash
+export CODEX_CA_CERTIFICATE=/path/to/root-ca.pem
+codex login
+```
+
+It falls back to `SSL_CERT_FILE` when unset. This applies to login, ordinary
+HTTPS and WebSocket connections alike.
 
 Already registered in the repo's `.mcp.json`. Restart your MCP client to pick it
 up, then call `codex_status` to confirm it is wired.
@@ -79,6 +122,18 @@ not allowed:
   anyway, since OpenAI is not an approved teacher and could not be
   (`docs/sft-teachers.md`);
 - routing a customer's message to it.
+
+## Where this came from
+
+The tool surface (`codex exec`, the absence of an MCP serve mode) was read off
+`codex --help` on the installed binary. The authentication section follows
+OpenAI's own docs at `learn.chatgpt.com/docs/auth`, cross-checked against the
+binary: `--with-api-key`, `--with-access-token`, `--device-auth` and `logout`
+all exist in 0.162.1, and `cli_auth_credentials_store` is accepted under
+`--strict-config` while an invented key is rejected as an unknown field.
+
+Re-check both after a CLI upgrade. The published third-party write-ups are
+wrong about `codex mcp-server`, which is why nothing here trusts them.
 
 ## Checking it without Codex installed
 
