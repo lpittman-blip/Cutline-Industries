@@ -45,6 +45,7 @@ from pathlib import Path
 
 HUMANEVAL_URL = "https://raw.githubusercontent.com/openai/human-eval/master/data/HumanEval.jsonl.gz"
 WEIGHTS_LABEL = "third-party base weights + Artemis LoRA adapter (not Artemis-from-scratch weights)"
+ARTEMIS_WEIGHTS_LABEL = "Artemis-from-scratch weights (Prime Core + ten experts), fine-tuned directly"
 
 # ---------------------------------------------------------------------------
 # Problems
@@ -435,7 +436,7 @@ h1{{margin:0 0 4px;font-size:22px}} .lbl{{color:#e8874a;margin:0 0 16px}}
 .t{{overflow-x:auto}} table{{width:100%;border-collapse:collapse;min-width:640px}} td,th{{padding:8px 10px;border-bottom:1px solid #26333d;text-align:left}}
 th{{color:#93a2ad;font-size:11px;text-transform:uppercase}} .k{{color:#fff;padding:2px 6px;border-radius:3px;font-size:12px}}
 .d{{font-family:ui-monospace,monospace;font-size:12px;color:#93a2ad}}</style></head><body>
-<h1>Artemis 2.0 self-improvement loop</h1><p class=lbl>{e(WEIGHTS_LABEL)}</p>
+<h1>Artemis 2.0 self-improvement loop</h1><p class=lbl>{e(info.get("weights", WEIGHTS_LABEL))}</p>
 <div class=s>{stats}</div><div class=t><table><thead><tr><th>Time (UTC)</th><th>Round</th><th>Event</th><th>Task</th><th>Eval pass@1</th><th>Detail</th></tr></thead>
 <tbody>{rows or '<tr><td colspan=6>Waiting for the first round...</td></tr>'}</tbody></table></div></body></html>""".encode()
                 ctype = "text/html; charset=utf-8"
@@ -468,12 +469,13 @@ def evaluate(model, sandbox: Sandbox, problems: list[dict]) -> float:
     return passed / len(problems)
 
 
-def export_solution(root: Path, version: str, prob: dict, code: str, model_id: str):
+def export_solution(root: Path, version: str, prob: dict, code: str, model_id: str,
+                    weights_label: str = WEIGHTS_LABEL):
     out = root / "committed_artifacts" / version
     out.mkdir(parents=True, exist_ok=True)
     name = re.sub(r"[^A-Za-z0-9_]", "_", prob["task_id"]) + ".py"
     header = (f"# Artemis 2.0 verified solution\n# Task: {prob['task_id']}\n# Adapter: {version}\n"
-              f"# Weights: {model_id} ({WEIGHTS_LABEL})\n# Passed sandboxed tests at "
+              f"# Weights: {model_id} ({weights_label})\n# Passed sandboxed tests at "
               f"{datetime.now(timezone.utc).isoformat(timespec='seconds')}\n\n")
     # Export what the sandbox actually graded, not the raw completion. In
     # completion mode `code` is a bare indented body, which does not parse on
@@ -494,13 +496,22 @@ def run(args):
     source = problems_path.name if problems_path.exists() else "built-in set (10 problems)"
     train, held = split_problems(problems, args.eval_fraction)
 
-    model = MockModel(args.seed) if args.mock_model else HFModel(
-        args.model, not args.no_4bit, args.lora_r, args.max_new_tokens)
+    if args.mock_model:
+        model = MockModel(args.seed)
+    elif args.artemis_checkpoint:
+        # Artemis's own weights. No adapter: these are our parameters, so they
+        # are fine-tuned directly and the output is genuinely Artemis's.
+        from artemis_backend import ArtemisModel
+        model = ArtemisModel(args.artemis_checkpoint, args.artemis_tokenizer,
+                             args.max_new_tokens)
+    else:
+        model = HFModel(args.model, not args.no_4bit, args.lora_r, args.max_new_tokens)
+    label = ARTEMIS_WEIGHTS_LABEL if args.artemis_checkpoint else WEIGHTS_LABEL
     sandbox = Sandbox(args.sandbox, args.timeout, args.docker_image, args.unsafe_local_exec)
     random.seed(args.seed)
 
     info = {"base model": model.model_id, "problems": source, "train / eval": f"{len(train)} / {len(held)}",
-            "sandbox": args.sandbox, "round": 0, "best eval pass@1": "-", "committed adapter": "none"}
+            "sandbox": args.sandbox, "weights": label, "round": 0, "best eval pass@1": "-", "committed adapter": "none"}
     tel = Telemetry(root, info)
     if not args.no_dashboard:
         start_dashboard(tel, args.host, args.port)
@@ -535,7 +546,7 @@ def run(args):
             version = f"adapter-r{rnd:03d}-{uuid.uuid4().hex[:6]}"
             model.save_adapter(root / "adapters" / version)
             for prob, code in examples:
-                export_solution(root, version, prob, code, model.model_id)
+                export_solution(root, version, prob, code, model.model_id, label)
             tel.log(Event("ADAPTER_COMMITTED", rnd, f"{version}; {stats['steps']} steps, loss {stats['final_loss']}",
                           eval_pass_rate=score, best_pass_rate=score))
             print(f"  committed {version}: eval pass@1 {best:.3f} -> {score:.3f}")
@@ -562,6 +573,8 @@ def main(argv=None):
     ap = argparse.ArgumentParser(description="Artemis 2.0 self-improvement loop")
     ap.add_argument("--model", default="Qwen/Qwen2.5-Coder-1.5B-Instruct")
     ap.add_argument("--mock-model", action="store_true", help="no torch; tests the pipeline only")
+    ap.add_argument("--artemis-checkpoint", help="train Artemis's OWN weights from this checkpoint instead of a third-party base model")
+    ap.add_argument("--artemis-tokenizer", help="tokenizer.json that the Artemis checkpoint was trained with")
     ap.add_argument("--no-4bit", action="store_true", help="disable NF4 quantization on CUDA")
     ap.add_argument("--problems", help="HumanEval-format .jsonl or .jsonl.gz (default: workdir/data/HumanEval.jsonl.gz, else built-in)")
     ap.add_argument("--download-humaneval", action="store_true")
