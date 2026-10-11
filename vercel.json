@@ -3,25 +3,38 @@
   "framework": null,
   "buildCommand": null,
   "installCommand": null,
-  "redirects": [
-    {"source": "/chat", "destination": "/artemisai/", "permanent": true},
-    {"source": "/chat/", "destination": "/artemisai/", "permanent": true}
-  ],
   "rewrites": [
-    {"source": "/api/:path*", "destination": "https://api.cutline-industries.studio/api/:path*"},
-    {"source": "/v1/:path*",  "destination": "https://api.cutline-industries.studio/v1/:path*"}
+    {
+      "source": "/api/:path*",
+      "destination": "https://api.cutline-industries.studio/api/:path*"
+    },
+    {
+      "source": "/v1/:path*",
+      "destination": "https://api.cutline-industries.studio/v1/:path*"
+    }
   ],
   "headers": [
     {
       "source": "/(.*)",
       "headers": [
-        {"key": "X-Content-Type-Options", "value": "nosniff"},
-        {"key": "Referrer-Policy", "value": "same-origin"}
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "same-origin"
+        }
       ]
     },
     {
       "source": "/sw.js",
-      "headers": [{"key": "Cache-Control", "value": "no-cache"}]
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-cache"
+        }
+      ]
     }
   ]
 }
