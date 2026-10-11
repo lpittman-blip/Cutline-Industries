@@ -132,6 +132,43 @@ def load_problems(path: Path | None) -> list[dict]:
     return validate_problems(rows)
 
 
+def three_way_split(problems: list[dict], val_fraction: float = 0.2,
+                    test_fraction: float = 0.1) -> tuple[list[dict], list[dict], list[dict]]:
+    """train / validation / final test, by a stable hash of task_id.
+
+    Review item 7. Choosing checkpoints repeatedly against one held-out split
+    turns that split into a validation set: by round twenty the loop has
+    selected for it as surely as if it had trained on it, and its pass@1 is
+    no longer evidence of general improvement. The final test set is reserved
+    here and is never used for a commit decision — `run_loop` scores it once
+    at the end, for reporting only.
+    """
+    if not 0.0 < val_fraction < 1.0:
+        raise ValueError(f"val_fraction must be in (0,1), got {val_fraction}")
+    if not 0.0 <= test_fraction < 1.0:
+        raise ValueError(f"test_fraction must be in [0,1), got {test_fraction}")
+    if val_fraction + test_fraction >= 1.0:
+        raise ValueError("val_fraction + test_fraction must leave training problems")
+    validate_problems(problems, minimum=3 if test_fraction else 2)
+    train, val, test = [], [], []
+    for p in problems:
+        h = int(hashlib.sha256(p["task_id"].encode()).hexdigest()[:8], 16) / 0xFFFFFFFF
+        if h < test_fraction:
+            test.append(p)
+        elif h < test_fraction + val_fraction:
+            val.append(p)
+        else:
+            train.append(p)
+    if not val:
+        val.append(train.pop())
+    if not train:
+        raise ValueError("no training problems left after the split")
+    ids = [{p["task_id"] for p in s} for s in (train, val, test)]
+    if ids[0] & ids[1] or ids[0] & ids[2] or ids[1] & ids[2]:
+        raise ValueError("splits overlap")
+    return train, val, test
+
+
 def split_problems(problems: list[dict], eval_fraction: float) -> tuple[list[dict], list[dict]]:
     """Split by a hash of task_id so the held-out set never moves between runs.
 
@@ -528,6 +565,77 @@ def write_labelled_corpus(path: Path, solved: list[tuple[dict, str]]) -> dict:
     return counts
 
 
+MANIFEST = "run_manifest.json"
+
+
+def run_identity(problems: list[dict], tokenizer_path: str, config: dict) -> dict:
+    """What a resumed run must still agree with.
+
+    Review item 6. Resuming against a different dataset, tokenizer or split
+    silently invalidates every pass@1 comparison in the history, because the
+    recorded best score was measured on problems the new run may not even
+    contain.
+    """
+    ids = sorted(p["task_id"] for p in problems)
+    return {
+        "dataset_sha256": hashlib.sha256("\n".join(ids).encode()).hexdigest(),
+        "problem_count": len(ids),
+        "tokenizer_sha256": hashlib.sha256(Path(tokenizer_path).read_bytes()).hexdigest()
+        if tokenizer_path and Path(tokenizer_path).exists() else None,
+        "config": config,
+    }
+
+
+def write_manifest(out_dir: Path, identity: dict, state: dict) -> Path:
+    path = Path(out_dir) / MANIFEST
+    path.parent.mkdir(parents=True, exist_ok=True)
+    tmp = path.with_suffix(".tmp")
+    tmp.write_text(json.dumps({"identity": identity, "state": state}, indent=2))
+    tmp.replace(path)          # atomic: a crash never leaves a half-written manifest
+    return path
+
+
+def load_manifest(out_dir: Path, identity: dict) -> dict | None:
+    """Return stored state, or raise if the run on disk is a different run."""
+    path = Path(out_dir) / MANIFEST
+    if not path.exists():
+        return None
+    stored = json.loads(path.read_text())
+    old = stored.get("identity", {})
+    for field in ("dataset_sha256", "tokenizer_sha256", "problem_count"):
+        if old.get(field) != identity.get(field):
+            raise ValueError(
+                f"cannot resume {out_dir}: {field} differs "
+                f"({old.get(field)!r} on disk, {identity.get(field)!r} now). "
+                "Use a fresh --out, or point at the original dataset and tokenizer.")
+    for k, v in identity["config"].items():
+        if old.get("config", {}).get(k) != v:
+            raise ValueError(
+                f"cannot resume {out_dir}: config {k} was {old.get('config', {}).get(k)!r}, now {v!r}")
+    return stored.get("state", {})
+
+
+def promote(player, out_dir: Path, version: str) -> Path:
+    """Save and promote a checkpoint without ever destroying the previous one.
+
+    Writes to a temporary name, then moves it into place, then repoints
+    `accepted.pt`. If any step fails the previously accepted checkpoint is
+    still exactly where it was.
+    """
+    ckpt_dir = Path(out_dir) / "checkpoints"
+    ckpt_dir.mkdir(parents=True, exist_ok=True)
+    staged = ckpt_dir / f".{version}.partial"
+    final = ckpt_dir / f"{version}.pt"
+    player.save(staged)
+    staged.replace(final)
+    pointer = ckpt_dir / "accepted.json"
+    tmp = pointer.with_suffix(".tmp")
+    tmp.write_text(json.dumps({"accepted": final.name,
+                               "at": datetime.now(timezone.utc).isoformat(timespec="seconds")}))
+    tmp.replace(pointer)
+    return final
+
+
 def export_solution(root: Path, version: str, prob: dict, code: str,
                     generated_by: str, sandbox: "Sandbox | None" = None) -> Path:
     """Write a verified solution, and prove the written file is the verified one.
@@ -580,7 +688,9 @@ def evaluate(player, sandbox: Sandbox, problems: list[dict]) -> float:
 def run_loop(player, sandbox: Sandbox, problems: list[dict], out_dir: Path, *,
              rounds: int = 5, train_per_round: int = 16, samples: int = 4,
              epochs: int = 2, lr: float = 2e-5, eval_fraction: float = 0.3,
-             min_gain: float = 0.0, seed: int = 0, log=print) -> dict:
+             min_gain: float = 0.0, seed: int = 0, log=print,
+             test_fraction: float = 0.1, tokenizer_path: str = "",
+             resume: bool = False) -> dict:
     """Returns a summary. Separate from main() so tests drive it directly."""
     for name, value in (("rounds", rounds), ("train_per_round", train_per_round),
                         ("samples", samples), ("epochs", epochs)):
@@ -594,7 +704,15 @@ def run_loop(player, sandbox: Sandbox, problems: list[dict], out_dir: Path, *,
             "threshold accepts checkpoints that scored WORSE than the best")
     random.seed(seed)
     out_dir = Path(out_dir)
-    train, held = split_problems(problems, eval_fraction)
+    # Selection happens on `val`; `test` is scored once at the end and never
+    # influences a commit, so it stays a clean estimate of generalisation.
+    train, held, test = three_way_split(problems, eval_fraction, test_fraction)
+    identity = run_identity(problems, tokenizer_path,
+                            {"eval_fraction": eval_fraction, "test_fraction": test_fraction,
+                             "seed": seed, "lr": lr, "epochs": epochs})
+    prior = load_manifest(out_dir, identity) if resume else None
+    if prior:
+        log(f"resuming: best pass@1 {prior.get('best_pass_rate')} from round {prior.get('round')}")
     corpus = out_dir / "labelled" / "verified.jsonl"
 
     best = evaluate(player, sandbox, held)
@@ -637,7 +755,7 @@ def run_loop(player, sandbox: Sandbox, problems: list[dict], out_dir: Path, *,
             continue
         if score > best + min_gain:
             version = f"ckpt-r{rnd:03d}-{uuid.uuid4().hex[:6]}"
-            player.save(out_dir / "checkpoints" / f"{version}.pt")
+            promote(player, out_dir, version)
             for prob, code in solved:
                 export_solution(out_dir, version, prob, code, generated_by, sandbox)
             history.append({"round": rnd, "event": "COMMITTED", "version": version,
@@ -649,8 +767,14 @@ def run_loop(player, sandbox: Sandbox, problems: list[dict], out_dir: Path, *,
             history.append({"round": rnd, "event": "ROLLED_BACK", "eval_pass_rate": score})
             log(f"  rolled back: pass@1 {score:.3f} did not beat {best:.3f}")
 
-    summary = {"best_pass_rate": best, "rounds": rounds, "committed": committed,
+    # Scored exactly once, after all selection is finished.
+    final_test = evaluate(player, sandbox, test) if test else None
+    summary = {"best_pass_rate": best, "validation_pass_rate": best,
+               "final_test_pass_rate": final_test, "final_test_size": len(test),
+               "rounds": rounds, "committed": committed,
                "labelled_records": labelled, "corpus": str(corpus), "history": history}
+    write_manifest(out_dir, identity, {"best_pass_rate": best, "round": rounds,
+                                       "committed": committed})
     (out_dir / "summary.json").parent.mkdir(parents=True, exist_ok=True)
     (out_dir / "summary.json").write_text(json.dumps(summary, indent=2))
     return summary

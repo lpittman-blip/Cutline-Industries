@@ -18,7 +18,7 @@ set -euo pipefail
 STAGE="${STAGE:-both}"
 WORK="${WORK:-/mnt/artemis}"
 SIZE="${SIZE:-1b}"
-SHARDS="${SHARDS:-340}"        # ~60M tokens each after filtering -> ~20B tokens
+SHARDS="${SHARDS:-284}"        # measured 70.4M tokens/shard at vocab 32000 -> ~20B
 STEPS="${STEPS:-60000}"
 BATCH="${BATCH:-6}"
 ACCUM="${ACCUM:-4}"
@@ -37,7 +37,13 @@ stage1() {
   [ "$NGPU" -gt 0 ] || { echo "no GPU visible"; exit 1; }
 
   python3 -m pip install -q --upgrade pip
-  python3 -m pip install -q torch numpy pyyaml tokenizers huggingface_hub pyarrow
+  # awscli is NOT an apt package on Ubuntu 24.04 ("no installation candidate"),
+  # which is what silently broke log sync on three earlier boots. Install the
+  # Python packages, including awscli, with pip instead.
+  PIP="python3 -m pip install -q --break-system-packages"
+  $PIP torch numpy pyyaml tokenizers huggingface_hub pyarrow awscli || \
+    python3 -m pip install -q torch numpy pyyaml tokenizers huggingface_hub pyarrow awscli
+  command -v aws >/dev/null || echo "WARNING: aws CLI unavailable; progress sync disabled"
 
   log "downloading $SHARDS shards of $DATASET"
   mkdir -p "$WORK/raw"

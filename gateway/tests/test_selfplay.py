@@ -20,6 +20,11 @@ from artemis.selfplay import (
     export_solution,
     load_problems,
     validate_problems,
+    three_way_split,
+    run_identity,
+    write_manifest,
+    load_manifest,
+    promote,
     TEST_DOMAIN,
     Sandbox,
     build_program,
@@ -315,3 +320,77 @@ def test_export_refuses_code_that_does_not_compile(tmp_path):
 
 
 # --- review bug 3 is exercised in test_selfplay_training.py (needs torch) ---
+
+
+# --- review item 7: a reserved final test set ------------------------------
+
+def test_three_way_split_is_disjoint_and_stable():
+    probs = builtin_problems() * 1  # stable ids
+    probs = [dict(p, task_id=f"T/{i}") for i, p in enumerate(builtin_problems() * 5)]
+    tr, va, te = three_way_split(probs, 0.2, 0.1)
+    a, b, c = ({p["task_id"] for p in s} for s in (tr, va, te))
+    assert a and b and c
+    assert not (a & b) and not (a & c) and not (b & c)
+    # stable under input order
+    tr2, va2, te2 = three_way_split(list(reversed(probs)), 0.2, 0.1)
+    assert {p["task_id"] for p in te2} == c
+
+
+def test_final_test_set_is_scored_but_never_selected_on(tmp_path, sandbox):
+    probs = [dict(p, task_id=f"T/{i}") for i, p in enumerate(builtin_problems() * 5)]
+    tr, va, te = three_way_split(probs, 0.2, 0.1)
+    player = ScriptedPlayer(solves={p["task_id"] for p in tr[:1]})
+    summary = run_loop(player, sandbox, probs, tmp_path, rounds=1,
+                       train_per_round=4, samples=1, test_fraction=0.1,
+                       log=lambda *a: None)
+    assert summary["final_test_size"] == len(te)
+    assert summary["final_test_pass_rate"] is not None
+    assert "validation_pass_rate" in summary
+
+
+def test_split_fractions_must_leave_training_problems():
+    with pytest.raises(ValueError, match="leave training"):
+        three_way_split(builtin_problems(), 0.8, 0.3)
+
+
+# --- review item 6: resume must validate run identity ----------------------
+
+def test_resume_rejects_a_different_dataset(tmp_path):
+    a = builtin_problems()
+    b = [dict(p, task_id=p["task_id"] + "-x") for p in a]
+    ident_a = run_identity(a, "", {"seed": 0})
+    write_manifest(tmp_path, ident_a, {"best_pass_rate": 0.5})
+    assert load_manifest(tmp_path, ident_a) == {"best_pass_rate": 0.5}
+    with pytest.raises(ValueError, match="dataset_sha256 differs"):
+        load_manifest(tmp_path, run_identity(b, "", {"seed": 0}))
+
+
+def test_resume_rejects_changed_config(tmp_path):
+    a = builtin_problems()
+    write_manifest(tmp_path, run_identity(a, "", {"seed": 0}), {})
+    with pytest.raises(ValueError, match="config seed"):
+        load_manifest(tmp_path, run_identity(a, "", {"seed": 1}))
+
+
+def test_no_manifest_means_a_fresh_run(tmp_path):
+    assert load_manifest(tmp_path, run_identity(builtin_problems(), "", {})) is None
+
+
+def test_promotion_preserves_the_previous_checkpoint(tmp_path):
+    """A failed promotion must not destroy what was already accepted."""
+    class P:
+        def __init__(self): self.fail = False
+        def save(self, path):
+            if self.fail:
+                raise RuntimeError("disk full")
+            Path(path).write_text("weights")
+    p = P()
+    first = promote(p, tmp_path, "ckpt-001")
+    assert first.exists()
+    p.fail = True
+    with pytest.raises(RuntimeError):
+        promote(p, tmp_path, "ckpt-002")
+    assert first.exists() and first.read_text() == "weights"
+    accepted = json.loads((tmp_path / "checkpoints" / "accepted.json").read_text())
+    assert accepted["accepted"] == "ckpt-001.pt", "pointer must still name the good checkpoint"
+    assert not (tmp_path / "checkpoints" / "ckpt-002.pt").exists()
