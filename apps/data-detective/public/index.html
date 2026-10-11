@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Data Detective</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><text y='13' font-size='13'>🔍</text></svg>">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<header>
+  <h1>Data&nbsp;Detective</h1>
+  <p class="tagline">Upload a CSV. Ask it anything. The agent writes and runs Python in a sandbox, draws the charts, and tells you what it is not sure about.</p>
+</header>
+
+<main>
+  <!-- Step 1 — get data in -->
+  <section id="intake" class="card">
+    <div class="intake-row">
+      <label class="dropzone" id="dropzone">
+        <input type="file" id="file" accept=".csv,text/csv" hidden>
+        <strong>Choose a CSV</strong>
+        <span>or drag one here · up to 25&nbsp;MB</span>
+      </label>
+      <div class="or">or</div>
+      <button id="sample" class="secondary" type="button">
+        <strong>Try the sample</strong>
+        <span>Four months of coffee-shop sales, mess included</span>
+      </button>
+    </div>
+    <p id="intake-error" class="error" hidden></p>
+  </section>
+
+  <!-- Step 2 — what we got -->
+  <section id="dataset" class="card" hidden>
+    <div class="dataset-head">
+      <div>
+        <h2 id="filename">—</h2>
+        <p class="meta"><span id="rowcount">—</span> · <span id="colcount">—</span></p>
+      </div>
+      <button id="reset" class="ghost" type="button">Use a different file</button>
+    </div>
+    <div class="table-scroll"><table id="preview"><thead></thead><tbody></tbody></table></div>
+  </section>
+
+  <!-- Step 3 — the conversation -->
+  <section id="conversation" hidden>
+    <div id="turns"></div>
+
+    <div id="working" class="card working" hidden>
+      <div class="spinner" aria-hidden="true"></div>
+      <div class="working-body">
+        <p id="working-status">Starting…</p>
+        <pre id="working-code" hidden></pre>
+      </div>
+    </div>
+
+    <div id="suggestions" class="suggestions" hidden></div>
+
+    <form id="ask-form" class="ask">
+      <textarea id="question" rows="2" placeholder="Ask about this data…" aria-label="Your question"></textarea>
+      <button id="ask" type="submit">Ask</button>
+    </form>
+    <p class="hint">Follow-ups stay in the same session, so you can say “now break that down by store”.</p>
+    <p id="ask-error" class="error" hidden></p>
+  </section>
+
+  <div id="report-bar" class="report-bar" hidden>
+    <span id="report-count">—</span>
+    <a id="report" href="#">Download report</a>
+  </div>
+</main>
+
+<footer>
+  <p>Analysis runs in an OpenAI-hosted Python sandbox with no network access. Your API key stays on the server — the browser never sees it. Uploaded data lives in memory for one hour, then is dropped.</p>
+</footer>
+
+<script src="app.js" type="module"></script>
+</body>
+</html>

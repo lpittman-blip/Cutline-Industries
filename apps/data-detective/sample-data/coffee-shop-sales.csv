@@ -1,0 +1,2233 @@
+date,store,product,units,unit_price,revenue,foot_traffic
+2026-07-01,Dockside,Filter coffee,7,3.20,22.40,532
+2026-07-01,Dockside,Flat white,5,4.10,20.50,532
+2026-07-01,Dockside,Latte,8,4.30,34.40,532
+2026-07-01,Dockside,Croissant,7,3.60,25.20,532
+2026-07-01,Dockside,Banana bread,6,4.00,24.00,532
+2026-07-01,Dockside,Cold brew,7,4.80,33.60,532
+2026-07-01,Newtown,Filter coffee,6,3.20,19.20,388
+2026-07-01,Newtown,Flat white,5,4.10,20.50,388
+2026-07-01,Newtown,Latte,6,4.30,25.80,388
+2026-07-01,Newtown,Croissant,5,3.60,18.00,388
+2026-07-01,Newtown,Banana bread,5,4.00,20.00,388
+2026-07-01,Newtown,Cold brew,4,4.80,19.20,388
+2026-07-01,Airport,Filter coffee,3,3.20,9.60,584
+2026-07-01,Airport,Flat white,3,4.10,12.30,584
+2026-07-01,Airport,Latte,5,4.30,21.50,584
+2026-07-01,Airport,Croissant,4,3.60,14.40,584
+2026-07-01,Airport,Banana bread,2,4.00,8.00,584
+2026-07-01,Airport,Cold brew,3,4.80,14.40,584
+2026-07-02,Dockside,Filter coffee,6,3.20,19.20,446
+2026-07-02,Dockside,Flat white,6,4.10,24.60,446
+2026-07-02,Dockside,Latte,7,4.30,30.10,446
+2026-07-02,Dockside,Croissant,5,3.60,18.00,446
+2026-07-02,Dockside,Banana bread,9,4.00,36.00,446
+2026-07-02,Dockside,Cold brew,4,4.80,19.20,446
+2026-07-02,Newtown,Filter coffee,5,3.20,16.00,428
+2026-07-02,Newtown,Flat white,3,4.10,12.30,428
+2026-07-02,Newtown,Latte,4,4.30,17.20,428
+2026-07-02,Newtown,Croissant,8,3.60,28.80,428
+2026-07-02,Newtown,Banana bread,6,4.00,24.00,428
+2026-07-02,Newtown,Cold brew,8,4.80,38.40,428
+2026-07-02,Airport,Filter coffee,2,3.20,6.40,603
+2026-07-02,Airport,Flat white,3,4.10,12.30,603
+2026-07-02,Airport,Latte,1,4.30,4.30,603
+2026-07-02,Airport,Croissant,4,3.60,14.40,603
+2026-07-02,Airport,Banana bread,3,4.00,12.00,603
+2026-07-02,Airport,Cold brew,4,4.80,19.20,603
+2026-07-03,Dockside,Filter coffee,8,3.20,25.60,515
+2026-07-03,Dockside,Flat white,8,4.10,32.80,515
+2026-07-03,Dockside,Latte,8,4.30,34.40,515
+2026-07-03,Dockside,Croissant,3,3.60,10.80,515
+2026-07-03,Dockside,Banana bread,8,4.00,32.00,515
+2026-07-03,Dockside,Cold brew,4,4.80,19.20,515
+2026-07-03,Newtown,Filter coffee,7,3.20,22.40,412
+2026-07-03,Newtown,Flat white,5,4.10,,412
+2026-07-03,Newtown,Latte,6,4.30,25.80,412
+2026-07-03,Newtown,Croissant,9,3.60,32.40,412
+2026-07-03,Newtown,Banana bread,7,4.00,28.00,412
+2026-07-03,Newtown,Cold brew,5,4.80,24.00,412
+2026-07-03,Airport,Filter coffee,5,3.20,16.00,685
+2026-07-03,Airport,Flat white,2,4.10,8.20,685
+2026-07-03,Airport,Latte,4,4.30,17.20,685
+2026-07-03,Airport,Croissant,5,3.60,18.00,685
+2026-07-03,Airport,Banana bread,5,4.00,20.00,685
+2026-07-03,Airport,Cold brew,5,4.80,24.00,685
+2026-07-04,Dockside,Filter coffee,4,3.20,12.80,346
+2026-07-04,Dockside,Flat white,3,4.10,12.30,346
+2026-07-04,Dockside,Latte,4,4.30,17.20,346
+2026-07-04,Dockside,Croissant,5,3.60,18.00,346
+2026-07-04,Dockside,Banana bread,4,4.00,16.00,346
+2026-07-04,Dockside,Cold brew,2,4.80,9.60,346
+2026-07-04,Newtown,Filter coffee,2,3.20,6.40,190
+2026-07-04,Newtown,Flat white,2,4.10,8.20,190
+2026-07-04,Newtown,Latte,2,4.30,8.60,190
+2026-07-04,Newtown,Croissant,2,3.60,7.20,190
+2026-07-04,Newtown,Banana bread,2,4.00,8.00,190
+2026-07-04,Newtown,Cold brew,2,4.80,9.60,190
+2026-07-04,Airport,Filter coffee,3,3.20,9.60,391
+2026-07-04,Airport,Flat white,1,4.10,4.10,391
+2026-07-04,Airport,Latte,2,4.30,8.60,391
+2026-07-04,Airport,Croissant,2,3.60,7.20,391
+2026-07-04,Airport,Banana bread,2,4.00,8.00,391
+2026-07-04,Airport,Cold brew,3,4.80,14.40,391
+2026-07-05,Dockside,Filter coffee,4,3.20,12.80,253
+2026-07-05,Dockside,Flat white,3,4.10,12.30,253
+2026-07-05,Dockside,Latte,4,4.30,17.20,253
+2026-07-05,Dockside,Croissant,4,3.60,14.40,253
+2026-07-05,Dockside,Banana bread,4,4.00,16.00,253
+2026-07-05,Dockside,Cold brew,2,4.80,9.60,253
+2026-07-05,Newtown,Filter coffee,1,3.20,3.20,87
+2026-07-05,Newtown,Flat white,1,4.10,4.10,87
+2026-07-05,Newtown,Latte,1,4.30,4.30,87
+2026-07-05,Newtown,Croissant,1,3.60,3.60,87
+2026-07-05,Newtown,Banana bread,0,4.00,0.00,87
+2026-07-05,Newtown,Cold brew,1,4.80,4.80,87
+2026-07-05,Airport,Filter coffee,3,3.20,9.60,357
+2026-07-05,Airport,Flat white,2,4.10,8.20,357
+2026-07-05,Airport,Latte,2,4.30,8.60,357
+2026-07-05,Airport,Croissant,2,3.60,7.20,357
+2026-07-05,Airport,Banana bread,3,4.00,12.00,357
+2026-07-05,Airport,Cold brew,3,4.80,14.40,357
+2026-07-06,Dockside,Filter coffee,6,3.20,19.20,441
+2026-07-06,Dockside,Flat white,4,4.10,16.40,441
+2026-07-06,Dockside,Latte,7,4.30,30.10,441
+2026-07-06,Dockside,Croissant,5,3.60,18.00,441
+2026-07-06,Dockside,Banana bread,5,4.00,20.00,441
+2026-07-06,Dockside,Cold brew,4,4.80,19.20,441
+2026-07-06,Newtown,Filter coffee,4,3.20,12.80,443
+2026-07-06,Newtown,Flat white,8,4.10,32.80,443
+2026-07-06,Newtown,Latte,4,4.30,17.20,443
+2026-07-06,Newtown,Croissant,6,3.60,21.60,443
+2026-07-06,Newtown,Banana bread,4,4.00,16.00,443
+2026-07-06,Newtown,Cold brew,10,4.80,48.00,443
+2026-07-06,Airport,Filter coffee,7,3.20,22.40,699
+2026-07-06,Airport,Flat white,4,4.10,16.40,699
+2026-07-06,Airport,Latte,5,4.30,21.50,699
+2026-07-06,Airport,Croissant,5,3.60,18.00,699
+2026-07-06,Airport,Banana bread,4,4.00,16.00,699
+2026-07-06,Airport,Cold brew,2,4.80,9.60,699
+2026-07-07,Dockside,Filter coffee,8,3.20,25.60,466
+2026-07-07,Dockside,Flat white,5,4.10,20.50,466
+2026-07-07,Dockside,Latte,4,4.30,17.20,466
+2026-07-07,Dockside,Croissant,3,3.60,10.80,466
+2026-07-07,Dockside,Banana bread,5,4.00,20.00,466
+2026-07-07,Dockside,Cold brew,5,4.80,24.00,466
+2026-07-07,Newtown,Filter coffee,4,3.20,12.80,297
+2026-07-07,Newtown,Flat white,3,4.10,12.30,297
+2026-07-07,Newtown,Latte,5,4.30,21.50,297
+2026-07-07,Newtown,Croissant,2,3.60,7.20,297
+2026-07-07,Newtown,Banana bread,5,4.00,20.00,297
+2026-07-07,Newtown,Cold brew,5,4.80,24.00,297
+2026-07-07,Airport,Filter coffee,3,3.20,9.60,675
+2026-07-07,Airport,Flat white,4,4.10,16.40,675
+2026-07-07,Airport,Latte,4,4.30,17.20,675
+2026-07-07,Airport,Croissant,4,3.60,14.40,675
+2026-07-07,Airport,Banana bread,4,4.00,16.00,675
+2026-07-07,Airport,Cold brew,4,4.80,19.20,675
+2026-07-08,Dockside,Filter coffee,4,3.20,12.80,452
+2026-07-08,Dockside,Flat white,5,4.10,20.50,452
+2026-07-08,Dockside,Latte,5,4.30,21.50,452
+2026-07-08,Dockside,Croissant,7,3.60,25.20,452
+2026-07-08,Dockside,Banana bread,5,4.00,20.00,452
+2026-07-08,Dockside,Cold brew,5,4.80,24.00,452
+2026-07-08,Newtown,Filter coffee,4,3.20,12.80,321
+2026-07-08,Newtown,Flat white,6,4.10,24.60,321
+2026-07-08,Newtown,Latte,3,4.30,12.90,321
+2026-07-08,Newtown,Croissant,4,3.60,14.40,321
+2026-07-08,Newtown,Banana bread,4,4.00,16.00,321
+2026-07-08,Newtown,Cold brew,4,4.80,19.20,321
+2026-07-08,Airport,Filter coffee,2,3.20,6.40,630
+2026-07-08,Airport,Flat white,3,4.10,12.30,630
+2026-07-08,Airport,Latte,4,4.30,17.20,630
+2026-07-08,Airport,Croissant,2,3.60,7.20,630
+2026-07-08,Airport,Banana bread,5,4.00,20.00,630
+2026-07-08,Airport,Cold brew,4,4.80,19.20,630
+2026-07-09,Dockside,Filter coffee,6,3.20,19.20,438
+2026-07-09,Dockside,Flat white,7,4.10,28.70,438
+2026-07-09,Dockside,Latte,5,4.30,21.50,438
+2026-07-09,Dockside,Croissant,8,3.60,28.80,438
+2026-07-09,Dockside,Banana bread,5,4.00,20.00,438
+2026-07-09,Dockside,Cold brew,7,4.80,33.60,438
+2026-07-09,Newtown,Filter coffee,4,3.20,12.80,340
+2026-07-09,Newtown,Flat white,5,4.10,20.50,340
+2026-07-09,Newtown,Latte,4,4.30,17.20,340
+2026-07-09,Newtown,Croissant,4,3.60,14.40,340
+2026-07-09,Newtown,Banana bread,7,4.00,28.00,340
+2026-07-09,Newtown,Cold brew,6,4.80,28.80,340
+2026-07-09,Airport,Filter coffee,3,3.20,9.60,617
+2026-07-09,Airport,Flat white,2,4.10,8.20,617
+2026-07-09,Airport,Latte,4,4.30,17.20,617
+2026-07-09,Airport,Croissant,3,3.60,10.80,617
+2026-07-09,Airport,Banana bread,4,4.00,16.00,617
+2026-07-09,Airport,Cold brew,3,4.80,14.40,617
+2026-07-10,Dockside,Filter coffee,10,3.20,32.00,537
+2026-07-10,Dockside,Flat white,6,4.10,24.60,537
+2026-07-10,Dockside,Latte,8,4.30,34.40,537
+2026-07-10,Dockside,Croissant,6,3.60,21.60,537
+2026-07-10,Dockside,Banana bread,9,4.00,36.00,537
+2026-07-10,Dockside,Cold brew,7,4.80,33.60,537
+2026-07-10,Newtown,Filter coffee,6,3.20,19.20,390
+2026-07-10,Newtown,Flat white,4,4.10,16.40,390
+2026-07-10,Newtown,Latte,4,4.30,17.20,390
+2026-07-10,Newtown,Croissant,6,3.60,21.60,390
+2026-07-10,Newtown,Banana bread,6,4.00,24.00,390
+2026-07-10,Newtown,Cold brew,8,4.80,38.40,390
+2026-07-10,Airport,Filter coffee,4,3.20,12.80,657
+2026-07-10,Airport,Flat white,3,4.10,12.30,657
+2026-07-10,Airport,Latte,5,4.30,21.50,657
+2026-07-10,Airport,Croissant,3,3.60,10.80,657
+2026-07-10,Airport,Banana bread,6,4.00,24.00,657
+2026-07-10,Airport,Cold brew,3,4.80,14.40,657
+2026-07-11,Dockside,Filter coffee,2,3.20,6.40,300
+2026-07-11,Dockside,Flat white,5,4.10,20.50,300
+2026-07-11,Dockside,Latte,4,4.30,17.20,
+2026-07-11,Dockside,Croissant,3,3.60,10.80,300
+2026-07-11,Dockside,Banana bread,6,4.00,24.00,300
+2026-07-11,Dockside,Cold brew,3,4.80,14.40,300
+2026-07-11,Newtown,Filter coffee,2,3.20,6.40,182
+2026-07-11,Newtown,Flat white,3,4.10,12.30,182
+2026-07-11,Newtown,Latte,3,4.30,12.90,182
+2026-07-11,Newtown,Croissant,1,3.60,3.60,182
+2026-07-11,Newtown,Banana bread,2,4.00,8.00,182
+2026-07-11,Newtown,Cold brew,4,4.80,19.20,182
+2026-07-11,Airport,Filter coffee,3,3.20,9.60,422
+2026-07-11,Airport,Flat white,2,4.10,8.20,422
+2026-07-11,Airport,Latte,3,4.30,12.90,422
+2026-07-11,Airport,Croissant,3,3.60,10.80,422
+2026-07-11,Airport,Banana bread,3,4.00,12.00,422
+2026-07-11,Airport,Cold brew,2,4.80,9.60,422
+2026-07-12,Dockside,Filter coffee,2,3.20,6.40,200
+2026-07-12,Dockside,Flat white,2,4.10,8.20,200
+2026-07-12,Dockside,Latte,1,4.30,4.30,200
+2026-07-12,Dockside,Croissant,3,3.60,10.80,200
+2026-07-12,Dockside,Banana bread,2,4.00,8.00,200
+2026-07-12,Dockside,Cold brew,2,4.80,9.60,200
+2026-07-12,Newtown,Filter coffee,3,3.20,9.60,198
+2026-07-12,Newtown,Flat white,1,4.10,4.10,198
+2026-07-12,Newtown,Latte,2,4.30,8.60,198
+2026-07-12,Newtown,Croissant,3,3.60,10.80,198
+2026-07-12,Newtown,Banana bread,2,4.00,8.00,198
+2026-07-12,Newtown,Cold brew,4,4.80,19.20,198
+2026-07-12,Airport,Filter coffee,1,3.20,3.20,232
+2026-07-12,Airport,Flat white,1,4.10,4.10,232
+2026-07-12,Airport,Latte,2,4.30,8.60,232
+2026-07-12,Airport,Croissant,1,3.60,3.60,232
+2026-07-12,Airport,Banana bread,2,4.00,8.00,232
+2026-07-12,Airport,Cold brew,2,4.80,9.60,232
+2026-07-13,Dockside,Filter coffee,7,3.20,22.40,479
+2026-07-13,Dockside,Flat white,3,4.10,12.30,479
+2026-07-13,Dockside,Latte,7,4.30,30.10,479
+2026-07-13,Dockside,Croissant,4,3.60,14.40,479
+2026-07-13,Dockside,Banana bread,6,4.00,24.00,479
+2026-07-13,Dockside,Cold brew,5,4.80,24.00,479
+2026-07-13,Newtown,Filter coffee,6,3.20,19.20,400
+2026-07-13,Newtown,Flat white,4,4.10,16.40,400
+2026-07-13,Newtown,Latte,5,4.30,21.50,400
+2026-07-13,Newtown,Croissant,5,3.60,18.00,400
+2026-07-13,Newtown,Banana bread,5,4.00,20.00,400
+2026-07-13,Newtown,Cold brew,6,4.80,28.80,400
+2026-07-13,Airport,Filter coffee,5,3.20,16.00,673
+2026-07-13,Airport,Flat white,6,4.10,24.60,673
+2026-07-13,Airport,Latte,6,4.30,25.80,673
+2026-07-13,Airport,Croissant,4,3.60,14.40,673
+2026-07-13,Airport,Banana bread,5,4.00,20.00,673
+2026-07-13,Airport,Cold brew,4,4.80,19.20,673
+2026-07-14,Dockside,Filter coffee,4,3.20,12.80,422
+2026-07-14,Dockside,Flat white,6,4.10,24.60,422
+2026-07-14,Dockside,Latte,5,4.30,21.50,422
+2026-07-14,Dockside,Croissant,6,3.60,21.60,422
+2026-07-14,Dockside,Banana bread,5,4.00,20.00,422
+2026-07-14,Dockside,Cold brew,5,4.80,24.00,422
+2026-07-14,Newtown,Filter coffee,9,3.20,28.80,432
+2026-07-14,Newtown,Flat white,6,4.10,24.60,432
+2026-07-14,Newtown,Latte,7,4.30,30.10,432
+2026-07-14,Newtown,Croissant,6,3.60,21.60,432
+2026-07-14,Newtown,Banana bread,7,4.00,28.00,432
+2026-07-14,Newtown,Cold brew,9,4.80,43.20,432
+2026-07-14,Airport,Filter coffee,6,3.20,19.20,656
+2026-07-14,Airport,Flat white,4,4.10,16.40,656
+2026-07-14,Airport,Latte,4,4.30,17.20,656
+2026-07-14,Airport,Croissant,3,3.60,10.80,656
+2026-07-14,Airport,Banana bread,4,4.00,16.00,656
+2026-07-14,Airport,Cold brew,4,4.80,19.20,656
+2026-07-15,Dockside,Filter coffee,4,3.20,12.80,444
+2026-07-15,Dockside,Flat white,8,4.10,32.80,444
+2026-07-15,Dockside,Latte,3,4.30,12.90,444
+2026-07-15,Dockside,Croissant,6,3.60,21.60,444
+2026-07-15,Dockside,Banana bread,6,4.00,24.00,444
+2026-07-15,Dockside,Cold brew,2,4.80,9.60,444
+2026-07-15,Newtown,Filter coffee,7,3.20,22.40,390
+2026-07-15,Newtown,Flat white,6,4.10,24.60,390
+2026-07-15,Newtown,Latte,5,4.30,21.50,390
+2026-07-15,Newtown,Croissant,4,3.60,14.40,390
+2026-07-15,Newtown,Banana bread,5,4.00,20.00,390
+2026-07-15,Newtown,Cold brew,4,4.80,19.20,390
+2026-07-15,Airport,Filter coffee,3,3.20,9.60,532
+2026-07-15,Airport,Flat white,2,4.10,8.20,532
+2026-07-15,Airport,Latte,4,4.30,17.20,532
+2026-07-15,Airport,Croissant,4,3.60,14.40,532
+2026-07-15,Airport,Banana bread,4,4.00,16.00,532
+2026-07-15,Airport,Cold brew,4,4.80,19.20,532
+2026-07-16,Dockside,Filter coffee,6,3.20,19.20,484
+2026-07-16,Dockside,Flat white,4,4.10,16.40,484
+2026-07-16,Dockside,Latte,7,4.30,30.10,484
+2026-07-16,Dockside,Croissant,6,3.60,21.60,484
+2026-07-16,Dockside,Banana bread,7,4.00,28.00,484
+2026-07-16,Dockside,Cold brew,7,4.80,33.60,484
+2026-07-16,Newtown,Filter coffee,5,3.20,16.00,329
+2026-07-16,Newtown,Flat white,6,4.10,24.60,329
+2026-07-16,Newtown,Latte,6,4.30,25.80,329
+2026-07-16,Newtown,Croissant,6,3.60,21.60,329
+2026-07-16,Newtown,Banana bread,7,4.00,28.00,329
+2026-07-16,Newtown,Cold brew,4,4.80,19.20,329
+2026-07-16,Airport,Filter coffee,3,3.20,9.60,674
+2026-07-16,Airport,Flat white,4,4.10,16.40,674
+2026-07-16,Airport,Latte,6,4.30,25.80,674
+2026-07-16,Airport,Croissant,4,3.60,,674
+2026-07-16,Airport,Banana bread,6,4.00,24.00,674
+2026-07-16,Airport,Cold brew,4,4.80,19.20,674
+2026-07-17,Dockside,Filter coffee,6,3.20,19.20,616
+2026-07-17,Dockside,Flat white,8,4.10,32.80,616
+2026-07-17,Dockside,Latte,10,4.30,43.00,616
+2026-07-17,Dockside,Croissant,6,3.60,21.60,616
+2026-07-17,Dockside,Banana bread,13,4.00,52.00,616
+2026-07-17,Dockside,Cold brew,7,4.80,33.60,616
+2026-07-17,Newtown,Filter coffee,7,3.20,22.40,416
+2026-07-17,Newtown,Flat white,7,4.10,28.70,416
+2026-07-17,Newtown,Latte,5,4.30,21.50,416
+2026-07-17,Newtown,Croissant,5,3.60,18.00,416
+2026-07-17,Newtown,Banana bread,11,4.00,44.00,416
+2026-07-17,Newtown,Cold brew,5,4.80,24.00,416
+2026-07-17,Airport,Filter coffee,4,3.20,12.80,671
+2026-07-17,Airport,Flat white,4,4.10,16.40,671
+2026-07-17,Airport,Latte,4,4.30,17.20,671
+2026-07-17,Airport,Croissant,5,3.60,18.00,671
+2026-07-17,Airport,Banana bread,3,4.00,12.00,671
+2026-07-17,Airport,Cold brew,4,4.80,19.20,671
+2026-07-18,Dockside,Filter coffee,3,3.20,9.60,286
+2026-07-18,Dockside,Flat white,3,4.10,12.30,286
+2026-07-18,Dockside,Latte,5,4.30,21.50,286
+2026-07-18,Dockside,Croissant,3,3.60,10.80,286
+2026-07-18,Dockside,Banana bread,3,4.00,12.00,286
+2026-07-18,Dockside,Cold brew,3,4.80,14.40,286
+2026-07-18,Newtown,Filter coffee,2,3.20,6.40,245
+2026-07-18,Newtown,Flat white,3,4.10,12.30,245
+2026-07-18,Newtown,Latte,3,4.30,12.90,245
+2026-07-18,Newtown,Croissant,3,3.60,10.80,245
+2026-07-18,Newtown,Banana bread,5,4.00,20.00,245
+2026-07-18,Newtown,Cold brew,4,4.80,19.20,245
+2026-07-18,Airport,Filter coffee,1,3.20,3.20,416
+2026-07-18,Airport,Flat white,3,4.10,12.30,416
+2026-07-18,Airport,Latte,2,4.30,8.60,416
+2026-07-18,Airport,Croissant,3,3.60,10.80,416
+2026-07-18,Airport,Banana bread,3,4.00,12.00,416
+2026-07-18,Airport,Cold brew,2,4.80,9.60,416
+2026-07-19,Dockside,Filter coffee,2,3.20,6.40,209
+2026-07-19,Dockside,Flat white,1,4.10,4.10,209
+2026-07-19,Dockside,Latte,2,4.30,8.60,209
+2026-07-19,Dockside,Croissant,2,3.60,7.20,209
+2026-07-19,Dockside,Banana bread,3,4.00,12.00,209
+2026-07-19,Dockside,Cold brew,3,4.80,14.40,209
+2026-07-19,Newtown,Filter coffee,1,3.20,3.20,128
+2026-07-19,Newtown,Flat white,2,4.10,8.20,128
+2026-07-19,Newtown,Latte,1,4.30,4.30,128
+2026-07-19,Newtown,Croissant,1,3.60,3.60,128
+2026-07-19,Newtown,Banana bread,2,4.00,8.00,128
+2026-07-19,Newtown,Cold brew,1,4.80,4.80,128
+2026-07-19,Airport,Filter coffee,3,3.20,9.60,359
+2026-07-19,Airport,Flat white,4,4.10,16.40,359
+2026-07-19,Airport,Latte,1,4.30,4.30,359
+2026-07-19,Airport,Croissant,2,3.60,7.20,359
+2026-07-19,Airport,Banana bread,2,4.00,8.00,359
+2026-07-19,Airport,Cold brew,2,4.80,9.60,359
+2026-07-20,Dockside,Filter coffee,8,3.20,25.60,513
+2026-07-20,Dockside,Flat white,6,4.10,24.60,513
+2026-07-20,Dockside,Latte,5,4.30,21.50,513
+2026-07-20,Dockside,Croissant,7,3.60,25.20,513
+2026-07-20,Dockside,Banana bread,8,4.00,32.00,513
+2026-07-20,Dockside,Cold brew,4,4.80,19.20,513
+2026-07-20,Newtown,Filter coffee,5,3.20,16.00,367
+2026-07-20,Newtown,Flat white,5,4.10,20.50,367
+2026-07-20,Newtown,Latte,5,4.30,21.50,367
+2026-07-20,Newtown,Croissant,7,3.60,25.20,367
+2026-07-20,Newtown,Banana bread,4,4.00,16.00,367
+2026-07-20,Newtown,Cold brew,2,4.80,9.60,367
+2026-07-20,Airport,Filter coffee,4,3.20,12.80,631
+2026-07-20,Airport,Flat white,4,4.10,16.40,631
+2026-07-20,Airport,Latte,5,4.30,21.50,631
+2026-07-20,Airport,Croissant,4,3.60,14.40,631
+2026-07-20,Airport,Banana bread,5,4.00,20.00,631
+2026-07-20,Airport,Cold brew,5,4.80,24.00,631
+2026-07-21,Dockside,Filter coffee,6,3.20,19.20,382
+2026-07-21,Dockside,Flat white,6,4.10,24.60,382
+2026-07-21,Dockside,Latte,4,4.30,17.20,382
+2026-07-21,Dockside,Croissant,5,3.60,18.00,382
+2026-07-21,Dockside,Banana bread,3,4.00,12.00,382
+2026-07-21,Dockside,Cold brew,6,4.80,28.80,382
+2026-07-21,Newtown,Filter coffee,4,3.20,12.80,309
+2026-07-21,Newtown,Flat white,5,4.10,20.50,309
+2026-07-21,Newtown,Latte,4,4.30,17.20,309
+2026-07-21,Newtown,Croissant,5,3.60,18.00,309
+2026-07-21,Newtown,Banana bread,5,4.00,20.00,309
+2026-07-21,Newtown,Cold brew,4,4.80,19.20,309
+2026-07-21,Airport,Filter coffee,5,3.20,16.00,654
+2026-07-21,Airport,Flat white,5,4.10,20.50,654
+2026-07-21,Airport,Latte,4,4.30,17.20,654
+2026-07-21,Airport,Croissant,3,3.60,,654
+2026-07-21,Airport,Banana bread,5,4.00,,654
+2026-07-21,Airport,Cold brew,4,4.80,19.20,654
+2026-07-22,Dockside,Filter coffee,7,3.20,22.40,508
+2026-07-22,Dockside,Flat white,8,4.10,32.80,508
+2026-07-22,Dockside,Latte,6,4.30,25.80,508
+2026-07-22,Dockside,Croissant,6,3.60,21.60,508
+2026-07-22,Dockside,Banana bread,6,4.00,24.00,508
+2026-07-22,Dockside,Cold brew,7,4.80,33.60,508
+2026-07-22,Newtown,Filter coffee,4,3.20,12.80,283
+2026-07-22,Newtown,Flat white,5,4.10,20.50,283
+2026-07-22,Newtown,Latte,3,4.30,12.90,283
+2026-07-22,Newtown,Croissant,4,3.60,14.40,283
+2026-07-22,Newtown,Banana bread,4,4.00,16.00,283
+2026-07-22,Newtown,Cold brew,3,4.80,14.40,283
+2026-07-22,Airport,Filter coffee,5,3.20,16.00,578
+2026-07-22,Airport,Flat white,4,4.10,16.40,578
+2026-07-22,Airport,Latte,1,4.30,4.30,578
+2026-07-22,Airport,Croissant,3,3.60,10.80,578
+2026-07-22,Airport,Banana bread,3,4.00,12.00,578
+2026-07-22,Airport,Cold brew,5,4.80,24.00,578
+2026-07-23,Dockside,Filter coffee,5,3.20,16.00,462
+2026-07-23,Dockside,Flat white,5,4.10,20.50,462
+2026-07-23,Dockside,Latte,6,4.30,25.80,462
+2026-07-23,Dockside,Croissant,5,3.60,18.00,462
+2026-07-23,Dockside,Banana bread,5,4.00,20.00,462
+2026-07-23,Dockside,Cold brew,5,4.80,24.00,462
+2026-07-23,Newtown,Filter coffee,6,3.20,19.20,415
+2026-07-23,Newtown,Flat white,6,4.10,24.60,415
+2026-07-23,Newtown,Latte,6,4.30,25.80,415
+2026-07-23,Newtown,Croissant,6,3.60,21.60,415
+2026-07-23,Newtown,Banana bread,5,4.00,20.00,415
+2026-07-23,Newtown,Cold brew,7,4.80,33.60,415
+2026-07-23,Airport,Filter coffee,5,3.20,16.00,656
+2026-07-23,Airport,Flat white,5,4.10,20.50,656
+2026-07-23,Airport,Latte,4,4.30,17.20,656
+2026-07-23,Airport,Croissant,4,3.60,14.40,656
+2026-07-23,Airport,Banana bread,5,4.00,20.00,656
+2026-07-23,Airport,Cold brew,5,4.80,24.00,656
+2026-07-24,Dockside,Filter coffee,6,3.20,19.20,533
+2026-07-24,Dockside,Flat white,9,4.10,36.90,533
+2026-07-24,Dockside,Latte,8,4.30,34.40,533
+2026-07-24,Dockside,Croissant,5,3.60,18.00,533
+2026-07-24,Dockside,Banana bread,8,4.00,32.00,
+2026-07-24,Dockside,Cold brew,7,4.80,33.60,533
+2026-07-24,Newtown,Filter coffee,6,3.20,,384
+2026-07-24,Newtown,Flat white,4,4.10,16.40,
+2026-07-24,Newtown,Latte,6,4.30,25.80,384
+2026-07-24,Newtown,Croissant,5,3.60,18.00,384
+2026-07-24,Newtown,Banana bread,4,4.00,16.00,384
+2026-07-24,Newtown,Cold brew,6,4.80,28.80,384
+2026-07-24,Airport,Filter coffee,4,3.20,12.80,676
+2026-07-24,Airport,Flat white,5,4.10,20.50,676
+2026-07-24,Airport,Latte,6,4.30,25.80,676
+2026-07-24,Airport,Croissant,4,3.60,14.40,676
+2026-07-24,Airport,Banana bread,4,4.00,16.00,676
+2026-07-24,Airport,Cold brew,6,4.80,28.80,676
+2026-07-25,Dockside,Filter coffee,4,3.20,12.80,265
+2026-07-25,Dockside,Flat white,2,4.10,8.20,265
+2026-07-25,Dockside,Latte,3,4.30,12.90,265
+2026-07-25,Dockside,Croissant,3,3.60,10.80,265
+2026-07-25,Dockside,Banana bread,4,4.00,16.00,265
+2026-07-25,Dockside,Cold brew,4,4.80,19.20,265
+2026-07-25,Newtown,Filter coffee,3,3.20,9.60,208
+2026-07-25,Newtown,Flat white,3,4.10,12.30,208
+2026-07-25,Newtown,Latte,2,4.30,8.60,208
+2026-07-25,Newtown,Croissant,3,3.60,10.80,208
+2026-07-25,Newtown,Banana bread,3,4.00,12.00,208
+2026-07-25,Newtown,Cold brew,3,4.80,14.40,208
+2026-07-25,Airport,Filter coffee,2,3.20,6.40,394
+2026-07-25,Airport,Flat white,1,4.10,4.10,394
+2026-07-25,Airport,Latte,3,4.30,12.90,394
+2026-07-25,Airport,Croissant,3,3.60,10.80,394
+2026-07-25,Airport,Banana bread,2,4.00,8.00,394
+2026-07-25,Airport,Cold brew,3,4.80,14.40,394
+2026-07-26,Dockside,Filter coffee,2,3.20,6.40,208
+2026-07-26,Dockside,Flat white,2,4.10,8.20,208
+2026-07-26,Dockside,Latte,2,4.30,8.60,208
+2026-07-26,Dockside,Croissant,4,3.60,14.40,208
+2026-07-26,Dockside,Banana bread,3,4.00,12.00,208
+2026-07-26,Dockside,Cold brew,2,4.80,9.60,208
+2026-07-26,Newtown,Filter coffee,3,3.20,9.60,156
+2026-07-26,Newtown,Flat white,2,4.10,8.20,156
+2026-07-26,Newtown,Latte,2,4.30,8.60,156
+2026-07-26,Newtown,Croissant,2,3.60,7.20,156
+2026-07-26,Newtown,Banana bread,2,4.00,8.00,156
+2026-07-26,Newtown,Cold brew,2,4.80,9.60,156
+2026-07-26,Airport,Filter coffee,1,3.20,3.20,263
+2026-07-26,Airport,Flat white,1,4.10,4.10,263
+2026-07-26,Airport,Latte,2,4.30,8.60,263
+2026-07-26,Airport,Croissant,2,3.60,7.20,263
+2026-07-26,Airport,Banana bread,1,4.00,4.00,263
+2026-07-26,Airport,Cold brew,2,4.80,9.60,263
+2026-07-27,Dockside,Filter coffee,7,3.20,22.40,391
+2026-07-27,Dockside,Flat white,4,4.10,16.40,391
+2026-07-27,Dockside,Latte,5,4.30,21.50,391
+2026-07-27,Dockside,Croissant,4,3.60,14.40,391
+2026-07-27,Dockside,Banana bread,6,4.00,24.00,391
+2026-07-27,Dockside,Cold brew,6,4.80,28.80,391
+2026-07-27,NEWTOWN,Filter coffee,7,3.20,22.40,372
+2026-07-27,Newtown,Flat white,5,4.10,20.50,372
+2026-07-27,Newtown,Latte,4,4.30,17.20,372
+2026-07-27,Newtown,Croissant,7,3.60,25.20,372
+2026-07-27,Newtown,Banana bread,5,4.00,20.00,372
+2026-07-27,Newtown,Cold brew,4,4.80,19.20,372
+2026-07-27,Airport,Filter coffee,3,3.20,9.60,711
+2026-07-27,Airport,Flat white,4,4.10,16.40,711
+2026-07-27,Airport,Latte,6,4.30,25.80,711
+2026-07-27,Airport,Croissant,3,3.60,10.80,711
+2026-07-27,Airport,Banana bread,5,4.00,20.00,711
+2026-07-27,Airport,Cold brew,5,4.80,24.00,711
+2026-07-28,Dockside,Filter coffee,7,3.20,22.40,490
+2026-07-28,Dockside,Flat white,6,4.10,24.60,490
+2026-07-28,Dockside,Latte,7,4.30,30.10,490
+2026-07-28,Dockside,Croissant,6,3.60,21.60,490
+2026-07-28,Dockside,Banana bread,8,4.00,32.00,490
+2026-07-28,Dockside,Cold brew,9,4.80,43.20,490
+2026-07-28,Newtown,Filter coffee,6,3.20,19.20,400
+2026-07-28,Newtown,Flat white,8,4.10,32.80,400
+2026-07-28,Newtown,Latte,8,4.30,34.40,400
+2026-07-28,Newtown,Croissant,5,3.60,18.00,400
+2026-07-28,Newtown,Banana bread,6,4.00,24.00,400
+2026-07-28,Newtown,Cold brew,5,4.80,24.00,400
+2026-07-28,Airport,Filter coffee,4,3.20,12.80,667
+2026-07-28,Airport,Flat white,3,4.10,12.30,667
+2026-07-28,Airport,Latte,3,4.30,12.90,667
+2026-07-28,Airport,Croissant,5,3.60,18.00,667
+2026-07-28,Airport,Banana bread,3,4.00,12.00,667
+2026-07-28,Airport,Cold brew,4,4.80,19.20,667
+2026-07-29,Dockside,Filter coffee,8,3.20,25.60,467
+2026-07-29,Dockside,Flat white,3,4.10,12.30,467
+2026-07-29,Dockside,Latte,8,4.30,34.40,467
+2026-07-29,Dockside,Croissant,7,3.60,25.20,467
+2026-07-29,Dockside,Banana bread,4,4.00,16.00,467
+2026-07-29,Dockside,Cold brew,6,4.80,28.80,467
+2026-07-29,Newtown,Filter coffee,4,3.20,12.80,323
+2026-07-29,Newtown,Flat white,5,4.10,20.50,323
+2026-07-29,Newtown,Latte,4,4.30,17.20,323
+2026-07-29,Newtown,Croissant,5,3.60,18.00,323
+2026-07-29,Newtown,Banana bread,4,4.00,16.00,323
+2026-07-29,Newtown,Cold brew,7,4.80,33.60,323
+2026-07-29,Airport,Filter coffee,4,3.20,12.80,618
+2026-07-29,Airport,Flat white,3,4.10,12.30,618
+2026-07-29,Airport,Latte,3,4.30,12.90,618
+2026-07-29,Airport,Croissant,3,3.60,10.80,618
+2026-07-29,Airport,Banana bread,4,4.00,16.00,618
+2026-07-29,Airport,Cold brew,4,4.80,19.20,618
+2026-07-30,Dockside,Filter coffee,3,3.20,9.60,449
+2026-07-30,Dockside,Flat white,8,4.10,32.80,449
+2026-07-30,Dockside,Latte,6,4.30,25.80,449
+2026-07-30,Dockside,Croissant,5,3.60,18.00,449
+2026-07-30,Dockside,Banana bread,6,4.00,24.00,449
+2026-07-30,Dockside,Cold brew,6,4.80,28.80,449
+2026-07-30,Newtown,Filter coffee,5,3.20,16.00,292
+2026-07-30,Newtown,Flat white,4,4.10,16.40,292
+2026-07-30,Newtown,Latte,4,4.30,17.20,292
+2026-07-30,Newtown,Croissant,4,3.60,14.40,292
+2026-07-30,Newtown,Banana bread,3,4.00,12.00,292
+2026-07-30,Newtown,Cold brew,5,4.80,24.00,292
+2026-07-30,Airport,Filter coffee,2,3.20,6.40,670
+2026-07-30,Airport,Flat white,3,4.10,12.30,670
+2026-07-30,Airport,Latte,5,4.30,21.50,670
+2026-07-30,Airport,Croissant,4,3.60,14.40,670
+2026-07-30,Airport,Banana bread,3,4.00,12.00,670
+2026-07-30,Airport,Cold brew,3,4.80,14.40,670
+2026-07-31,Dockside,Filter coffee,8,3.20,25.60,486
+2026-07-31,Dockside,Flat white,6,4.10,24.60,486
+2026-07-31,Dockside,Latte,2,4.30,8.60,486
+2026-07-31,Dockside,Croissant,7,3.60,25.20,486
+2026-07-31,Dockside,Banana bread,5,4.00,20.00,486
+2026-07-31,Dockside,Cold brew,7,4.80,33.60,486
+2026-07-31,Newtown,Filter coffee,4,3.20,12.80,291
+2026-07-31,Newtown,Flat white,5,4.10,20.50,291
+2026-07-31,Newtown,Latte,5,4.30,21.50,291
+2026-07-31,Newtown,Croissant,4,3.60,14.40,291
+2026-07-31,Newtown,Banana bread,5,4.00,20.00,291
+2026-07-31,Newtown,Cold brew,5,4.80,24.00,291
+2026-07-31,Airport,Filter coffee,5,3.20,16.00,703
+2026-07-31,Airport,Flat white,5,4.10,20.50,703
+2026-07-31,Airport,Latte,5,4.30,21.50,703
+2026-07-31,Airport,Croissant,4,3.60,14.40,703
+2026-07-31,Airport,Banana bread,4,4.00,16.00,703
+2026-07-31,Airport,Cold brew,4,4.80,19.20,703
+2026-08-01,Dockside,Filter coffee,6,3.20,19.20,373
+2026-08-01,Dockside,Flat white,4,4.10,16.40,373
+2026-08-01,Dockside,Latte,6,4.30,25.80,373
+2026-08-01,Dockside,Croissant,4,3.60,14.40,373
+2026-08-01,Dockside,Banana bread,3,4.00,12.00,373
+2026-08-01,Dockside,Cold brew,3,4.80,14.40,373
+2026-08-01,Newtown,Filter coffee,6,3.20,19.20,268
+2026-08-01,Newtown,Flat white,3,4.10,12.30,268
+2026-08-01,Newtown,Latte,6,4.30,25.80,268
+2026-08-01,Newtown,Croissant,6,3.60,21.60,268
+2026-08-01,Newtown,Banana bread,3,4.00,12.00,268
+2026-08-01,Newtown,Cold brew,2,4.80,9.60,268
+2026-08-01,Airport,Filter coffee,3,3.20,9.60,415
+2026-08-01,Airport,Flat white,2,4.10,8.20,415
+2026-08-01,Airport,Latte,2,4.30,8.60,415
+2026-08-01,Airport,Croissant,2,3.60,7.20,415
+2026-08-01,Airport,Banana bread,3,4.00,12.00,415
+2026-08-01,Airport,Cold brew,3,4.80,14.40,415
+2026-08-02,Dockside,Filter coffee,2,3.20,6.40,234
+2026-08-02,Dockside,Flat white,4,4.10,16.40,234
+2026-08-02,DOCKSIDE,Latte,2,4.30,8.60,234
+2026-08-02,Dockside,Croissant,2,3.60,7.20,234
+2026-08-02,Dockside,Banana bread,3,4.00,12.00,234
+2026-08-02,Dockside,Cold brew,2,4.80,9.60,234
+2026-08-02,Newtown,Filter coffee,1,3.20,3.20,106
+2026-08-02,Newtown,Flat white,1,4.10,4.10,106
+2026-08-02,Newtown,Latte,1,4.30,4.30,106
+2026-08-02,Newtown,Croissant,1,3.60,3.60,106
+2026-08-02,Newtown,Banana bread,2,4.00,8.00,106
+2026-08-02,Newtown,Cold brew,1,4.80,4.80,106
+2026-08-02,Airport,Filter coffee,2,3.20,6.40,294
+2026-08-02,Airport,Flat white,2,4.10,8.20,294
+2026-08-02,Airport,Latte,1,4.30,4.30,294
+2026-08-02,Airport,Croissant,2,3.60,7.20,294
+2026-08-02,Airport,Banana bread,1,4.00,4.00,294
+2026-08-02,Airport,Cold brew,2,4.80,9.60,294
+2026-08-03,Dockside,Filter coffee,5,3.20,16.00,516
+2026-08-03,Dockside,Flat white,4,4.10,16.40,516
+2026-08-03,Dockside,Latte,9,4.30,38.70,516
+2026-08-03,Dockside,Croissant,10,3.60,36.00,516
+2026-08-03,Dockside,Banana bread,6,4.00,24.00,516
+2026-08-03,Dockside,Cold brew,7,4.80,33.60,516
+2026-08-03,Newtown,Filter coffee,8,3.20,25.60,429
+2026-08-03,Newtown,Flat white,5,4.10,20.50,429
+2026-08-03,Newtown,Latte,8,4.30,34.40,429
+2026-08-03,Newtown,Croissant,7,3.60,25.20,429
+2026-08-03,Newtown,Banana bread,6,4.00,24.00,429
+2026-08-03,Newtown,Cold brew,6,4.80,28.80,429
+2026-08-03,Airport,Filter coffee,4,3.20,12.80,674
+2026-08-03,Airport,Flat white,4,4.10,16.40,674
+2026-08-03,Airport,Latte,4,4.30,17.20,674
+2026-08-03,Airport,Croissant,5,3.60,18.00,674
+2026-08-03,Airport,Banana bread,2,4.00,8.00,674
+2026-08-03,Airport,Cold brew,4,4.80,19.20,674
+2026-08-04,Dockside,Filter coffee,6,3.20,19.20,435
+2026-08-04,Dockside,Flat white,6,4.10,24.60,435
+2026-08-04,Dockside,Latte,7,4.30,30.10,435
+2026-08-04,Dockside,Croissant,7,3.60,25.20,435
+2026-08-04,Dockside,Banana bread,7,4.00,28.00,435
+2026-08-04,Dockside,Cold brew,5,4.80,24.00,435
+2026-08-04,Newtown,Filter coffee,5,3.20,16.00,377
+2026-08-04,Newtown,Flat white,5,4.10,20.50,377
+2026-08-04,Newtown,Latte,5,4.30,21.50,377
+2026-08-04,Newtown,Croissant,9,3.60,32.40,377
+2026-08-04,Newtown,Banana bread,6,4.00,24.00,377
+2026-08-04,Newtown,Cold brew,5,4.80,24.00,377
+2026-08-04,Airport,Filter coffee,3,3.20,9.60,577
+2026-08-04,Airport,Flat white,4,4.10,16.40,577
+2026-08-04,Airport,Latte,3,4.30,12.90,577
+2026-08-04,Airport,Croissant,2,3.60,7.20,577
+2026-08-04,Airport,Banana bread,4,4.00,16.00,577
+2026-08-04,Airport,Cold brew,4,4.80,19.20,577
+2026-08-05,Dockside,Filter coffee,3,3.20,9.60,445
+2026-08-05,Dockside,Flat white,6,4.10,24.60,445
+2026-08-05,Dockside,Latte,8,4.30,34.40,445
+2026-08-05,Dockside,Croissant,7,3.60,25.20,445
+2026-08-05,Dockside,Banana bread,4,4.00,16.00,445
+2026-08-05,Dockside,Cold brew,6,4.80,28.80,445
+2026-08-05,Newtown,Filter coffee,6,3.20,19.20,334
+2026-08-05,Newtown,Flat white,4,4.10,16.40,334
+2026-08-05,Newtown,Latte,4,4.30,17.20,334
+2026-08-05,Newtown,Croissant,5,3.60,18.00,334
+2026-08-05,Newtown,Banana bread,5,4.00,20.00,334
+2026-08-05,Newtown,Cold brew,4,4.80,19.20,334
+2026-08-05,Airport,Filter coffee,3,3.20,9.60,642
+2026-08-05,Airport,Flat white,5,4.10,20.50,642
+2026-08-05,Airport,Latte,2,4.30,8.60,642
+2026-08-05,Airport,Croissant,4,3.60,14.40,642
+2026-08-05,Airport,Banana bread,4,4.00,16.00,642
+2026-08-05,Airport,Cold brew,6,4.80,28.80,642
+2026-08-06,Dockside,Filter coffee,4,3.20,12.80,408
+2026-08-06,Dockside,Flat white,7,4.10,28.70,408
+2026-08-06,Dockside,Latte,4,4.30,17.20,408
+2026-08-06,Dockside,Croissant,5,3.60,18.00,408
+2026-08-06,Dockside,Banana bread,8,4.00,32.00,408
+2026-08-06,Dockside,Cold brew,4,4.80,19.20,408
+2026-08-06,Newtown,Filter coffee,6,3.20,19.20,357
+2026-08-06,Newtown,Flat white,5,4.10,20.50,357
+2026-08-06,Newtown,Latte,7,4.30,30.10,357
+2026-08-06,Newtown,Croissant,5,3.60,18.00,357
+2026-08-06,Newtown,Banana bread,4,4.00,16.00,357
+2026-08-06,Newtown,Cold brew,4,4.80,19.20,357
+2026-08-06,Airport,Filter coffee,4,3.20,12.80,623
+2026-08-06,Airport,Flat white,3,4.10,12.30,623
+2026-08-06,Airport,Latte,4,4.30,17.20,623
+2026-08-06,Airport,Croissant,4,3.60,14.40,623
+2026-08-06,Airport,Banana bread,4,4.00,16.00,623
+2026-08-06,Airport,Cold brew,3,4.80,14.40,623
+2026-08-07,Dockside,Filter coffee,6,3.20,,594
+2026-08-07,Dockside,Flat white,6,4.10,24.60,594
+2026-08-07,Dockside,Latte,10,4.30,43.00,594
+2026-08-07,Dockside,Croissant,9,3.60,32.40,594
+2026-08-07,Dockside,Banana bread,8,4.00,32.00,594
+2026-08-07,Dockside,Cold brew,11,4.80,52.80,594
+2026-08-07,Newtown,Filter coffee,4,3.20,12.80,313
+2026-08-07,Newtown,Flat white,5,4.10,20.50,313
+2026-08-07,Newtown,Latte,4,4.30,17.20,313
+2026-08-07,Newtown,Croissant,5,3.60,18.00,313
+2026-08-07,Newtown,Banana bread,6,4.00,24.00,313
+2026-08-07,Newtown,Cold brew,5,4.80,24.00,313
+2026-08-07,Airport,Filter coffee,3,3.20,9.60,728
+2026-08-07,Airport,Flat white,6,4.10,24.60,728
+2026-08-07,Airport,Latte,6,4.30,25.80,728
+2026-08-07,Airport,Croissant,4,3.60,14.40,728
+2026-08-07,Airport,Banana bread,6,4.00,24.00,728
+2026-08-07,Airport,Cold brew,6,4.80,28.80,728
+2026-08-08,Dockside,Filter coffee,5,3.20,16.00,285
+2026-08-08,Dockside,Flat white,3,4.10,12.30,285
+2026-08-08,Dockside,Latte,4,4.30,17.20,285
+2026-08-08,Dockside,Croissant,3,3.60,10.80,285
+2026-08-08,Dockside,Banana bread,3,4.00,12.00,285
+2026-08-08,Dockside,Cold brew,4,4.80,19.20,285
+2026-08-08,Newtown,Filter coffee,2,3.20,6.40,160
+2026-08-08,Newtown,Flat white,2,4.10,8.20,160
+2026-08-08,Newtown,Latte,2,4.30,8.60,160
+2026-08-08,Newtown,Croissant,1,3.60,3.60,160
+2026-08-08,Newtown,Banana bread,2,4.00,8.00,160
+2026-08-08,Newtown,Cold brew,2,4.80,9.60,160
+2026-08-08,Airport,Filter coffee,3,3.20,9.60,416
+2026-08-08,Airport,Flat white,2,4.10,8.20,416
+2026-08-08,Airport,Latte,4,4.30,17.20,416
+2026-08-08,Airport,Croissant,3,3.60,10.80,416
+2026-08-08,Airport,Banana bread,3,4.00,12.00,416
+2026-08-08,Airport,Cold brew,2,4.80,9.60,416
+2026-08-09,Dockside,Filter coffee,2,3.20,6.40,196
+2026-08-09,Dockside,Flat white,2,4.10,8.20,196
+2026-08-09,Dockside,Latte,2,4.30,8.60,196
+2026-08-09,Dockside,Croissant,2,3.60,7.20,196
+2026-08-09,Dockside,Banana bread,4,4.00,16.00,196
+2026-08-09,Dockside,Cold brew,2,4.80,9.60,196
+2026-08-09,Newtown,Filter coffee,2,3.20,6.40,170
+2026-08-09,Newtown,Flat white,1,4.10,4.10,170
+2026-08-09,Newtown,Latte,2,4.30,8.60,170
+2026-08-09,Newtown,Croissant,2,3.60,7.20,170
+2026-08-09,Newtown,Banana bread,1,4.00,4.00,170
+2026-08-09,Newtown,Cold brew,2,4.80,9.60,170
+2026-08-09,Airport,Filter coffee,2,3.20,6.40,335
+2026-08-09,Airport,Flat white,1,4.10,4.10,335
+2026-08-09,Airport,Latte,3,4.30,12.90,335
+2026-08-09,Airport,Croissant,1,3.60,3.60,335
+2026-08-09,Airport,Banana bread,1,4.00,4.00,335
+2026-08-09,Airport,Cold brew,1,4.80,4.80,335
+2026-08-10,Dockside,Filter coffee,4,3.20,12.80,434
+2026-08-10,Dockside,Flat white,5,4.10,20.50,434
+2026-08-10,Dockside,Latte,6,4.30,25.80,434
+2026-08-10,Dockside,Croissant,7,3.60,25.20,434
+2026-08-10,Dockside,Banana bread,6,4.00,24.00,434
+2026-08-10,Dockside,Cold brew,6,4.80,28.80,434
+2026-08-10,Newtown,Filter coffee,5,3.20,16.00,375
+2026-08-10,Newtown,Flat white,5,4.10,20.50,375
+2026-08-10,Newtown,Latte,4,4.30,,375
+2026-08-10,Newtown,Croissant,6,3.60,21.60,375
+2026-08-10,Newtown,Banana bread,7,4.00,28.00,375
+2026-08-10,Newtown,Cold brew,4,4.80,19.20,375
+2026-08-10,Airport,Filter coffee,5,3.20,,633
+2026-08-10,Airport,Flat white,4,4.10,16.40,633
+2026-08-10,Airport,Latte,4,4.30,17.20,633
+2026-08-10,Airport,Croissant,3,3.60,10.80,633
+2026-08-10,Airport,Banana bread,3,4.00,12.00,633
+2026-08-10,Airport,Cold brew,3,4.80,14.40,633
+2026-08-11,Dockside,Filter coffee,-4,3.20,25.60,459
+2026-08-11,Dockside,Flat white,7,4.10,28.70,459
+2026-08-11,Dockside,Latte,4,4.30,17.20,459
+2026-08-11,Dockside,Croissant,5,3.60,18.00,459
+2026-08-11,Dockside,Banana bread,7,4.00,28.00,459
+2026-08-11,Dockside,Cold brew,7,4.80,,459
+2026-08-11,Newtown,Filter coffee,4,3.20,12.80,397
+2026-08-11,Newtown,Flat white,5,4.10,20.50,397
+2026-08-11,Newtown,Latte,5,4.30,21.50,397
+2026-08-11,Newtown,Croissant,6,3.60,21.60,397
+2026-08-11,Newtown,Banana bread,3,4.00,12.00,397
+2026-08-11,Newtown,Cold brew,5,4.80,24.00,397
+2026-08-11,Airport,Filter coffee,6,3.20,19.20,680
+2026-08-11,Airport,Flat white,5,4.10,20.50,680
+2026-08-11,Airport,Latte,4,4.30,17.20,680
+2026-08-11,Airport,Croissant,5,3.60,18.00,680
+2026-08-11,Airport,Banana bread,4,4.00,16.00,680
+2026-08-11,Airport,Cold brew,4,4.80,19.20,680
+2026-08-12,Dockside,Filter coffee,8,3.20,25.60,504
+2026-08-12,Dockside,Flat white,6,4.10,24.60,504
+2026-08-12,Dockside,Latte,7,4.30,30.10,504
+2026-08-12,Dockside,Croissant,4,3.60,14.40,504
+2026-08-12,Dockside,Banana bread,6,4.00,24.00,504
+2026-08-12,Dockside,Cold brew,7,4.80,33.60,504
+2026-08-12,Newtown,Filter coffee,3,3.20,9.60,281
+2026-08-12,Newtown,Flat white,4,4.10,16.40,281
+2026-08-12,Newtown,Latte,5,4.30,21.50,281
+2026-08-12,Newtown,Croissant,5,3.60,18.00,281
+2026-08-12,Newtown,Banana bread,4,4.00,16.00,281
+2026-08-12,Newtown,Cold brew,4,4.80,19.20,281
+2026-08-12,Airport,Filter coffee,4,3.20,12.80,625
+2026-08-12,Airport,Flat white,2,4.10,8.20,625
+2026-08-12,Airport,Latte,5,4.30,21.50,625
+2026-08-12,Airport,Croissant,5,3.60,18.00,625
+2026-08-12,Airport,Banana bread,6,4.00,24.00,625
+2026-08-12,Airport,Cold brew,4,4.80,19.20,625
+2026-08-13,Dockside,Filter coffee,6,3.20,19.20,527
+2026-08-13,Dockside,Flat white,6,4.10,24.60,527
+2026-08-13,Dockside,Latte,4,4.30,17.20,527
+2026-08-13,Dockside,Croissant,5,3.60,18.00,527
+2026-08-13,Dockside,Banana bread,8,4.00,32.00,527
+2026-08-13,Dockside,Cold brew,6,4.80,28.80,527
+2026-08-13,Newtown,Filter coffee,6,3.20,19.20,402
+2026-08-13,Newtown,Flat white,7,4.10,28.70,402
+2026-08-13,Newtown,Latte,6,4.30,25.80,402
+2026-08-13,Newtown,Croissant,6,3.60,21.60,402
+2026-08-13,Newtown,Banana bread,7,4.00,28.00,402
+2026-08-13,Newtown,Cold brew,6,4.80,28.80,402
+2026-08-13,Airport,Filter coffee,4,3.20,12.80,634
+2026-08-13,Airport,Flat white,4,4.10,16.40,634
+2026-08-13,Airport,Latte,5,4.30,21.50,634
+2026-08-13,Airport,Croissant,5,3.60,18.00,634
+2026-08-13,Airport,Banana bread,3,4.00,12.00,634
+2026-08-13,Airport,Cold brew,3,4.80,14.40,634
+2026-08-14,Dockside,Filter coffee,4,3.20,12.80,519
+2026-08-14,Dockside,Flat white,8,4.10,32.80,519
+2026-08-14,Dockside,Latte,4,4.30,17.20,519
+2026-08-14,Dockside,Croissant,5,3.60,18.00,519
+2026-08-14,Dockside,Banana bread,5,4.00,20.00,519
+2026-08-14,Dockside,Cold brew,8,4.80,38.40,519
+2026-08-14,Newtown,Filter coffee,6,3.20,19.20,407
+2026-08-14,Newtown,Flat white,5,4.10,20.50,407
+2026-08-14,Newtown,Latte,7,4.30,30.10,407
+2026-08-14,Newtown,Croissant,5,3.60,18.00,407
+2026-08-14,Newtown,Banana bread,6,4.00,24.00,407
+2026-08-14,Newtown,Cold brew,6,4.80,28.80,407
+2026-08-14,Airport,Filter coffee,4,3.20,12.80,642
+2026-08-14,Airport,Flat white,3,4.10,12.30,642
+2026-08-14,Airport,Latte,5,4.30,21.50,642
+2026-08-14,Airport,Croissant,4,3.60,14.40,642
+2026-08-14,Airport,Banana bread,5,4.00,20.00,642
+2026-08-14,Airport,Cold brew,5,4.80,24.00,642
+2026-08-15,Dockside,Filter coffee,3,3.20,9.60,230
+2026-08-15,Dockside,Flat white,4,4.10,16.40,230
+2026-08-15,Dockside,Latte,4,4.30,17.20,230
+2026-08-15,Dockside,Croissant,2,3.60,7.20,230
+2026-08-15,Dockside,Banana bread,3,4.00,12.00,230
+2026-08-15,Dockside,Cold brew,1,4.80,4.80,230
+2026-08-15,Newtown,Filter coffee,2,3.20,6.40,218
+2026-08-15,Newtown,Flat white,2,4.10,8.20,218
+2026-08-15,Newtown,Latte,3,4.30,12.90,218
+2026-08-15,Newtown,Croissant,3,3.60,10.80,218
+2026-08-15,Newtown,Banana bread,3,4.00,12.00,218
+2026-08-15,Newtown,Cold brew,3,4.80,14.40,218
+2026-08-15,Airport,Filter coffee,3,3.20,9.60,392
+2026-08-15,Airport,Flat white,2,4.10,8.20,392
+2026-08-15,Airport,Latte,2,4.30,8.60,392
+2026-08-15,Airport,Croissant,3,3.60,10.80,392
+2026-08-15,Airport,Banana bread,2,4.00,8.00,392
+2026-08-15,Airport,Cold brew,2,4.80,9.60,392
+2026-08-16,Dockside,Filter coffee,5,3.20,16.00,272
+2026-08-16,Dockside,Flat white,4,4.10,16.40,272
+2026-08-16,Dockside,Latte,2,4.30,8.60,272
+2026-08-16,Dockside,Croissant,4,3.60,14.40,272
+2026-08-16,Dockside,Banana bread,3,4.00,12.00,272
+2026-08-16,Dockside,Cold brew,3,4.80,14.40,272
+2026-08-16,Newtown,Filter coffee,2,3.20,6.40,155
+2026-08-16,Newtown,Flat white,2,4.10,8.20,155
+2026-08-16,Newtown,Latte,2,4.30,8.60,155
+2026-08-16,Newtown,Croissant,1,3.60,3.60,155
+2026-08-16,Newtown,Banana bread,2,4.00,8.00,155
+2026-08-16,Newtown,Cold brew,3,4.80,14.40,155
+2026-08-16,Airport,Filter coffee,1,3.20,3.20,238
+2026-08-16,Airport,Flat white,1,4.10,4.10,238
+2026-08-16,Airport,Latte,1,4.30,4.30,238
+2026-08-16,Airport,Croissant,1,3.60,3.60,238
+2026-08-16,Airport,Banana bread,1,4.00,4.00,238
+2026-08-16,Airport,Cold brew,2,4.80,9.60,238
+2026-08-17,Dockside,Filter coffee,6,3.20,19.20,471
+2026-08-17,Dockside,Flat white,10,4.10,41.00,471
+2026-08-17,Dockside,Latte,4,4.30,17.20,471
+2026-08-17,Dockside,Croissant,5,3.60,18.00,471
+2026-08-17,DOCKSIDE,Banana bread,6,4.00,24.00,471
+2026-08-17,Dockside,Cold brew,5,4.80,24.00,471
+2026-08-17,Newtown,Filter coffee,7,3.20,22.40,438
+2026-08-17,Newtown,Flat white,7,4.10,28.70,438
+2026-08-17,Newtown,Latte,9,4.30,38.70,438
+2026-08-17,Newtown,Croissant,6,3.60,21.60,438
+2026-08-17,Newtown,Banana bread,3,4.00,12.00,438
+2026-08-17,Newtown,Cold brew,7,4.80,33.60,438
+2026-08-17,Airport,Filter coffee,6,3.20,19.20,697
+2026-08-17,Airport,Flat white,4,4.10,16.40,697
+2026-08-17,Airport,Latte,3,4.30,12.90,697
+2026-08-17,Airport,Croissant,4,3.60,14.40,697
+2026-08-17,Airport,Banana bread,5,4.00,20.00,697
+2026-08-17,Airport,Cold brew,5,4.80,24.00,697
+2026-08-18,Dockside,Filter coffee,5,3.20,16.00,482
+2026-08-18,Dockside,Flat white,6,4.10,24.60,482
+2026-08-18,Dockside,Latte,6,4.30,25.80,482
+2026-08-18,Dockside,Croissant,6,3.60,21.60,482
+2026-08-18,Dockside,Banana bread,7,4.00,28.00,482
+2026-08-18,Dockside,Cold brew,9,4.80,43.20,482
+2026-08-18,Newtown,Filter coffee,6,3.20,19.20,440
+2026-08-18,Newtown,Flat white,6,4.10,24.60,440
+2026-08-18,Newtown,Latte,8,4.30,,440
+2026-08-18,Newtown,Croissant,7,3.60,25.20,440
+2026-08-18,Newtown,Banana bread,5,4.00,20.00,440
+2026-08-18,Newtown,Cold brew,5,4.80,24.00,440
+2026-08-18,Airport,Filter coffee,3,3.20,9.60,623
+2026-08-18,Airport,Flat white,4,4.10,16.40,623
+2026-08-18,Airport,Latte,5,4.30,21.50,623
+2026-08-18,Airport,Croissant,4,3.60,14.40,623
+2026-08-18,Airport,Banana bread,3,4.00,12.00,623
+2026-08-18,Airport,Cold brew,4,4.80,19.20,623
+2026-08-19,Dockside,Filter coffee,6,3.20,19.20,459
+2026-08-19,Dockside,Flat white,3,4.10,12.30,459
+2026-08-19,Dockside,Latte,7,4.30,30.10,459
+2026-08-19,DOCKSIDE,Croissant,9,3.60,32.40,459
+2026-08-19,Dockside,Banana bread,5,4.00,20.00,459
+2026-08-19,Dockside,Cold brew,6,4.80,28.80,459
+2026-08-19,Newtown,Filter coffee,6,3.20,19.20,358
+2026-08-19,Newtown,Flat white,7,4.10,28.70,358
+2026-08-19,Newtown,Latte,4,4.30,17.20,358
+2026-08-19,Newtown,Croissant,3,3.60,10.80,358
+2026-08-19,Newtown,Banana bread,5,4.00,20.00,358
+2026-08-19,Newtown,Cold brew,7,4.80,33.60,358
+2026-08-19,Airport,Filter coffee,3,3.20,9.60,575
+2026-08-19,Airport,Flat white,4,4.10,16.40,575
+2026-08-19,Airport,Latte,5,4.30,21.50,575
+2026-08-19,Airport,Croissant,3,3.60,10.80,575
+2026-08-19,Airport,Banana bread,3,4.00,12.00,575
+2026-08-19,Airport,Cold brew,4,4.80,19.20,575
+2026-08-20,Dockside,Filter coffee,7,3.20,22.40,503
+2026-08-20,Dockside,Flat white,4,4.10,16.40,503
+2026-08-20,Dockside,Latte,4,4.30,17.20,503
+2026-08-20,Dockside,Croissant,5,3.60,18.00,503
+2026-08-20,Dockside,Banana bread,5,4.00,20.00,503
+2026-08-20,Dockside,Cold brew,5,4.80,24.00,503
+2026-08-20,Newtown,Filter coffee,4,3.20,12.80,363
+2026-08-20,Newtown,Flat white,6,4.10,24.60,363
+2026-08-20,Newtown,Latte,6,4.30,25.80,363
+2026-08-20,Newtown,Croissant,3,3.60,10.80,363
+2026-08-20,Newtown,Banana bread,6,4.00,24.00,363
+2026-08-20,Newtown,Cold brew,5,4.80,24.00,363
+2026-08-20,Airport,Filter coffee,2,3.20,6.40,584
+2026-08-20,Airport,Flat white,4,4.10,16.40,584
+2026-08-20,Airport,Latte,3,4.30,12.90,584
+2026-08-20,Airport,Croissant,3,3.60,10.80,584
+2026-08-20,Airport,Banana bread,4,4.00,16.00,584
+2026-08-20,Airport,Cold brew,3,4.80,14.40,584
+2026-08-21,Dockside,Filter coffee,8,3.20,25.60,561
+2026-08-21,Dockside,Flat white,6,4.10,24.60,561
+2026-08-21,Dockside,Latte,7,4.30,30.10,561
+2026-08-21,Dockside,Croissant,8,3.60,28.80,561
+2026-08-21,Dockside,Banana bread,7,4.00,28.00,561
+2026-08-21,Dockside,Cold brew,6,4.80,28.80,561
+2026-08-21,Newtown,Filter coffee,5,3.20,16.00,425
+2026-08-21,Newtown,Flat white,8,4.10,32.80,
+2026-08-21,Newtown,Latte,6,4.30,25.80,425
+2026-08-21,Newtown,Croissant,5,3.60,18.00,425
+2026-08-21,Newtown,Banana bread,6,4.00,24.00,425
+2026-08-21,Newtown,Cold brew,4,4.80,19.20,425
+2026-08-21,Airport,Filter coffee,4,3.20,12.80,617
+2026-08-21,Airport,Flat white,2,4.10,8.20,617
+2026-08-21,Airport,Latte,3,4.30,12.90,617
+2026-08-21,Airport,Croissant,4,3.60,14.40,617
+2026-08-21,Airport,Banana bread,4,4.00,16.00,617
+2026-08-21,Airport,Cold brew,3,4.80,14.40,617
+2026-08-22,Dockside,Filter coffee,4,3.20,12.80,360
+2026-08-22,Dockside,Flat white,1,4.10,4.10,360
+2026-08-22,Dockside,Latte,4,4.30,17.20,360
+2026-08-22,Dockside,Croissant,5,3.60,18.00,360
+2026-08-22,Dockside,Banana bread,4,4.00,16.00,360
+2026-08-22,Dockside,Cold brew,7,4.80,33.60,360
+2026-08-22,Newtown,Filter coffee,3,3.20,9.60,212
+2026-08-22,Newtown,Flat white,1,4.10,4.10,212
+2026-08-22,Newtown,Latte,3,4.30,12.90,212
+2026-08-22,Newtown,Croissant,3,3.60,10.80,212
+2026-08-22,Newtown,Banana bread,4,4.00,16.00,212
+2026-08-22,Newtown,Cold brew,2,4.80,9.60,212
+2026-08-22,Airport,Filter coffee,3,3.20,9.60,425
+2026-08-22,Airport,Flat white,2,4.10,8.20,425
+2026-08-22,Airport,Latte,2,4.30,8.60,425
+2026-08-22,Airport,Croissant,3,3.60,10.80,425
+2026-08-22,Airport,Banana bread,3,4.00,12.00,425
+2026-08-22,Airport,Cold brew,2,4.80,9.60,425
+2026-08-23,Dockside,Filter coffee,1,3.20,3.20,167
+2026-08-23,Dockside,Flat white,3,4.10,12.30,167
+2026-08-23,Dockside,Latte,2,4.30,8.60,167
+2026-08-23,Dockside,Croissant,2,3.60,7.20,167
+2026-08-23,Dockside,Banana bread,2,4.00,8.00,167
+2026-08-23,Dockside,Cold brew,1,4.80,4.80,167
+2026-08-23,Newtown,Filter coffee,3,3.20,9.60,187
+2026-08-23,Newtown,Flat white,2,4.10,8.20,187
+2026-08-23,Newtown,Latte,0,4.30,0.00,187
+2026-08-23,Newtown,Croissant,3,3.60,10.80,187
+2026-08-23,Newtown,Banana bread,2,4.00,8.00,187
+2026-08-23,Newtown,Cold brew,3,4.80,14.40,187
+2026-08-23,Airport,Filter coffee,1,3.20,3.20,288
+2026-08-23,Airport,Flat white,1,4.10,4.10,288
+2026-08-23,Airport,Latte,1,4.30,4.30,288
+2026-08-23,Airport,Croissant,1,3.60,3.60,288
+2026-08-23,Airport,Banana bread,2,4.00,8.00,288
+2026-08-23,Airport,Cold brew,2,4.80,9.60,288
+2026-08-24,Dockside,Filter coffee,7,3.20,22.40,461
+2026-08-24,Dockside,Flat white,5,4.10,20.50,461
+2026-08-24,Dockside,Latte,6,4.30,25.80,461
+2026-08-24,Dockside,Croissant,5,3.60,18.00,461
+2026-08-24,Dockside,Banana bread,7,4.00,28.00,461
+2026-08-24,Dockside,Cold brew,6,4.80,28.80,461
+2026-08-24,Newtown,Filter coffee,3,3.20,9.60,408
+2026-08-24,Newtown,Flat white,7,4.10,28.70,408
+2026-08-24,Newtown,Latte,5,4.30,21.50,408
+2026-08-24,Newtown,Croissant,3,3.60,10.80,408
+2026-08-24,Newtown,Banana bread,6,4.00,24.00,408
+2026-08-24,Newtown,Cold brew,4,4.80,19.20,408
+2026-08-24,Airport,Filter coffee,5,3.20,16.00,684
+2026-08-24,Airport,Flat white,4,4.10,16.40,684
+2026-08-24,AIRPORT,Latte,3,4.30,12.90,684
+2026-08-24,Airport,Croissant,4,3.60,14.40,684
+2026-08-24,Airport,Banana bread,5,4.00,20.00,684
+2026-08-24,Airport,Cold brew,4,4.80,19.20,684
+2026-08-25,Dockside,Filter coffee,5,3.20,16.00,446
+2026-08-25,Dockside,Flat white,5,4.10,20.50,446
+2026-08-25,Dockside,Latte,7,4.30,30.10,446
+2026-08-25,Dockside,Croissant,8,3.60,28.80,446
+2026-08-25,Dockside,Banana bread,5,4.00,20.00,446
+2026-08-25,Dockside,Cold brew,6,4.80,28.80,446
+2026-08-25,Newtown,Filter coffee,4,3.20,12.80,364
+2026-08-25,NEWTOWN,Flat white,3,4.10,12.30,364
+2026-08-25,Newtown,Latte,7,4.30,30.10,364
+2026-08-25,Newtown,Croissant,5,3.60,18.00,364
+2026-08-25,Newtown,Banana bread,5,4.00,20.00,364
+2026-08-25,Newtown,Cold brew,6,4.80,28.80,364
+2026-08-25,Airport,Filter coffee,3,3.20,9.60,627
+2026-08-25,Airport,Flat white,3,4.10,12.30,627
+2026-08-25,Airport,Latte,3,4.30,12.90,627
+2026-08-25,Airport,Croissant,4,3.60,14.40,627
+2026-08-25,Airport,Banana bread,3,4.00,12.00,627
+2026-08-25,Airport,Cold brew,3,4.80,14.40,627
+2026-08-26,Dockside,Filter coffee,8,3.20,25.60,531
+2026-08-26,Dockside,Flat white,6,4.10,24.60,531
+2026-08-26,Dockside,Latte,7,4.30,30.10,531
+2026-08-26,Dockside,Croissant,8,3.60,28.80,531
+2026-08-26,Dockside,Banana bread,9,4.00,36.00,531
+2026-08-26,Dockside,Cold brew,9,4.80,43.20,531
+2026-08-26,Newtown,Filter coffee,6,3.20,19.20,365
+2026-08-26,Newtown,Flat white,5,4.10,20.50,365
+2026-08-26,Newtown,Latte,4,4.30,17.20,365
+2026-08-26,Newtown,Croissant,6,3.60,21.60,365
+2026-08-26,Newtown,Banana bread,7,4.00,28.00,365
+2026-08-26,Newtown,Cold brew,6,4.80,28.80,365
+2026-08-26,Airport,Filter coffee,2,3.20,6.40,550
+2026-08-26,Airport,Flat white,4,4.10,16.40,550
+2026-08-26,Airport,Latte,1,4.30,4.30,550
+2026-08-26,Airport,Croissant,4,3.60,14.40,550
+2026-08-26,Airport,Banana bread,3,4.00,12.00,550
+2026-08-26,Airport,Cold brew,4,4.80,19.20,550
+2026-08-27,Dockside,Filter coffee,8,3.20,25.60,491
+2026-08-27,Dockside,Flat white,4,4.10,16.40,491
+2026-08-27,Dockside,Latte,6,4.30,25.80,491
+2026-08-27,Dockside,Croissant,7,3.60,25.20,491
+2026-08-27,Dockside,Banana bread,7,4.00,28.00,491
+2026-08-27,Dockside,Cold brew,8,4.80,38.40,491
+2026-08-27,Newtown,Filter coffee,5,3.20,16.00,350
+2026-08-27,Newtown,Flat white,4,4.10,16.40,350
+2026-08-27,Newtown,Latte,3,4.30,12.90,350
+2026-08-27,Newtown,Croissant,5,3.60,18.00,350
+2026-08-27,Newtown,Banana bread,6,4.00,24.00,350
+2026-08-27,Newtown,Cold brew,5,4.80,24.00,350
+2026-08-27,Airport,Filter coffee,5,3.20,16.00,609
+2026-08-27,Airport,Flat white,4,4.10,16.40,609
+2026-08-27,Airport,Latte,5,4.30,21.50,609
+2026-08-27,Airport,Croissant,4,3.60,14.40,609
+2026-08-27,Airport,Banana bread,3,4.00,12.00,609
+2026-08-27,Airport,Cold brew,3,4.80,14.40,609
+2026-08-28,Dockside,Filter coffee,9,3.20,28.80,455
+2026-08-28,Dockside,Flat white,6,4.10,24.60,455
+2026-08-28,Dockside,Latte,7,4.30,30.10,455
+2026-08-28,Dockside,Croissant,5,3.60,18.00,455
+2026-08-28,Dockside,Banana bread,6,4.00,24.00,455
+2026-08-28,Dockside,Cold brew,3,4.80,14.40,455
+2026-08-28,Newtown,Filter coffee,4,3.20,12.80,436
+2026-08-28,Newtown,Flat white,5,4.10,20.50,436
+2026-08-28,Newtown,Latte,7,4.30,30.10,436
+2026-08-28,Newtown,Croissant,7,3.60,25.20,436
+2026-08-28,Newtown,Banana bread,6,4.00,24.00,436
+2026-08-28,Newtown,Cold brew,6,4.80,,436
+2026-08-28,Airport,Filter coffee,5,3.20,16.00,734
+2026-08-28,Airport,Flat white,5,4.10,20.50,734
+2026-08-28,Airport,Latte,7,4.30,30.10,734
+2026-08-28,Airport,Croissant,6,3.60,,734
+2026-08-28,Airport,Banana bread,4,4.00,16.00,734
+2026-08-28,Airport,Cold brew,3,4.80,14.40,734
+2026-08-29,Dockside,Filter coffee,3,3.20,9.60,243
+2026-08-29,Dockside,Flat white,4,4.10,16.40,243
+2026-08-29,Dockside,Latte,3,4.30,12.90,243
+2026-08-29,Dockside,Croissant,4,3.60,14.40,243
+2026-08-29,Dockside,Banana bread,3,4.00,12.00,243
+2026-08-29,Dockside,Cold brew,2,4.80,9.60,243
+2026-08-29,Newtown,Filter coffee,2,3.20,6.40,183
+2026-08-29,Newtown,Flat white,2,4.10,8.20,183
+2026-08-29,Newtown,Latte,3,4.30,12.90,183
+2026-08-29,Newtown,Croissant,3,3.60,10.80,183
+2026-08-29,Newtown,Banana bread,3,4.00,12.00,183
+2026-08-29,Newtown,Cold brew,3,4.80,14.40,183
+2026-08-29,Airport,Filter coffee,2,3.20,6.40,356
+2026-08-29,Airport,Flat white,2,4.10,8.20,356
+2026-08-29,Airport,Latte,2,4.30,8.60,356
+2026-08-29,Airport,Croissant,2,3.60,7.20,356
+2026-08-29,Airport,Banana bread,1,4.00,4.00,356
+2026-08-29,Airport,Cold brew,2,4.80,9.60,356
+2026-08-30,Dockside,Filter coffee,1,3.20,3.20,154
+2026-08-30,Dockside,Flat white,1,4.10,4.10,154
+2026-08-30,Dockside,Latte,2,4.30,8.60,154
+2026-08-30,Dockside,Croissant,2,3.60,7.20,154
+2026-08-30,Dockside,Banana bread,2,4.00,8.00,154
+2026-08-30,Dockside,Cold brew,2,4.80,9.60,154
+2026-08-30,Newtown,Filter coffee,1,3.20,3.20,95
+2026-08-30,Newtown,Flat white,2,4.10,8.20,95
+2026-08-30,Newtown,Latte,1,4.30,4.30,95
+2026-08-30,Newtown,Croissant,1,3.60,3.60,95
+2026-08-30,Newtown,Banana bread,2,4.00,8.00,95
+2026-08-30,Newtown,Cold brew,1,4.80,4.80,95
+2026-08-30,Airport,Filter coffee,2,3.20,6.40,395
+2026-08-30,Airport,Flat white,3,4.10,12.30,395
+2026-08-30,Airport,Latte,3,4.30,12.90,395
+2026-08-30,Airport,Croissant,2,3.60,7.20,395
+2026-08-30,Airport,Banana bread,2,4.00,8.00,395
+2026-08-30,Airport,Cold brew,3,4.80,14.40,395
+2026-08-31,Dockside,Filter coffee,9,3.20,28.80,522
+2026-08-31,Dockside,Flat white,9,4.10,36.90,522
+2026-08-31,Dockside,Latte,7,4.30,30.10,522
+2026-08-31,Dockside,Croissant,9,3.60,32.40,522
+2026-08-31,Dockside,Banana bread,8,4.00,32.00,522
+2026-08-31,Dockside,Cold brew,5,4.80,24.00,522
+2026-08-31,Newtown,Filter coffee,5,3.20,16.00,345
+2026-08-31,Newtown,Flat white,8,4.10,32.80,345
+2026-08-31,Newtown,Latte,6,4.30,25.80,345
+2026-08-31,Newtown,Croissant,6,3.60,21.60,345
+2026-08-31,Newtown,Banana bread,5,4.00,20.00,345
+2026-08-31,Newtown,Cold brew,5,4.80,24.00,345
+2026-08-31,Airport,Filter coffee,3,3.20,9.60,612
+2026-08-31,Airport,Flat white,4,4.10,16.40,612
+2026-08-31,Airport,Latte,6,4.30,25.80,612
+2026-08-31,Airport,Croissant,5,3.60,18.00,612
+2026-08-31,Airport,Banana bread,3,4.00,12.00,612
+2026-08-31,Airport,Cold brew,4,4.80,19.20,612
+2026-09-01,Dockside,Filter coffee,5,3.58,17.90,426
+2026-09-01,Dockside,Flat white,5,4.51,22.55,426
+2026-09-01,Dockside,Latte,4,4.73,18.92,426
+2026-09-01,Dockside,Croissant,5,3.60,18.00,426
+2026-09-01,Dockside,Banana bread,5,4.00,20.00,426
+2026-09-01,Dockside,Cold brew,7,5.23,36.61,426
+2026-09-01,Newtown,Filter coffee,5,3.58,17.90,339
+2026-09-01,Newtown,Flat white,2,4.51,9.02,339
+2026-09-01,Newtown,Latte,6,4.73,28.38,339
+2026-09-01,Newtown,Croissant,3,3.60,10.80,339
+2026-09-01,Newtown,Banana bread,2,4.00,8.00,339
+2026-09-01,Newtown,Cold brew,3,5.23,15.69,339
+2026-09-01,Airport,Filter coffee,5,3.58,17.90,648
+2026-09-01,Airport,Flat white,3,4.51,13.53,648
+2026-09-01,Airport,Latte,3,4.73,14.19,648
+2026-09-01,Airport,Croissant,4,3.60,14.40,648
+2026-09-01,Airport,Banana bread,3,4.00,12.00,648
+2026-09-01,Airport,Cold brew,3,5.23,15.69,648
+2026-09-02,Dockside,Filter coffee,5,3.58,17.90,474
+2026-09-02,Dockside,Flat white,5,4.51,22.55,474
+2026-09-02,Dockside,Latte,5,4.73,23.65,474
+2026-09-02,Dockside,Croissant,6,3.60,21.60,474
+2026-09-02,Dockside,Banana bread,5,4.00,20.00,474
+2026-09-02,Dockside,Cold brew,7,5.23,36.61,474
+2026-09-02,Newtown,Filter coffee,5,3.58,17.90,331
+2026-09-02,Newtown,Flat white,5,4.51,22.55,
+2026-09-02,Newtown,Latte,5,4.73,23.65,331
+2026-09-02,Newtown,Croissant,7,3.60,25.20,331
+2026-09-02,Newtown,Banana bread,2,4.00,8.00,331
+2026-09-02,Newtown,Cold brew,5,5.23,26.15,331
+2026-09-02,Airport,Filter coffee,3,3.58,10.74,634
+2026-09-02,Airport,Flat white,4,4.51,18.04,634
+2026-09-02,Airport,Latte,2,4.73,9.46,634
+2026-09-02,Airport,Croissant,5,3.60,18.00,634
+2026-09-02,Airport,Banana bread,4,4.00,16.00,634
+2026-09-02,Airport,Cold brew,4,5.23,20.92,634
+2026-09-03,Dockside,Filter coffee,5,3.58,17.90,439
+2026-09-03,Dockside,Flat white,7,4.51,31.57,439
+2026-09-03,Dockside,Latte,5,4.73,23.65,439
+2026-09-03,Dockside,Croissant,7,3.60,25.20,439
+2026-09-03,Dockside,Banana bread,5,4.00,20.00,439
+2026-09-03,Dockside,Cold brew,2,5.23,10.46,439
+2026-09-03,Newtown,Filter coffee,5,3.58,17.90,321
+2026-09-03,Newtown,Flat white,4,4.51,18.04,321
+2026-09-03,Newtown,Latte,3,4.73,14.19,321
+2026-09-03,Newtown,Croissant,4,3.60,14.40,321
+2026-09-03,Newtown,Banana bread,3,4.00,12.00,321
+2026-09-03,Newtown,Cold brew,4,5.23,20.92,321
+2026-09-03,Airport,Filter coffee,3,3.58,10.74,569
+2026-09-03,Airport,Flat white,2,4.51,9.02,569
+2026-09-03,Airport,Latte,4,4.73,18.92,569
+2026-09-03,Airport,Croissant,3,3.60,10.80,569
+2026-09-03,Airport,Banana bread,3,4.00,12.00,569
+2026-09-03,Airport,Cold brew,2,5.23,10.46,569
+2026-09-04,Dockside,Filter coffee,7,3.58,25.06,571
+2026-09-04,Dockside,Flat white,9,4.51,40.59,571
+2026-09-04,Dockside,Latte,7,4.73,33.11,571
+2026-09-04,Dockside,Croissant,8,3.60,28.80,571
+2026-09-04,Dockside,Banana bread,10,4.00,40.00,571
+2026-09-04,Dockside,Cold brew,4,5.23,20.92,571
+2026-09-04,Newtown,Filter coffee,7,3.58,25.06,423
+2026-09-04,Newtown,Flat white,6,4.51,27.06,423
+2026-09-04,Newtown,Latte,5,4.73,23.65,423
+2026-09-04,Newtown,Croissant,7,3.60,25.20,423
+2026-09-04,Newtown,Banana bread,8,4.00,32.00,423
+2026-09-04,Newtown,Cold brew,5,5.23,26.15,423
+2026-09-04,Airport,Filter coffee,4,3.58,14.32,804
+2026-09-04,Airport,Flat white,5,4.51,22.55,804
+2026-09-04,Airport,Latte,4,4.73,,804
+2026-09-04,Airport,Croissant,5,3.60,18.00,804
+2026-09-04,Airport,Banana bread,4,4.00,16.00,804
+2026-09-04,Airport,Cold brew,5,5.23,26.15,804
+2026-09-05,Dockside,Filter coffee,4,3.58,14.32,298
+2026-09-05,Dockside,Flat white,4,4.51,18.04,298
+2026-09-05,Dockside,Latte,3,4.73,14.19,298
+2026-09-05,Dockside,Croissant,5,3.60,18.00,298
+2026-09-05,Dockside,Banana bread,4,4.00,16.00,298
+2026-09-05,Dockside,Cold brew,5,5.23,26.15,298
+2026-09-05,Newtown,Filter coffee,2,3.58,7.16,
+2026-09-05,Newtown,Flat white,4,4.51,18.04,261
+2026-09-05,Newtown,Latte,2,4.73,9.46,261
+2026-09-05,Newtown,Croissant,3,3.60,10.80,261
+2026-09-05,Newtown,Banana bread,4,4.00,16.00,261
+2026-09-05,Newtown,Cold brew,2,5.23,10.46,261
+2026-09-05,Airport,Filter coffee,2,3.58,7.16,430
+2026-09-05,Airport,Flat white,2,4.51,9.02,430
+2026-09-05,Airport,Latte,2,4.73,9.46,430
+2026-09-05,AIRPORT,Croissant,2,3.60,7.20,430
+2026-09-05,Airport,Banana bread,3,4.00,12.00,430
+2026-09-05,Airport,Cold brew,1,5.23,5.23,430
+2026-09-06,Dockside,Filter coffee,3,3.58,10.74,251
+2026-09-06,Dockside,Flat white,2,4.51,9.02,
+2026-09-06,Dockside,Latte,3,4.73,14.19,251
+2026-09-06,Dockside,Croissant,3,3.60,10.80,251
+2026-09-06,DOCKSIDE,Banana bread,3,4.00,12.00,251
+2026-09-06,Dockside,Cold brew,4,5.23,20.92,251
+2026-09-06,Newtown,Filter coffee,3,3.58,10.74,217
+2026-09-06,Newtown,Flat white,3,4.51,13.53,217
+2026-09-06,Newtown,Latte,3,4.73,14.19,217
+2026-09-06,Newtown,Croissant,3,3.60,10.80,217
+2026-09-06,Newtown,Banana bread,4,4.00,16.00,217
+2026-09-06,Newtown,Cold brew,3,5.23,15.69,217
+2026-09-06,Airport,Filter coffee,1,3.58,3.58,360
+2026-09-06,Airport,Flat white,2,4.51,9.02,360
+2026-09-06,Airport,Latte,3,4.73,14.19,360
+2026-09-06,Airport,Croissant,2,3.60,7.20,360
+2026-09-06,Airport,Banana bread,3,4.00,12.00,360
+2026-09-06,AIRPORT,Cold brew,1,5.23,5.23,360
+2026-09-07,Dockside,Filter coffee,5,3.58,17.90,451
+2026-09-07,Dockside,Flat white,6,4.51,27.06,451
+2026-09-07,Dockside,Latte,6,4.73,28.38,451
+2026-09-07,Dockside,Croissant,7,3.60,25.20,451
+2026-09-07,Dockside,Banana bread,9,4.00,36.00,451
+2026-09-07,Dockside,Cold brew,5,5.23,26.15,451
+2026-09-07,Newtown,Filter coffee,4,3.58,14.32,382
+2026-09-07,Newtown,Flat white,8,4.51,36.08,382
+2026-09-07,Newtown,Latte,6,4.73,28.38,382
+2026-09-07,Newtown,Croissant,6,3.60,21.60,382
+2026-09-07,Newtown,Banana bread,6,4.00,24.00,382
+2026-09-07,Newtown,Cold brew,7,5.23,36.61,382
+2026-09-07,Airport,Filter coffee,4,3.58,14.32,715
+2026-09-07,Airport,Flat white,2,4.51,9.02,715
+2026-09-07,Airport,Latte,3,4.73,14.19,715
+2026-09-07,Airport,Croissant,5,3.60,18.00,715
+2026-09-07,Airport,Banana bread,6,4.00,24.00,715
+2026-09-07,Airport,Cold brew,5,5.23,26.15,715
+2026-09-08,Dockside,Filter coffee,6,3.58,21.48,493
+2026-09-08,Dockside,Flat white,6,4.51,27.06,493
+2026-09-08,Dockside,Latte,3,4.73,14.19,493
+2026-09-08,Dockside,Croissant,9,3.60,32.40,493
+2026-09-08,Dockside,Banana bread,7,4.00,28.00,493
+2026-09-08,Dockside,Cold brew,5,5.23,26.15,493
+2026-09-08,Newtown,Filter coffee,4,3.58,14.32,344
+2026-09-08,Newtown,Flat white,6,4.51,27.06,344
+2026-09-08,Newtown,Latte,5,4.73,23.65,344
+2026-09-08,Newtown,Croissant,5,3.60,18.00,344
+2026-09-08,Newtown,Banana bread,5,4.00,20.00,344
+2026-09-08,Newtown,Cold brew,4,5.23,20.92,344
+2026-09-08,Airport,Filter coffee,3,3.58,10.74,642
+2026-09-08,Airport,Flat white,4,4.51,18.04,642
+2026-09-08,Airport,Latte,3,4.73,14.19,642
+2026-09-08,Airport,Croissant,5,3.60,18.00,642
+2026-09-08,Airport,Banana bread,7,4.00,28.00,642
+2026-09-08,Airport,Cold brew,6,5.23,31.38,642
+2026-09-09,Dockside,Filter coffee,6,3.58,21.48,441
+2026-09-09,Dockside,Flat white,7,4.51,31.57,441
+2026-09-09,Dockside,Latte,5,4.73,23.65,441
+2026-09-09,Dockside,Croissant,5,3.60,18.00,441
+2026-09-09,Dockside,Banana bread,6,4.00,24.00,441
+2026-09-09,Dockside,Cold brew,6,5.23,31.38,441
+2026-09-09,Newtown,Filter coffee,4,3.58,14.32,371
+2026-09-09,Newtown,Flat white,4,4.51,18.04,371
+2026-09-09,Newtown,Latte,6,4.73,28.38,371
+2026-09-09,Newtown,Croissant,7,3.60,25.20,371
+2026-09-09,Newtown,Banana bread,2,4.00,8.00,371
+2026-09-09,Newtown,Cold brew,4,5.23,20.92,371
+2026-09-09,Airport,Filter coffee,5,3.58,17.90,645
+2026-09-09,Airport,Flat white,4,4.51,18.04,645
+2026-09-09,Airport,Latte,4,4.73,18.92,645
+2026-09-09,Airport,Croissant,3,3.60,,645
+2026-09-09,Airport,Banana bread,4,4.00,16.00,645
+2026-09-09,Airport,Cold brew,3,5.23,15.69,645
+2026-09-10,Dockside,Filter coffee,7,3.58,25.06,528
+2026-09-10,Dockside,Flat white,3,4.51,13.53,528
+2026-09-10,Dockside,Latte,4,4.73,18.92,528
+2026-09-10,Dockside,Croissant,9,3.60,32.40,528
+2026-09-10,Dockside,Banana bread,5,4.00,20.00,528
+2026-09-10,Dockside,Cold brew,8,5.23,41.84,528
+2026-09-10,Newtown,Filter coffee,5,3.58,17.90,335
+2026-09-10,Newtown,Flat white,4,4.51,18.04,335
+2026-09-10,Newtown,Latte,3,4.73,14.19,335
+2026-09-10,Newtown,Croissant,5,3.60,18.00,335
+2026-09-10,Newtown,Banana bread,4,4.00,16.00,335
+2026-09-10,Newtown,Cold brew,4,5.23,20.92,335
+2026-09-10,Airport,Filter coffee,2,3.58,7.16,654
+2026-09-10,Airport,Flat white,4,4.51,18.04,654
+2026-09-10,Airport,Latte,4,4.73,18.92,654
+2026-09-10,Airport,Croissant,4,3.60,14.40,654
+2026-09-10,Airport,Banana bread,3,4.00,12.00,654
+2026-09-10,Airport,Cold brew,3,5.23,15.69,654
+2026-09-11,Dockside,Filter coffee,5,3.58,17.90,522
+2026-09-11,Dockside,Flat white,5,4.51,22.55,522
+2026-09-11,Dockside,Latte,6,4.73,28.38,522
+2026-09-11,Dockside,Croissant,5,3.60,18.00,522
+2026-09-11,Dockside,Banana bread,7,4.00,28.00,522
+2026-09-11,Dockside,Cold brew,5,5.23,26.15,522
+2026-09-11,Newtown,Filter coffee,4,3.58,14.32,346
+2026-09-11,Newtown,Flat white,4,4.51,18.04,346
+2026-09-11,Newtown,Latte,4,4.73,18.92,346
+2026-09-11,Newtown,Croissant,5,3.60,18.00,346
+2026-09-11,Newtown,Banana bread,5,4.00,20.00,346
+2026-09-11,Newtown,Cold brew,5,5.23,26.15,346
+2026-09-11,Airport,Filter coffee,4,3.58,14.32,742
+2026-09-11,Airport,Flat white,6,4.51,27.06,742
+2026-09-11,Airport,Latte,4,4.73,18.92,742
+2026-09-11,Airport,Croissant,4,3.60,14.40,742
+2026-09-11,Airport,Banana bread,3,4.00,12.00,742
+2026-09-11,Airport,Cold brew,6,5.23,31.38,742
+2026-09-12,Dockside,Filter coffee,4,3.58,14.32,306
+2026-09-12,Dockside,Flat white,4,4.51,18.04,306
+2026-09-12,Dockside,Latte,5,4.73,23.65,306
+2026-09-12,Dockside,Croissant,3,3.60,10.80,306
+2026-09-12,Dockside,Banana bread,4,4.00,16.00,306
+2026-09-12,Dockside,Cold brew,4,5.23,20.92,306
+2026-09-12,Newtown,Filter coffee,3,3.58,10.74,237
+2026-09-12,Newtown,Flat white,3,4.51,13.53,237
+2026-09-12,Newtown,Latte,2,4.73,9.46,237
+2026-09-12,Newtown,Croissant,5,3.60,18.00,237
+2026-09-12,Newtown,Banana bread,5,4.00,20.00,237
+2026-09-12,Newtown,Cold brew,2,5.23,10.46,237
+2026-09-12,Airport,Filter coffee,4,3.58,14.32,499
+2026-09-12,Airport,Flat white,3,4.51,13.53,499
+2026-09-12,Airport,Latte,3,4.73,14.19,499
+2026-09-12,Airport,Croissant,2,3.60,7.20,499
+2026-09-12,Airport,Banana bread,3,4.00,12.00,499
+2026-09-12,Airport,Cold brew,3,5.23,,499
+2026-09-13,Dockside,Filter coffee,3,3.58,10.74,229
+2026-09-13,Dockside,Flat white,3,4.51,13.53,229
+2026-09-13,Dockside,Latte,1,4.73,4.73,229
+2026-09-13,Dockside,Croissant,3,3.60,10.80,229
+2026-09-13,Dockside,Banana bread,3,4.00,12.00,229
+2026-09-13,Dockside,Cold brew,3,5.23,15.69,229
+2026-09-13,Newtown,Filter coffee,2,3.58,7.16,155
+2026-09-13,Newtown,Flat white,2,4.51,9.02,155
+2026-09-13,Newtown,Latte,2,4.73,9.46,155
+2026-09-13,Newtown,Croissant,2,3.60,7.20,155
+2026-09-13,Newtown,Banana bread,2,4.00,8.00,155
+2026-09-13,Newtown,Cold brew,2,5.23,10.46,155
+2026-09-13,Airport,Filter coffee,2,3.58,7.16,358
+2026-09-13,Airport,Flat white,1,4.51,4.51,358
+2026-09-13,Airport,Latte,2,4.73,9.46,358
+2026-09-13,Airport,Croissant,2,3.60,7.20,358
+2026-09-13,Airport,Banana bread,1,4.00,4.00,358
+2026-09-13,Airport,Cold brew,1,5.23,5.23,358
+2026-09-14,Dockside,Filter coffee,5,3.58,17.90,538
+2026-09-14,Dockside,Flat white,8,4.51,36.08,538
+2026-09-14,Dockside,Latte,7,4.73,33.11,538
+2026-09-14,Dockside,Croissant,7,3.60,25.20,538
+2026-09-14,Dockside,Banana bread,7,4.00,28.00,538
+2026-09-14,Dockside,Cold brew,7,5.23,36.61,538
+2026-09-14,Newtown,Filter coffee,5,3.58,17.90,397
+2026-09-14,Newtown,Flat white,4,4.51,18.04,397
+2026-09-14,Newtown,Latte,5,4.73,23.65,397
+2026-09-14,Newtown,Croissant,7,3.60,25.20,397
+2026-09-14,Newtown,Banana bread,6,4.00,24.00,397
+2026-09-14,Newtown,Cold brew,5,5.23,26.15,397
+2026-09-14,Airport,Filter coffee,4,3.58,14.32,639
+2026-09-14,Airport,Flat white,5,4.51,22.55,639
+2026-09-14,Airport,Latte,3,4.73,14.19,639
+2026-09-14,Airport,Croissant,4,3.60,14.40,639
+2026-09-14,Airport,Banana bread,4,4.00,16.00,639
+2026-09-14,Airport,Cold brew,3,5.23,15.69,639
+2026-09-15,Dockside,Filter coffee,6,3.58,21.48,499
+2026-09-15,Dockside,Flat white,4,4.51,18.04,499
+2026-09-15,Dockside,Latte,9,4.73,42.57,499
+2026-09-15,Dockside,Croissant,8,3.60,28.80,499
+2026-09-15,Dockside,Banana bread,10,4.00,40.00,499
+2026-09-15,Dockside,Cold brew,5,5.23,26.15,499
+2026-09-15,Newtown,Filter coffee,6,3.58,21.48,333
+2026-09-15,Newtown,Flat white,4,4.51,18.04,333
+2026-09-15,Newtown,Latte,3,4.73,14.19,333
+2026-09-15,Newtown,Croissant,5,3.60,18.00,333
+2026-09-15,Newtown,Banana bread,3,4.00,12.00,333
+2026-09-15,Newtown,Cold brew,6,5.23,31.38,333
+2026-09-15,Airport,Filter coffee,2,3.58,7.16,575
+2026-09-15,Airport,Flat white,4,4.51,18.04,575
+2026-09-15,Airport,Latte,4,4.73,18.92,575
+2026-09-15,Airport,Croissant,4,3.60,14.40,575
+2026-09-15,Airport,Banana bread,4,4.00,16.00,575
+2026-09-15,Airport,Cold brew,4,5.23,20.92,575
+2026-09-16,Dockside,Filter coffee,3,3.58,10.74,447
+2026-09-16,Dockside,Flat white,9,4.51,40.59,447
+2026-09-16,Dockside,Latte,2,4.73,9.46,447
+2026-09-16,Dockside,Croissant,6,3.60,21.60,447
+2026-09-16,Dockside,Banana bread,7,4.00,28.00,447
+2026-09-16,Dockside,Cold brew,5,5.23,26.15,447
+2026-09-16,Newtown,Filter coffee,5,3.58,17.90,331
+2026-09-16,Newtown,Flat white,4,4.51,18.04,331
+2026-09-16,Newtown,Latte,3,4.73,14.19,331
+2026-09-16,Newtown,Croissant,5,3.60,18.00,331
+2026-09-16,Newtown,Banana bread,6,4.00,24.00,331
+2026-09-16,Newtown,Cold brew,3,5.23,15.69,331
+2026-09-16,Airport,Filter coffee,4,3.58,14.32,606
+2026-09-16,Airport,Flat white,3,4.51,13.53,606
+2026-09-16,Airport,Latte,3,4.73,14.19,606
+2026-09-16,Airport,Croissant,4,3.60,14.40,606
+2026-09-16,Airport,Banana bread,4,4.00,16.00,606
+2026-09-16,Airport,Cold brew,3,5.23,15.69,606
+2026-09-17,Dockside,Filter coffee,4,3.58,14.32,427
+2026-09-17,Dockside,Flat white,6,4.51,27.06,427
+2026-09-17,Dockside,Latte,4,4.73,18.92,427
+2026-09-17,Dockside,Croissant,8,3.60,28.80,427
+2026-09-17,Dockside,Banana bread,7,4.00,28.00,427
+2026-09-17,Dockside,Cold brew,5,5.23,26.15,427
+2026-09-17,Newtown,Filter coffee,3,3.58,10.74,320
+2026-09-17,Newtown,Flat white,4,4.51,18.04,320
+2026-09-17,Newtown,Latte,5,4.73,23.65,320
+2026-09-17,Newtown,Croissant,3,3.60,10.80,320
+2026-09-17,Newtown,Banana bread,5,4.00,20.00,320
+2026-09-17,Newtown,Cold brew,3,5.23,15.69,320
+2026-09-17,Airport,Filter coffee,5,3.58,17.90,599
+2026-09-17,Airport,Flat white,4,4.51,18.04,599
+2026-09-17,Airport,Latte,4,4.73,18.92,599
+2026-09-17,Airport,Croissant,4,3.60,14.40,599
+2026-09-17,Airport,Banana bread,4,4.00,16.00,599
+2026-09-17,Airport,Cold brew,4,5.23,20.92,599
+2026-09-18,Dockside,Filter coffee,4,3.58,14.32,477
+2026-09-18,Dockside,Flat white,4,4.51,18.04,477
+2026-09-18,Dockside,Latte,6,4.73,28.38,477
+2026-09-18,Dockside,Croissant,7,3.60,25.20,477
+2026-09-18,Dockside,Banana bread,3,4.00,12.00,477
+2026-09-18,Dockside,Cold brew,6,5.23,31.38,477
+2026-09-18,Newtown,Filter coffee,6,3.58,21.48,425
+2026-09-18,Newtown,Flat white,8,4.51,36.08,425
+2026-09-18,Newtown,Latte,8,4.73,37.84,425
+2026-09-18,Newtown,Croissant,8,3.60,28.80,425
+2026-09-18,Newtown,Banana bread,9,4.00,36.00,425
+2026-09-18,Newtown,Cold brew,6,5.23,31.38,425
+2026-09-18,Airport,Filter coffee,2,3.58,7.16,693
+2026-09-18,Airport,Flat white,5,4.51,22.55,693
+2026-09-18,Airport,Latte,3,4.73,14.19,693
+2026-09-18,Airport,Croissant,5,3.60,18.00,693
+2026-09-18,Airport,Banana bread,4,4.00,16.00,693
+2026-09-18,Airport,Cold brew,3,5.23,15.69,693
+2026-09-19,Dockside,Filter coffee,4,3.58,14.32,287
+2026-09-19,Dockside,Flat white,3,4.51,13.53,287
+2026-09-19,Dockside,Latte,4,4.73,18.92,287
+2026-09-19,Dockside,Croissant,3,3.60,10.80,287
+2026-09-19,Dockside,Banana bread,4,4.00,16.00,287
+2026-09-19,Dockside,Cold brew,2,5.23,10.46,287
+2026-09-19,Newtown,Filter coffee,3,3.58,10.74,234
+2026-09-19,Newtown,Flat white,2,4.51,9.02,234
+2026-09-19,Newtown,Latte,3,4.73,14.19,234
+2026-09-19,Newtown,Croissant,3,3.60,10.80,234
+2026-09-19,Newtown,Banana bread,2,4.00,8.00,234
+2026-09-19,Newtown,Cold brew,3,5.23,15.69,234
+2026-09-19,Airport,Filter coffee,2,3.58,7.16,340
+2026-09-19,Airport,Flat white,1,4.51,4.51,340
+2026-09-19,Airport,Latte,2,4.73,9.46,340
+2026-09-19,Airport,Croissant,2,3.60,7.20,340
+2026-09-19,Airport,Banana bread,2,4.00,8.00,340
+2026-09-19,Airport,Cold brew,2,5.23,10.46,340
+2026-09-20,Dockside,Filter coffee,3,3.58,10.74,242
+2026-09-20,Dockside,Flat white,2,4.51,9.02,242
+2026-09-20,Dockside,Latte,3,4.73,14.19,242
+2026-09-20,Dockside,Croissant,3,3.60,10.80,242
+2026-09-20,Dockside,Banana bread,3,4.00,12.00,242
+2026-09-20,Dockside,Cold brew,3,5.23,15.69,242
+2026-09-20,Newtown,Filter coffee,2,3.58,,236
+2026-09-20,Newtown,Flat white,4,4.51,18.04,236
+2026-09-20,Newtown,Latte,3,4.73,14.19,236
+2026-09-20,Newtown,Croissant,4,3.60,14.40,236
+2026-09-20,Newtown,Banana bread,5,4.00,20.00,236
+2026-09-20,Newtown,Cold brew,2,5.23,10.46,236
+2026-09-20,Airport,Filter coffee,2,3.58,7.16,340
+2026-09-20,Airport,Flat white,2,4.51,9.02,340
+2026-09-20,Airport,Latte,2,4.73,9.46,340
+2026-09-20,Airport,Croissant,2,3.60,7.20,340
+2026-09-20,Airport,Banana bread,1,4.00,4.00,340
+2026-09-20,Airport,Cold brew,2,5.23,10.46,340
+2026-09-21,Dockside,Filter coffee,4,3.58,14.32,502
+2026-09-21,Dockside,Flat white,6,4.51,27.06,502
+2026-09-21,Dockside,Latte,7,4.73,33.11,502
+2026-09-21,Dockside,Croissant,6,3.60,21.60,502
+2026-09-21,Dockside,Banana bread,8,4.00,32.00,502
+2026-09-21,Dockside,Cold brew,7,5.23,36.61,502
+2026-09-21,Newtown,Filter coffee,4,3.58,14.32,341
+2026-09-21,Newtown,Flat white,5,4.51,22.55,341
+2026-09-21,Newtown,Latte,5,4.73,23.65,341
+2026-09-21,Newtown,Croissant,5,3.60,18.00,341
+2026-09-21,Newtown,Banana bread,6,4.00,24.00,341
+2026-09-21,Newtown,Cold brew,5,5.23,26.15,341
+2026-09-21,Airport,Filter coffee,4,3.58,14.32,594
+2026-09-21,Airport,Flat white,4,4.51,18.04,594
+2026-09-21,Airport,Latte,3,4.73,14.19,594
+2026-09-21,Airport,Croissant,1,3.60,3.60,594
+2026-09-21,Airport,Banana bread,2,4.00,8.00,594
+2026-09-21,Airport,Cold brew,3,5.23,15.69,594
+2026-09-22,Dockside,Filter coffee,4,3.58,14.32,472
+2026-09-22,Dockside,Flat white,5,4.51,22.55,472
+2026-09-22,Dockside,Latte,5,4.73,23.65,472
+2026-09-22,Dockside,Croissant,6,3.60,21.60,472
+2026-09-22,Dockside,Banana bread,5,4.00,20.00,472
+2026-09-22,Dockside,Cold brew,4,5.23,20.92,472
+2026-09-22,Newtown,Filter coffee,4,3.58,14.32,415
+2026-09-22,Newtown,Flat white,7,4.51,31.57,415
+2026-09-22,Newtown,Latte,6,4.73,28.38,415
+2026-09-22,Newtown,Croissant,6,3.60,21.60,415
+2026-09-22,Newtown,Banana bread,5,4.00,20.00,415
+2026-09-22,Newtown,Cold brew,5,5.23,26.15,415
+2026-09-22,Airport,Filter coffee,4,3.58,14.32,652
+2026-09-22,Airport,Flat white,4,4.51,18.04,652
+2026-09-22,Airport,Latte,6,4.73,28.38,652
+2026-09-22,Airport,Croissant,3,3.60,10.80,652
+2026-09-22,Airport,Banana bread,4,4.00,16.00,652
+2026-09-22,Airport,Cold brew,3,5.23,15.69,652
+2026-09-23,Dockside,Filter coffee,7,3.58,25.06,504
+2026-09-23,Dockside,Flat white,6,4.51,27.06,504
+2026-09-23,Dockside,Latte,6,4.73,,504
+2026-09-23,Dockside,Croissant,4,3.60,14.40,504
+2026-09-23,Dockside,Banana bread,8,4.00,32.00,504
+2026-09-23,Dockside,Cold brew,7,5.23,36.61,504
+2026-09-23,Newtown,Filter coffee,5,3.58,17.90,333
+2026-09-23,Newtown,Flat white,7,4.51,31.57,333
+2026-09-23,Newtown,Latte,2,4.73,9.46,333
+2026-09-23,Newtown,Croissant,5,3.60,18.00,333
+2026-09-23,Newtown,Banana bread,4,4.00,16.00,333
+2026-09-23,Newtown,Cold brew,6,5.23,31.38,333
+2026-09-23,Airport,Filter coffee,5,3.58,17.90,612
+2026-09-23,Airport,Flat white,4,4.51,18.04,612
+2026-09-23,Airport,Latte,2,4.73,9.46,612
+2026-09-23,Airport,Croissant,5,3.60,18.00,612
+2026-09-23,Airport,Banana bread,5,4.00,20.00,612
+2026-09-23,Airport,Cold brew,3,5.23,15.69,612
+2026-09-24,Dockside,Filter coffee,3,3.58,10.74,406
+2026-09-24,Dockside,Flat white,5,4.51,22.55,406
+2026-09-24,Dockside,Latte,4,4.73,18.92,406
+2026-09-24,Dockside,Croissant,5,3.60,18.00,406
+2026-09-24,Dockside,Banana bread,5,4.00,20.00,406
+2026-09-24,Dockside,Cold brew,5,5.23,26.15,406
+2026-09-24,Newtown,Filter coffee,5,3.58,17.90,395
+2026-09-24,Newtown,Flat white,5,4.51,22.55,395
+2026-09-24,Newtown,Latte,6,4.73,28.38,395
+2026-09-24,Newtown,Croissant,6,3.60,21.60,395
+2026-09-24,NEWTOWN,Banana bread,6,4.00,24.00,395
+2026-09-24,Newtown,Cold brew,7,5.23,36.61,395
+2026-09-24,Airport,Filter coffee,4,3.58,14.32,656
+2026-09-24,Airport,Flat white,5,4.51,22.55,656
+2026-09-24,Airport,Latte,4,4.73,18.92,656
+2026-09-24,Airport,Croissant,4,3.60,14.40,656
+2026-09-24,Airport,Banana bread,5,4.00,20.00,656
+2026-09-24,Airport,Cold brew,4,5.23,20.92,656
+2026-09-25,DOCKSIDE,Filter coffee,5,3.58,17.90,516
+2026-09-25,Dockside,Flat white,6,4.51,27.06,516
+2026-09-25,Dockside,Latte,6,4.73,28.38,516
+2026-09-25,Dockside,Croissant,10,3.60,36.00,516
+2026-09-25,Dockside,Banana bread,6,4.00,24.00,516
+2026-09-25,Dockside,Cold brew,5,5.23,26.15,516
+2026-09-25,Newtown,Filter coffee,7,3.58,,427
+2026-09-25,Newtown,Flat white,7,4.51,31.57,427
+2026-09-25,Newtown,Latte,4,4.73,18.92,427
+2026-09-25,Newtown,Croissant,7,3.60,25.20,427
+2026-09-25,Newtown,Banana bread,8,4.00,32.00,427
+2026-09-25,Newtown,Cold brew,6,5.23,31.38,427
+2026-09-25,Airport,Filter coffee,4,3.58,14.32,704
+2026-09-25,Airport,Flat white,3,4.51,13.53,704
+2026-09-25,Airport,Latte,3,4.73,14.19,704
+2026-09-25,Airport,Croissant,5,3.60,18.00,704
+2026-09-25,Airport,Banana bread,4,4.00,,704
+2026-09-25,Airport,Cold brew,3,5.23,15.69,704
+2026-09-26,Dockside,Filter coffee,2,3.58,7.16,378
+2026-09-26,Dockside,Flat white,5,4.51,22.55,378
+2026-09-26,Dockside,Latte,6,4.73,28.38,378
+2026-09-26,Dockside,Croissant,5,3.60,18.00,378
+2026-09-26,Dockside,Banana bread,3,4.00,12.00,378
+2026-09-26,Dockside,Cold brew,4,5.23,20.92,378
+2026-09-26,Newtown,Filter coffee,4,3.58,14.32,245
+2026-09-26,Newtown,Flat white,3,4.51,13.53,245
+2026-09-26,Newtown,Latte,4,4.73,18.92,245
+2026-09-26,Newtown,Croissant,4,3.60,14.40,245
+2026-09-26,Newtown,Banana bread,2,4.00,8.00,245
+2026-09-26,Newtown,Cold brew,4,5.23,20.92,245
+2026-09-26,Airport,Filter coffee,3,3.58,10.74,474
+2026-09-26,Airport,Flat white,2,4.51,9.02,474
+2026-09-26,Airport,Latte,2,4.73,9.46,474
+2026-09-26,Airport,Croissant,3,3.60,10.80,474
+2026-09-26,Airport,Banana bread,2,4.00,8.00,474
+2026-09-26,Airport,Cold brew,2,5.23,10.46,474
+2026-09-27,Dockside,Filter coffee,3,3.58,10.74,216
+2026-09-27,Dockside,Flat white,2,4.51,9.02,216
+2026-09-27,Dockside,Latte,3,4.73,14.19,216
+2026-09-27,Dockside,Croissant,3,3.60,10.80,216
+2026-09-27,Dockside,Banana bread,1,4.00,4.00,216
+2026-09-27,Dockside,Cold brew,2,5.23,10.46,216
+2026-09-27,Newtown,Filter coffee,2,3.58,7.16,193
+2026-09-27,Newtown,Flat white,2,4.51,9.02,193
+2026-09-27,Newtown,Latte,3,4.73,14.19,193
+2026-09-27,Newtown,Croissant,3,3.60,10.80,193
+2026-09-27,Newtown,Banana bread,3,4.00,12.00,193
+2026-09-27,Newtown,Cold brew,2,5.23,10.46,193
+2026-09-27,Airport,Filter coffee,1,3.58,3.58,293
+2026-09-27,Airport,Flat white,2,4.51,9.02,293
+2026-09-27,Airport,Latte,2,4.73,9.46,293
+2026-09-27,Airport,Croissant,2,3.60,7.20,293
+2026-09-27,Airport,Banana bread,1,4.00,4.00,293
+2026-09-27,Airport,Cold brew,2,5.23,10.46,293
+2026-09-28,DOCKSIDE,Filter coffee,5,3.58,17.90,450
+2026-09-28,Dockside,Flat white,7,4.51,31.57,450
+2026-09-28,Dockside,Latte,6,4.73,28.38,450
+2026-09-28,Dockside,Croissant,8,3.60,28.80,450
+2026-09-28,Dockside,Banana bread,6,4.00,24.00,450
+2026-09-28,Dockside,Cold brew,7,5.23,36.61,450
+2026-09-28,Newtown,Filter coffee,6,3.58,21.48,413
+2026-09-28,Newtown,Flat white,5,4.51,22.55,413
+2026-09-28,Newtown,Latte,3,4.73,14.19,413
+2026-09-28,Newtown,Croissant,6,3.60,21.60,413
+2026-09-28,Newtown,Banana bread,7,4.00,28.00,413
+2026-09-28,Newtown,Cold brew,5,5.23,26.15,413
+2026-09-28,Airport,Filter coffee,5,3.58,17.90,699
+2026-09-28,Airport,Flat white,4,4.51,18.04,699
+2026-09-28,Airport,Latte,4,4.73,18.92,699
+2026-09-28,Airport,Croissant,4,3.60,14.40,699
+2026-09-28,Airport,Banana bread,4,4.00,16.00,699
+2026-09-28,Airport,Cold brew,6,5.23,31.38,699
+2026-09-29,Dockside,Filter coffee,5,3.58,17.90,458
+2026-09-29,Dockside,Flat white,8,4.51,36.08,458
+2026-09-29,Dockside,Latte,5,4.73,23.65,458
+2026-09-29,Dockside,Croissant,3,3.60,10.80,458
+2026-09-29,Dockside,Banana bread,5,4.00,20.00,458
+2026-09-29,Dockside,Cold brew,4,5.23,20.92,458
+2026-09-29,Newtown,Filter coffee,4,3.58,14.32,366
+2026-09-29,Newtown,Flat white,4,4.51,18.04,366
+2026-09-29,Newtown,Latte,3,4.73,14.19,366
+2026-09-29,Newtown,Croissant,6,3.60,21.60,366
+2026-09-29,Newtown,Banana bread,5,4.00,20.00,366
+2026-09-29,Newtown,Cold brew,6,5.23,31.38,366
+2026-09-29,Airport,Filter coffee,5,3.58,17.90,662
+2026-09-29,Airport,Flat white,5,4.51,22.55,662
+2026-09-29,Airport,Latte,4,4.73,18.92,662
+2026-09-29,Airport,Croissant,1,3.60,3.60,662
+2026-09-29,Airport,Banana bread,6,4.00,24.00,662
+2026-09-29,Airport,Cold brew,3,5.23,15.69,662
+2026-09-30,Dockside,Filter coffee,6,3.58,21.48,449
+2026-09-30,Dockside,Flat white,5,4.51,22.55,449
+2026-09-30,Dockside,Latte,5,4.73,23.65,449
+2026-09-30,Dockside,Croissant,3,3.60,10.80,449
+2026-09-30,Dockside,Banana bread,7,4.00,28.00,449
+2026-09-30,Dockside,Cold brew,5,5.23,26.15,449
+2026-09-30,Newtown,Filter coffee,6,3.58,21.48,348
+2026-09-30,Newtown,Flat white,5,4.51,22.55,348
+2026-09-30,Newtown,Latte,4,4.73,18.92,348
+2026-09-30,Newtown,Croissant,6,3.60,21.60,348
+2026-09-30,Newtown,Banana bread,4,4.00,16.00,348
+2026-09-30,Newtown,Cold brew,4,5.23,20.92,348
+2026-09-30,Airport,Filter coffee,2,3.58,7.16,616
+2026-09-30,Airport,Flat white,4,4.51,18.04,616
+2026-09-30,Airport,Latte,4,4.73,18.92,616
+2026-09-30,Airport,Croissant,4,3.60,14.40,616
+2026-09-30,Airport,Banana bread,4,4.00,16.00,616
+2026-09-30,Airport,Cold brew,5,5.23,26.15,616
+2026-10-01,Dockside,Filter coffee,3,3.58,10.74,464
+2026-10-01,Dockside,Flat white,6,4.51,27.06,464
+2026-10-01,Dockside,Latte,6,4.73,28.38,464
+2026-10-01,Dockside,Croissant,5,3.60,18.00,464
+2026-10-01,Dockside,Banana bread,7,4.00,28.00,464
+2026-10-01,Dockside,Cold brew,5,5.23,26.15,464
+2026-10-01,Newtown,Filter coffee,4,3.58,14.32,361
+2026-10-01,Newtown,Flat white,7,4.51,31.57,361
+2026-10-01,Newtown,Latte,5,4.73,23.65,361
+2026-10-01,Newtown,Croissant,4,3.60,14.40,361
+2026-10-01,Newtown,Banana bread,3,4.00,12.00,361
+2026-10-01,Newtown,Cold brew,6,5.23,31.38,361
+2026-10-01,Airport,Filter coffee,3,3.58,10.74,575
+2026-10-01,Airport,Flat white,3,4.51,13.53,575
+2026-10-01,Airport,Latte,3,4.73,14.19,575
+2026-10-01,Airport,Croissant,3,3.60,10.80,575
+2026-10-01,Airport,Banana bread,3,4.00,12.00,575
+2026-10-01,Airport,Cold brew,3,5.23,15.69,575
+2026-10-02,Dockside,Filter coffee,7,3.58,25.06,480
+2026-10-02,Dockside,Flat white,7,4.51,31.57,480
+2026-10-02,Dockside,Latte,4,4.73,18.92,480
+2026-10-02,Dockside,Croissant,5,3.60,18.00,480
+2026-10-02,Dockside,Banana bread,6,4.00,24.00,480
+2026-10-02,Dockside,Cold brew,5,5.23,26.15,480
+2026-10-02,Newtown,Filter coffee,4,3.58,14.32,400
+2026-10-02,Newtown,Flat white,5,4.51,22.55,400
+2026-10-02,Newtown,Latte,5,4.73,23.65,400
+2026-10-02,Newtown,Croissant,6,3.60,21.60,400
+2026-10-02,Newtown,Banana bread,8,4.00,32.00,400
+2026-10-02,Newtown,Cold brew,5,5.23,26.15,400
+2026-10-02,Airport,Filter coffee,5,3.58,17.90,693
+2026-10-02,Airport,Flat white,4,4.51,18.04,693
+2026-10-02,Airport,Latte,3,4.73,14.19,693
+2026-10-02,Airport,Croissant,4,3.60,14.40,693
+2026-10-02,Airport,Banana bread,3,4.00,12.00,693
+2026-10-02,Airport,Cold brew,3,5.23,15.69,693
+2026-10-03,DOCKSIDE,Filter coffee,5,3.58,17.90,335
+2026-10-03,Dockside,Flat white,3,4.51,13.53,335
+2026-10-03,Dockside,Latte,2,4.73,9.46,335
+2026-10-03,Dockside,Croissant,5,3.60,18.00,335
+2026-10-03,Dockside,Banana bread,4,4.00,16.00,335
+2026-10-03,Dockside,Cold brew,5,5.23,26.15,335
+2026-10-03,Newtown,Filter coffee,3,3.58,10.74,260
+2026-10-03,Newtown,Flat white,3,4.51,13.53,260
+2026-10-03,Newtown,Latte,3,4.73,14.19,260
+2026-10-03,Newtown,Croissant,3,3.60,10.80,260
+2026-10-03,Newtown,Banana bread,3,4.00,12.00,260
+2026-10-03,Newtown,Cold brew,2,5.23,10.46,260
+2026-10-03,Airport,Filter coffee,2,3.58,7.16,448
+2026-10-03,Airport,Flat white,3,4.51,13.53,448
+2026-10-03,Airport,Latte,2,4.73,9.46,448
+2026-10-03,Airport,Croissant,3,3.60,10.80,448
+2026-10-03,Airport,Banana bread,3,4.00,12.00,448
+2026-10-03,Airport,Cold brew,2,5.23,10.46,448
+2026-10-04,Dockside,Filter coffee,1,3.58,3.58,187
+2026-10-04,Dockside,Flat white,2,4.51,9.02,187
+2026-10-04,Dockside,Latte,2,4.73,9.46,187
+2026-10-04,Dockside,Croissant,2,3.60,7.20,187
+2026-10-04,Dockside,Banana bread,2,4.00,8.00,187
+2026-10-04,Dockside,Cold brew,1,5.23,5.23,187
+2026-10-04,Newtown,Filter coffee,3,3.58,10.74,218
+2026-10-04,Newtown,Flat white,2,4.51,9.02,218
+2026-10-04,Newtown,Latte,2,4.73,9.46,218
+2026-10-04,Newtown,Croissant,4,3.60,14.40,218
+2026-10-04,Newtown,Banana bread,3,4.00,12.00,218
+2026-10-04,Newtown,Cold brew,3,5.23,15.69,218
+2026-10-04,Airport,Filter coffee,2,3.58,7.16,341
+2026-10-04,Airport,Flat white,1,4.51,4.51,341
+2026-10-04,Airport,Latte,2,4.73,9.46,341
+2026-10-04,Airport,Croissant,1,3.60,3.60,341
+2026-10-04,Airport,Banana bread,2,4.00,8.00,341
+2026-10-04,Airport,Cold brew,3,5.23,15.69,341
+2026-10-05,Dockside,Filter coffee,6,3.58,21.48,525
+2026-10-05,Dockside,Flat white,7,4.51,31.57,525
+2026-10-05,Dockside,Latte,7,4.73,33.11,525
+2026-10-05,Dockside,Croissant,7,3.60,25.20,525
+2026-10-05,Dockside,Banana bread,7,4.00,28.00,525
+2026-10-05,Dockside,Cold brew,4,5.23,20.92,525
+2026-10-05,Newtown,Filter coffee,5,3.58,17.90,309
+2026-10-05,Newtown,Flat white,3,4.51,13.53,309
+2026-10-05,Newtown,Latte,4,4.73,18.92,309
+2026-10-05,Newtown,Croissant,5,3.60,18.00,309
+2026-10-05,Newtown,Banana bread,5,4.00,20.00,309
+2026-10-05,Newtown,Cold brew,4,5.23,20.92,309
+2026-10-05,Airport,Filter coffee,3,3.58,10.74,700
+2026-10-05,Airport,Flat white,3,4.51,13.53,700
+2026-10-05,Airport,Latte,3,4.73,14.19,700
+2026-10-05,Airport,Croissant,5,3.60,18.00,700
+2026-10-05,Airport,Banana bread,3,4.00,12.00,700
+2026-10-05,Airport,Cold brew,3,5.23,15.69,700
+2026-10-06,Dockside,Filter coffee,6,3.58,21.48,460
+2026-10-06,Dockside,Flat white,7,4.51,31.57,460
+2026-10-06,Dockside,Latte,5,4.73,23.65,460
+2026-10-06,Dockside,Croissant,3,3.60,10.80,460
+2026-10-06,Dockside,Banana bread,4,4.00,16.00,460
+2026-10-06,Dockside,Cold brew,6,5.23,31.38,460
+2026-10-06,Newtown,Filter coffee,7,3.58,25.06,354
+2026-10-06,Newtown,Flat white,3,4.51,13.53,354
+2026-10-06,Newtown,Latte,3,4.73,14.19,354
+2026-10-06,Newtown,Croissant,3,3.60,10.80,354
+2026-10-06,Newtown,Banana bread,6,4.00,24.00,354
+2026-10-06,Newtown,Cold brew,3,5.23,15.69,354
+2026-10-06,Airport,Filter coffee,4,3.58,14.32,634
+2026-10-06,Airport,Flat white,4,4.51,18.04,634
+2026-10-06,Airport,Latte,3,4.73,14.19,634
+2026-10-06,Airport,Croissant,4,3.60,14.40,634
+2026-10-06,Airport,Banana bread,4,4.00,16.00,634
+2026-10-06,Airport,Cold brew,3,5.23,15.69,634
+2026-10-07,Dockside,Filter coffee,5,3.58,17.90,488
+2026-10-07,Dockside,Flat white,6,4.51,27.06,488
+2026-10-07,Dockside,Latte,6,4.73,28.38,488
+2026-10-07,Dockside,Croissant,9,3.60,32.40,488
+2026-10-07,Dockside,Banana bread,9,4.00,36.00,488
+2026-10-07,Dockside,Cold brew,8,5.23,41.84,488
+2026-10-07,Newtown,Filter coffee,5,3.58,17.90,376
+2026-10-07,Newtown,Flat white,6,4.51,27.06,376
+2026-10-07,Newtown,Latte,4,4.73,18.92,376
+2026-10-07,Newtown,Croissant,6,3.60,21.60,376
+2026-10-07,Newtown,Banana bread,4,4.00,16.00,376
+2026-10-07,Newtown,Cold brew,6,5.23,31.38,376
+2026-10-07,Airport,Filter coffee,3,3.58,10.74,642
+2026-10-07,Airport,Flat white,2,4.51,9.02,642
+2026-10-07,Airport,Latte,4,4.73,18.92,642
+2026-10-07,Airport,Croissant,4,3.60,14.40,642
+2026-10-07,Airport,Banana bread,4,4.00,16.00,642
+2026-10-07,Airport,Cold brew,4,5.23,20.92,642
+2026-10-08,Dockside,Filter coffee,5,3.58,17.90,481
+2026-10-08,Dockside,Flat white,4,4.51,18.04,481
+2026-10-08,Dockside,Latte,6,4.73,28.38,481
+2026-10-08,Dockside,Croissant,10,3.60,36.00,481
+2026-10-08,Dockside,Banana bread,4,4.00,16.00,481
+2026-10-08,Dockside,Cold brew,6,5.23,31.38,481
+2026-10-08,Newtown,Filter coffee,5,3.58,17.90,379
+2026-10-08,Newtown,Flat white,5,4.51,22.55,379
+2026-10-08,Newtown,Latte,6,4.73,28.38,379
+2026-10-08,Newtown,Croissant,7,3.60,25.20,379
+2026-10-08,Newtown,Banana bread,8,4.00,32.00,379
+2026-10-08,Newtown,Cold brew,4,5.23,20.92,379
+2026-10-08,Airport,Filter coffee,4,3.58,14.32,625
+2026-10-08,Airport,Flat white,3,4.51,13.53,625
+2026-10-08,Airport,Latte,6,4.73,28.38,
+2026-10-08,Airport,Croissant,4,3.60,14.40,625
+2026-10-08,Airport,Banana bread,2,4.00,8.00,625
+2026-10-08,Airport,Cold brew,3,5.23,15.69,625
+2026-10-09,Dockside,Filter coffee,6,3.58,21.48,534
+2026-10-09,Dockside,Flat white,7,4.51,31.57,534
+2026-10-09,Dockside,Latte,5,4.73,23.65,534
+2026-10-09,Dockside,Croissant,6,3.60,21.60,534
+2026-10-09,Dockside,Banana bread,7,4.00,28.00,534
+2026-10-09,Dockside,Cold brew,6,5.23,31.38,534
+2026-10-09,Newtown,Filter coffee,4,3.58,14.32,428
+2026-10-09,Newtown,Flat white,1,4.51,4.51,428
+2026-10-09,Newtown,Latte,5,4.73,23.65,428
+2026-10-09,Newtown,Croissant,7,3.60,25.20,428
+2026-10-09,Newtown,Banana bread,6,4.00,24.00,428
+2026-10-09,Newtown,Cold brew,6,5.23,31.38,428
+2026-10-09,Airport,Filter coffee,4,3.58,14.32,655
+2026-10-09,Airport,Flat white,4,4.51,18.04,655
+2026-10-09,Airport,Latte,3,4.73,14.19,655
+2026-10-09,Airport,Croissant,3,3.60,10.80,655
+2026-10-09,Airport,Banana bread,5,4.00,20.00,655
+2026-10-09,Airport,Cold brew,2,5.23,10.46,655
+2026-10-10,Dockside,Filter coffee,5,3.58,17.90,346
+2026-10-10,Dockside,Flat white,3,4.51,13.53,346
+2026-10-10,Dockside,Latte,4,4.73,18.92,346
+2026-10-10,Dockside,Croissant,7,3.60,25.20,346
+2026-10-10,Dockside,Banana bread,5,4.00,20.00,346
+2026-10-10,Dockside,Cold brew,3,5.23,15.69,346
+2026-10-10,Newtown,Filter coffee,3,3.58,10.74,226
+2026-10-10,Newtown,Flat white,4,4.51,18.04,226
+2026-10-10,Newtown,Latte,3,4.73,14.19,226
+2026-10-10,Newtown,Croissant,3,3.60,10.80,226
+2026-10-10,Newtown,Banana bread,2,4.00,8.00,226
+2026-10-10,Newtown,Cold brew,3,5.23,15.69,226
+2026-10-10,Airport,Filter coffee,2,3.58,7.16,396
+2026-10-10,Airport,Flat white,2,4.51,9.02,396
+2026-10-10,Airport,Latte,1,4.73,4.73,396
+2026-10-10,Airport,Croissant,2,3.60,7.20,396
+2026-10-10,Airport,Banana bread,3,4.00,12.00,396
+2026-10-10,Airport,Cold brew,2,5.23,10.46,396
+2026-10-11,Dockside,Filter coffee,3,3.58,10.74,202
+2026-10-11,Dockside,Flat white,2,4.51,9.02,202
+2026-10-11,Dockside,Latte,3,4.73,14.19,202
+2026-10-11,Dockside,Croissant,2,3.60,7.20,202
+2026-10-11,Dockside,Banana bread,3,4.00,12.00,202
+2026-10-11,Dockside,Cold brew,1,5.23,5.23,202
+2026-10-11,Newtown,Filter coffee,3,3.58,10.74,186
+2026-10-11,Newtown,Flat white,3,4.51,13.53,186
+2026-10-11,Newtown,Latte,3,4.73,14.19,186
+2026-10-11,Newtown,Croissant,2,3.60,7.20,186
+2026-10-11,Newtown,Banana bread,2,4.00,8.00,186
+2026-10-11,Newtown,Cold brew,2,5.23,10.46,186
+2026-10-11,Airport,Filter coffee,1,3.58,3.58,298
+2026-10-11,Airport,Flat white,1,4.51,4.51,298
+2026-10-11,Airport,Latte,1,4.73,4.73,298
+2026-10-11,Airport,Croissant,2,3.60,7.20,298
+2026-10-11,Airport,Banana bread,2,4.00,8.00,298
+2026-10-11,Airport,Cold brew,1,5.23,5.23,298
+2026-10-12,Dockside,Filter coffee,7,3.58,25.06,510
+2026-10-12,Dockside,Flat white,7,4.51,31.57,510
+2026-10-12,Dockside,Latte,7,4.73,33.11,510
+2026-10-12,Dockside,Croissant,7,3.60,25.20,510
+2026-10-12,Dockside,Banana bread,9,4.00,36.00,510
+2026-10-12,Dockside,Cold brew,6,5.23,31.38,510
+2026-10-12,Newtown,Filter coffee,7,3.58,25.06,428
+2026-10-12,Newtown,Flat white,6,4.51,27.06,428
+2026-10-12,Newtown,Latte,6,4.73,28.38,428
+2026-10-12,Newtown,Croissant,6,3.60,21.60,428
+2026-10-12,Newtown,Banana bread,8,4.00,32.00,428
+2026-10-12,Newtown,Cold brew,7,5.23,36.61,428
+2026-10-12,Airport,Filter coffee,5,3.58,17.90,674
+2026-10-12,Airport,Flat white,3,4.51,13.53,674
+2026-10-12,Airport,Latte,4,4.73,18.92,674
+2026-10-12,Airport,Croissant,4,3.60,14.40,674
+2026-10-12,Airport,Banana bread,4,4.00,16.00,674
+2026-10-12,Airport,Cold brew,3,5.23,15.69,674
+2026-10-13,Dockside,Filter coffee,5,3.58,17.90,496
+2026-10-13,Dockside,Flat white,8,4.51,36.08,496
+2026-10-13,Dockside,Latte,5,4.73,23.65,496
+2026-10-13,Dockside,Croissant,5,3.60,18.00,496
+2026-10-13,Dockside,Banana bread,6,4.00,24.00,496
+2026-10-13,Dockside,Cold brew,8,5.23,41.84,496
+2026-10-13,Newtown,Filter coffee,5,3.58,17.90,411
+2026-10-13,Newtown,Flat white,4,4.51,18.04,411
+2026-10-13,Newtown,Latte,5,4.73,23.65,411
+2026-10-13,Newtown,Croissant,6,3.60,21.60,411
+2026-10-13,Newtown,Banana bread,5,4.00,20.00,411
+2026-10-13,Newtown,Cold brew,7,5.23,36.61,411
+2026-10-13,Airport,Filter coffee,3,3.58,10.74,625
+2026-10-13,Airport,Flat white,2,4.51,9.02,625
+2026-10-13,Airport,Latte,4,4.73,18.92,625
+2026-10-13,Airport,Croissant,2,3.60,,625
+2026-10-13,Airport,Banana bread,3,4.00,12.00,625
+2026-10-13,Airport,Cold brew,4,5.23,20.92,625
+2026-10-14,Dockside,Filter coffee,3,3.58,10.74,445
+2026-10-14,Dockside,Flat white,4,4.51,18.04,445
+2026-10-14,Dockside,Latte,5,4.73,23.65,445
+2026-10-14,Dockside,Croissant,7,3.60,25.20,445
+2026-10-14,Dockside,Banana bread,5,4.00,20.00,445
+2026-10-14,Dockside,Cold brew,7,5.23,36.61,445
+2026-10-14,Newtown,Filter coffee,6,3.58,21.48,382
+2026-10-14,Newtown,Flat white,5,4.51,22.55,382
+2026-10-14,Newtown,Latte,2,4.73,9.46,382
+2026-10-14,Newtown,Croissant,5,3.60,18.00,382
+2026-10-14,Newtown,Banana bread,9,4.00,36.00,382
+2026-10-14,Newtown,Cold brew,4,5.23,20.92,382
+2026-10-14,Airport,Filter coffee,3,3.58,10.74,677
+2026-10-14,Airport,Flat white,3,4.51,13.53,677
+2026-10-14,Airport,Latte,3,4.73,14.19,677
+2026-10-14,Airport,Croissant,6,3.60,21.60,677
+2026-10-14,Airport,Banana bread,5,4.00,20.00,677
+2026-10-14,Airport,Cold brew,3,5.23,15.69,677
+2026-10-15,Dockside,Filter coffee,7,3.58,25.06,462
+2026-10-15,Dockside,Flat white,5,4.51,22.55,462
+2026-10-15,Dockside,Latte,4,4.73,18.92,462
+2026-10-15,Dockside,Croissant,7,3.60,25.20,462
+2026-10-15,Dockside,Banana bread,4,4.00,16.00,462
+2026-10-15,Dockside,Cold brew,7,5.23,36.61,462
+2026-10-15,Newtown,Filter coffee,5,3.58,17.90,365
+2026-10-15,Newtown,Flat white,6,4.51,27.06,365
+2026-10-15,Newtown,Latte,5,4.73,23.65,365
+2026-10-15,Newtown,Croissant,4,3.60,14.40,365
+2026-10-15,Newtown,Banana bread,6,4.00,24.00,365
+2026-10-15,Newtown,Cold brew,3,5.23,15.69,365
+2026-10-15,Airport,Filter coffee,3,3.58,10.74,672
+2026-10-15,Airport,Flat white,4,4.51,18.04,672
+2026-10-15,Airport,Latte,4,4.73,18.92,672
+2026-10-15,Airport,Croissant,4,3.60,14.40,672
+2026-10-15,Airport,Banana bread,4,4.00,16.00,672
+2026-10-15,Airport,Cold brew,4,5.23,20.92,672
+2026-10-16,Dockside,Filter coffee,6,3.58,21.48,516
+2026-10-16,Dockside,Flat white,5,4.51,22.55,516
+2026-10-16,Dockside,Latte,6,4.73,28.38,516
+2026-10-16,Dockside,Croissant,8,3.60,28.80,516
+2026-10-16,Dockside,Banana bread,7,4.00,28.00,516
+2026-10-16,Dockside,Cold brew,4,5.23,20.92,516
+2026-10-16,Newtown,Filter coffee,4,3.58,14.32,372
+2026-10-16,Newtown,Flat white,5,4.51,22.55,372
+2026-10-16,Newtown,Latte,4,4.73,18.92,372
+2026-10-16,Newtown,Croissant,5,3.60,18.00,372
+2026-10-16,Newtown,Banana bread,4,4.00,16.00,372
+2026-10-16,Newtown,Cold brew,6,5.23,31.38,372
+2026-10-16,Airport,Filter coffee,3,3.58,10.74,739
+2026-10-16,Airport,Flat white,5,4.51,22.55,739
+2026-10-16,Airport,Latte,5,4.73,23.65,739
+2026-10-16,Airport,Croissant,7,3.60,25.20,739
+2026-10-16,Airport,Banana bread,6,4.00,24.00,739
+2026-10-16,Airport,Cold brew,5,5.23,26.15,739
+2026-10-17,Dockside,Filter coffee,2,3.58,7.16,287
+2026-10-17,Dockside,Flat white,4,4.51,18.04,287
+2026-10-17,Dockside,Latte,3,4.73,14.19,287
+2026-10-17,Dockside,Croissant,3,3.60,10.80,287
+2026-10-17,Dockside,Banana bread,3,4.00,12.00,287
+2026-10-17,Dockside,Cold brew,4,5.23,,287
+2026-10-17,Newtown,Filter coffee,5,3.58,17.90,302
+2026-10-17,Newtown,Flat white,3,4.51,13.53,302
+2026-10-17,Newtown,Latte,4,4.73,18.92,302
+2026-10-17,Newtown,Croissant,5,3.60,18.00,302
+2026-10-17,Newtown,Banana bread,3,4.00,12.00,302
+2026-10-17,Newtown,Cold brew,4,5.23,20.92,302
+2026-10-17,Airport,Filter coffee,1,3.58,3.58,383
+2026-10-17,Airport,Flat white,2,4.51,9.02,383
+2026-10-17,Airport,Latte,2,4.73,9.46,383
+2026-10-17,Airport,Croissant,3,3.60,10.80,383
+2026-10-17,Airport,Banana bread,3,4.00,12.00,383
+2026-10-17,Airport,Cold brew,2,5.23,10.46,383
+2026-10-18,Dockside,Filter coffee,2,3.58,7.16,191
+2026-10-18,Dockside,Flat white,2,4.51,9.02,191
+2026-10-18,Dockside,Latte,3,4.73,14.19,191
+2026-10-18,Dockside,Croissant,2,3.60,7.20,191
+2026-10-18,Dockside,Banana bread,2,4.00,8.00,191
+2026-10-18,Dockside,Cold brew,2,5.23,10.46,191
+2026-10-18,Newtown,Filter coffee,3,3.58,10.74,239
+2026-10-18,Newtown,Flat white,4,4.51,18.04,239
+2026-10-18,Newtown,Latte,1,4.73,4.73,239
+2026-10-18,Newtown,Croissant,3,3.60,10.80,239
+2026-10-18,Newtown,Banana bread,3,4.00,12.00,239
+2026-10-18,Newtown,Cold brew,4,5.23,20.92,239
+2026-10-18,Airport,Filter coffee,2,3.58,7.16,379
+2026-10-18,Airport,Flat white,2,4.51,9.02,379
+2026-10-18,Airport,Latte,2,4.73,9.46,379
+2026-10-18,Airport,Croissant,2,3.60,7.20,379
+2026-10-18,Airport,Banana bread,3,4.00,12.00,379
+2026-10-18,Airport,Cold brew,1,5.23,5.23,379
+2026-10-19,Dockside,Filter coffee,4,3.58,14.32,557
+2026-10-19,Dockside,Flat white,7,4.51,31.57,557
+2026-10-19,Dockside,Latte,8,4.73,37.84,557
+2026-10-19,Dockside,Croissant,8,3.60,28.80,557
+2026-10-19,Dockside,Banana bread,9,4.00,36.00,557
+2026-10-19,Dockside,Cold brew,6,5.23,31.38,557
+2026-10-19,Newtown,Filter coffee,6,3.58,21.48,363
+2026-10-19,Newtown,Flat white,4,4.51,18.04,363
+2026-10-19,Newtown,Latte,5,4.73,23.65,363
+2026-10-19,Newtown,Croissant,5,3.60,18.00,363
+2026-10-19,Newtown,Banana bread,1,4.00,4.00,363
+2026-10-19,Newtown,Cold brew,2,5.23,10.46,363
+2026-10-19,Airport,Filter coffee,3,3.58,10.74,615
+2026-10-19,Airport,Flat white,3,4.51,13.53,615
+2026-10-19,Airport,Latte,2,4.73,,615
+2026-10-19,Airport,Croissant,5,3.60,18.00,615
+2026-10-19,Airport,Banana bread,4,4.00,16.00,615
+2026-10-19,Airport,Cold brew,5,5.23,26.15,615
+2026-10-20,Dockside,Filter coffee,5,3.58,17.90,424
+2026-10-20,Dockside,Flat white,6,4.51,27.06,424
+2026-10-20,Dockside,Latte,6,4.73,28.38,424
+2026-10-20,Dockside,Croissant,5,3.60,18.00,424
+2026-10-20,Dockside,Banana bread,7,4.00,28.00,424
+2026-10-20,Dockside,Cold brew,5,5.23,26.15,424
+2026-10-20,Newtown,Filter coffee,3,3.58,10.74,386
+2026-10-20,Newtown,Flat white,5,4.51,22.55,386
+2026-10-20,Newtown,Latte,6,4.73,28.38,386
+2026-10-20,Newtown,Croissant,6,3.60,21.60,386
+2026-10-20,Newtown,Banana bread,7,4.00,28.00,386
+2026-10-20,Newtown,Cold brew,4,5.23,20.92,386
+2026-10-20,Airport,Filter coffee,5,3.58,17.90,669
+2026-10-20,Airport,Flat white,5,4.51,22.55,669
+2026-10-20,Airport,Latte,3,4.73,14.19,669
+2026-10-20,Airport,Croissant,3,3.60,10.80,669
+2026-10-20,Airport,Banana bread,3,4.00,12.00,669
+2026-10-20,Airport,Cold brew,6,5.23,31.38,669
+2026-10-21,Dockside,Filter coffee,7,3.58,25.06,488
+2026-10-21,Dockside,Flat white,3,4.51,13.53,488
+2026-10-21,Dockside,Latte,4,4.73,18.92,488
+2026-10-21,Dockside,Croissant,6,3.60,21.60,488
+2026-10-21,Dockside,Banana bread,7,4.00,28.00,488
+2026-10-21,Dockside,Cold brew,3,5.23,15.69,488
+2026-10-21,Newtown,Filter coffee,5,3.58,17.90,355
+2026-10-21,Newtown,Flat white,5,4.51,22.55,355
+2026-10-21,Newtown,Latte,5,4.73,23.65,355
+2026-10-21,Newtown,Croissant,5,3.60,18.00,355
+2026-10-21,Newtown,Banana bread,6,4.00,24.00,355
+2026-10-21,Newtown,Cold brew,4,5.23,20.92,355
+2026-10-21,Airport,Filter coffee,4,3.58,14.32,642
+2026-10-21,Airport,Flat white,5,4.51,22.55,642
+2026-10-21,Airport,Latte,4,4.73,18.92,642
+2026-10-21,AIRPORT,Croissant,4,3.60,14.40,642
+2026-10-21,Airport,Banana bread,6,4.00,24.00,642
+2026-10-21,Airport,Cold brew,3,5.23,15.69,642
+2026-10-22,Dockside,Filter coffee,6,3.58,21.48,468
+2026-10-22,Dockside,Flat white,6,4.51,27.06,468
+2026-10-22,Dockside,Latte,7,4.73,33.11,468
+2026-10-22,Dockside,Croissant,5,3.60,18.00,468
+2026-10-22,Dockside,Banana bread,6,4.00,24.00,468
+2026-10-22,Dockside,Cold brew,7,5.23,36.61,468
+2026-10-22,Newtown,Filter coffee,6,3.58,21.48,327
+2026-10-22,Newtown,Flat white,6,4.51,27.06,327
+2026-10-22,Newtown,Latte,7,4.73,33.11,327
+2026-10-22,Newtown,Croissant,4,3.60,14.40,327
+2026-10-22,Newtown,Banana bread,5,4.00,20.00,327
+2026-10-22,Newtown,Cold brew,4,5.23,20.92,327
+2026-10-22,Airport,Filter coffee,3,3.58,10.74,638
+2026-10-22,Airport,Flat white,3,4.51,13.53,638
+2026-10-22,Airport,Latte,5,4.73,23.65,638
+2026-10-22,Airport,Croissant,4,3.60,14.40,638
+2026-10-22,Airport,Banana bread,3,4.00,12.00,638
+2026-10-22,Airport,Cold brew,3,5.23,15.69,638
+2026-10-23,Dockside,Filter coffee,5,3.58,17.90,615
+2026-10-23,Dockside,Flat white,8,4.51,36.08,615
+2026-10-23,Dockside,Latte,7,4.73,33.11,615
+2026-10-23,Dockside,Croissant,7,3.60,25.20,615
+2026-10-23,Dockside,Banana bread,10,4.00,40.00,
+2026-10-23,Dockside,Cold brew,8,5.23,41.84,615
+2026-10-23,Newtown,Filter coffee,3,3.58,10.74,329
+2026-10-23,Newtown,Flat white,3,4.51,13.53,329
+2026-10-23,Newtown,Latte,5,4.73,23.65,329
+2026-10-23,Newtown,Croissant,4,3.60,14.40,329
+2026-10-23,Newtown,Banana bread,6,4.00,24.00,329
+2026-10-23,Newtown,Cold brew,2,5.23,10.46,329
+2026-10-23,Airport,Filter coffee,3,3.58,10.74,654
+2026-10-23,Airport,Flat white,3,4.51,13.53,654
+2026-10-23,Airport,Latte,3,4.73,14.19,654
+2026-10-23,Airport,Croissant,5,3.60,18.00,654
+2026-10-23,Airport,Banana bread,2,4.00,8.00,654
+2026-10-23,Airport,Cold brew,3,5.23,15.69,654
+2026-10-24,Dockside,Filter coffee,3,3.58,10.74,303
+2026-10-24,Dockside,Flat white,4,4.51,18.04,303
+2026-10-24,Dockside,Latte,4,4.73,18.92,303
+2026-10-24,Dockside,Croissant,4,3.60,14.40,303
+2026-10-24,Dockside,Banana bread,3,4.00,12.00,303
+2026-10-24,Dockside,Cold brew,4,5.23,20.92,303
+2026-10-24,Newtown,Filter coffee,2,3.58,7.16,148
+2026-10-24,Newtown,Flat white,1,4.51,4.51,148
+2026-10-24,Newtown,Latte,2,4.73,9.46,148
+2026-10-24,Newtown,Croissant,3,3.60,10.80,148
+2026-10-24,Newtown,Banana bread,3,4.00,12.00,148
+2026-10-24,Newtown,Cold brew,1,5.23,5.23,148
+2026-10-24,Airport,Filter coffee,2,3.58,7.16,449
+2026-10-24,Airport,Flat white,3,4.51,13.53,449
+2026-10-24,Airport,Latte,1,4.73,4.73,449
+2026-10-24,Airport,Croissant,2,3.60,7.20,449
+2026-10-24,Airport,Banana bread,2,4.00,8.00,449
+2026-10-24,Airport,Cold brew,2,5.23,10.46,449
+2026-10-25,Dockside,Filter coffee,4,3.58,14.32,245
+2026-10-25,Dockside,Flat white,3,4.51,13.53,245
+2026-10-25,Dockside,Latte,3,4.73,14.19,245
+2026-10-25,Dockside,Croissant,2,3.60,7.20,245
+2026-10-25,Dockside,Banana bread,3,4.00,12.00,245
+2026-10-25,Dockside,Cold brew,3,5.23,15.69,245
+2026-10-25,Newtown,Filter coffee,2,3.58,7.16,212
+2026-10-25,Newtown,Flat white,3,4.51,13.53,212
+2026-10-25,Newtown,Latte,3,4.73,14.19,212
+2026-10-25,Newtown,Croissant,3,3.60,10.80,212
+2026-10-25,Newtown,Banana bread,2,4.00,8.00,212
+2026-10-25,Newtown,Cold brew,3,5.23,15.69,212
+2026-10-25,Airport,Filter coffee,1,3.58,3.58,319
+2026-10-25,Airport,Flat white,1,4.51,4.51,319
+2026-10-25,Airport,Latte,1,4.73,4.73,319
+2026-10-25,Airport,Croissant,1,3.60,3.60,319
+2026-10-25,Airport,Banana bread,1,4.00,4.00,319
+2026-10-25,Airport,Cold brew,2,5.23,10.46,319
+2026-10-26,Dockside,Filter coffee,5,3.58,17.90,429
+2026-10-26,Dockside,Flat white,5,4.51,22.55,429
+2026-10-26,Dockside,Latte,4,4.73,18.92,429
+2026-10-26,Dockside,Croissant,7,3.60,25.20,429
+2026-10-26,Dockside,Banana bread,7,4.00,28.00,429
+2026-10-26,Dockside,Cold brew,4,5.23,20.92,429
+2026-10-26,Newtown,Filter coffee,6,3.58,21.48,440
+2026-10-26,Newtown,Flat white,6,4.51,27.06,440
+2026-10-26,Newtown,Latte,5,4.73,23.65,440
+2026-10-26,Newtown,Croissant,5,3.60,18.00,440
+2026-10-26,Newtown,Banana bread,6,4.00,24.00,440
+2026-10-26,Newtown,Cold brew,5,5.23,26.15,440
+2026-10-26,Airport,Filter coffee,5,3.58,17.90,630
+2026-10-26,Airport,Flat white,5,4.51,22.55,630
+2026-10-26,Airport,Latte,5,4.73,23.65,630
+2026-10-26,Airport,Croissant,3,3.60,10.80,630
+2026-10-26,Airport,Banana bread,4,4.00,16.00,630
+2026-10-26,Airport,Cold brew,4,5.23,20.92,630
+2026-10-27,Dockside,Filter coffee,6,3.58,21.48,446
+2026-10-27,Dockside,Flat white,5,4.51,22.55,446
+2026-10-27,Dockside,Latte,6,4.73,28.38,446
+2026-10-27,Dockside,Croissant,5,3.60,18.00,446
+2026-10-27,Dockside,Banana bread,5,4.00,20.00,446
+2026-10-27,Dockside,Cold brew,5,5.23,26.15,446
+2026-10-27,Newtown,Filter coffee,4,3.58,14.32,335
+2026-10-27,Newtown,Flat white,4,4.51,18.04,335
+2026-10-27,Newtown,Latte,4,4.73,18.92,335
+2026-10-27,Newtown,Croissant,3,3.60,10.80,335
+2026-10-27,Newtown,Banana bread,6,4.00,24.00,335
+2026-10-27,Newtown,Cold brew,4,5.23,20.92,335
+2026-10-27,Airport,Filter coffee,6,3.58,21.48,585
+2026-10-27,Airport,Flat white,5,4.51,22.55,585
+2026-10-27,Airport,Latte,2,4.73,9.46,585
+2026-10-27,Airport,Croissant,5,3.60,18.00,585
+2026-10-27,Airport,Banana bread,3,4.00,12.00,585
+2026-10-27,Airport,Cold brew,2,5.23,10.46,585
+2026-10-28,Dockside,Filter coffee,3,3.58,10.74,449
+2026-10-28,Dockside,Flat white,5,4.51,22.55,449
+2026-10-28,Dockside,Latte,7,4.73,33.11,449
+2026-10-28,Dockside,Croissant,5,3.60,18.00,449
+2026-10-28,Dockside,Banana bread,6,4.00,24.00,449
+2026-10-28,Dockside,Cold brew,5,5.23,26.15,449
+2026-10-28,Newtown,Filter coffee,5,3.58,17.90,378
+2026-10-28,Newtown,Flat white,5,4.51,22.55,378
+2026-10-28,Newtown,Latte,6,4.73,28.38,378
+2026-10-28,Newtown,Croissant,5,3.60,18.00,378
+2026-10-28,Newtown,Banana bread,3,4.00,12.00,378
+2026-10-28,Newtown,Cold brew,6,5.23,31.38,378
+2026-10-28,Airport,Filter coffee,2,3.58,,659
+2026-10-28,Airport,Flat white,3,4.51,13.53,659
+2026-10-28,Airport,Latte,3,4.73,14.19,659
+2026-10-28,Airport,Croissant,5,3.60,18.00,659
+2026-10-28,Airport,Banana bread,4,4.00,16.00,659
+2026-10-28,Airport,Cold brew,6,5.23,31.38,659
+2026-10-29,Dockside,Filter coffee,6,3.58,21.48,493
+2026-10-29,Dockside,Flat white,7,4.51,31.57,493
+2026-10-29,Dockside,Latte,3,4.73,14.19,493
+2026-10-29,Dockside,Croissant,7,3.60,25.20,493
+2026-10-29,Dockside,Banana bread,7,4.00,28.00,493
+2026-10-29,Dockside,Cold brew,4,5.23,20.92,493
+2026-10-29,Newtown,Filter coffee,4,3.58,14.32,345
+2026-10-29,Newtown,Flat white,4,4.51,18.04,345
+2026-10-29,Newtown,Latte,5,4.73,23.65,345
+2026-10-29,Newtown,Croissant,6,3.60,21.60,345
+2026-10-29,Newtown,Banana bread,4,4.00,16.00,345
+2026-10-29,Newtown,Cold brew,4,5.23,20.92,345
+2026-10-29,AIRPORT,Filter coffee,3,3.58,10.74,623
+2026-10-29,Airport,Flat white,4,4.51,18.04,623
+2026-10-29,Airport,Latte,3,4.73,14.19,623
+2026-10-29,Airport,Croissant,4,3.60,14.40,623
+2026-10-29,Airport,Banana bread,3,4.00,12.00,623
+2026-10-29,Airport,Cold brew,2,5.23,10.46,623
+2026-10-30,Dockside,Filter coffee,4,3.58,14.32,411
+2026-10-30,Dockside,Flat white,7,4.51,31.57,411
+2026-10-30,Dockside,Latte,5,4.73,,411
+2026-10-30,Dockside,Croissant,5,3.60,18.00,411
+2026-10-30,Dockside,Banana bread,4,4.00,16.00,411
+2026-10-30,Dockside,Cold brew,6,5.23,31.38,411
+2026-10-30,Newtown,Filter coffee,7,3.58,25.06,476
+2026-10-30,Newtown,Flat white,7,4.51,31.57,476
+2026-10-30,Newtown,Latte,4,4.73,18.92,476
+2026-10-30,Newtown,Croissant,9,3.60,32.40,476
+2026-10-30,Newtown,Banana bread,9,4.00,36.00,476
+2026-10-30,Newtown,Cold brew,6,5.23,31.38,476
+2026-10-30,Airport,Filter coffee,3,3.58,10.74,685
+2026-10-30,Airport,Flat white,3,4.51,13.53,685
+2026-10-30,Airport,Latte,3,4.73,14.19,685
+2026-10-30,Airport,Croissant,3,3.60,10.80,685
+2026-10-30,Airport,Banana bread,6,4.00,24.00,685
+2026-10-30,Airport,Cold brew,5,5.23,26.15,685
+2026-10-31,Dockside,Filter coffee,2,3.58,7.16,245
+2026-10-31,Dockside,Flat white,2,4.51,9.02,245
+2026-10-31,Dockside,Latte,4,4.73,18.92,245
+2026-10-31,Dockside,Croissant,3,3.60,10.80,245
+2026-10-31,Dockside,Banana bread,2,4.00,8.00,245
+2026-10-31,Dockside,Cold brew,2,5.23,10.46,245
+2026-10-31,Newtown,Filter coffee,5,3.58,17.90,244
+2026-10-31,Newtown,Flat white,2,4.51,9.02,244
+2026-10-31,Newtown,Latte,3,4.73,14.19,244
+2026-10-31,Newtown,Croissant,3,3.60,10.80,244
+2026-10-31,Newtown,Banana bread,3,4.00,12.00,244
+2026-10-31,Newtown,Cold brew,3,5.23,15.69,244
+2026-10-31,Airport,Filter coffee,2,3.58,7.16,394
+2026-10-31,Airport,Flat white,1,4.51,4.51,394
+2026-10-31,Airport,Latte,3,4.73,14.19,394
+2026-10-31,Airport,Croissant,2,3.60,7.20,394
+2026-10-31,Airport,Banana bread,3,4.00,12.00,394
+2026-10-31,Airport,Cold brew,2,5.23,10.46,394
+2026-07-06,Newtown,Banana bread,4,4.00,16.00,443
+2026-07-06,Newtown,Cold brew,10,4.80,48.00,443
+2026-07-06,Airport,Filter coffee,7,3.20,22.40,699
+2026-07-06,Airport,Flat white,4,4.10,16.40,699
+2026-07-06,Airport,Latte,5,4.30,21.50,699
+2026-07-06,Airport,Croissant,5,3.60,18.00,699
+2026-07-06,Airport,Banana bread,4,4.00,16.00,699
+2026-07-06,Airport,Cold brew,2,4.80,9.60,699
+2026-07-07,Dockside,Filter coffee,8,3.20,25.60,466
+2026-07-07,Dockside,Flat white,5,4.10,20.50,466
+2026-07-07,Dockside,Latte,4,4.30,17.20,466
+2026-07-07,Dockside,Croissant,3,3.60,10.80,466
+2026-07-07,Dockside,Banana bread,5,4.00,20.00,466
+2026-07-07,Dockside,Cold brew,5,4.80,24.00,466
+2026-07-07,Newtown,Filter coffee,4,3.20,12.80,297
+2026-07-07,Newtown,Flat white,3,4.10,12.30,297
+2026-07-07,Newtown,Latte,5,4.30,21.50,297
+2026-07-07,Newtown,Croissant,2,3.60,7.20,297
