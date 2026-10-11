@@ -268,6 +268,24 @@ class AzureAIBackend(ArtemisServerBackend):
             raise ModelUnavailable("Artemis 0 bootstrap backend is unavailable; please retry later.") from e
 
 
+#: The Grok model id, in ONE place. It was previously spelled three different
+#: ways - "grok-4.20-non-reasoning" here and in server.py, "grok-4-fast-non-reasoning"
+#: in artemis-cli - which is a transcription slip, not three deliberate choices.
+#: A wrong id does not fail loudly: readiness() probes, the probe 404s, and the
+#: status endpoint reports "unavailable", which reads as an outage rather than a
+#: typo.
+#:
+#: UNVERIFIED. No live call has ever succeeded against xAI from this repo (see
+#: artemis-cli/README.md: both keys on the build machine were rejected 400/401),
+#: so neither spelling is confirmed. Settle it with a valid key and:
+#:
+#:     curl -sS https://api.x.ai/v1/models -H "Authorization: Bearer $XAI_API_KEY"
+#:
+#: then change this constant and configs/business.yaml together - a test asserts
+#: they match, because the catalogue entry is what customers are shown.
+GROK_DEFAULT_MODEL = "grok-4-fast-non-reasoning"
+
+
 class GrokBackend:
     """Grok (xAI), offered to customers as an added service - never as Artemis.
 
@@ -284,7 +302,7 @@ class GrokBackend:
     so it is omitted as it is for Azure.
     """
 
-    def __init__(self, api_key: str, model: str = "grok-4.20-non-reasoning",
+    def __init__(self, api_key: str, model: str = GROK_DEFAULT_MODEL,
                  base_url: str = "https://api.x.ai", timeout: float = 60.0):
         if not api_key:
             raise ValueError("GrokBackend needs an api_key; read it from Key Vault, never hardcode it")

@@ -29,15 +29,50 @@ def make(**kw):
 def test_request_uses_bearer_and_names_the_model_in_the_body(monkeypatch):
     """xAI is OpenAI-shaped: model in the body, Bearer auth - unlike Azure, which routes
     by deployment in the URL with an api-key header."""
-    b = make(model="grok-4.20-non-reasoning")
+    # A deliberately arbitrary id: this pins that whatever model is configured is
+    # the model sent, not that any particular spelling is the right one.
+    b = make(model="grok-test-id")
     captured = {}
     monkeypatch.setattr("artemis.backends.urllib.request.urlopen", _fake({"choices": [{"message": {"content": "x"}}]}, captured))
     b.generate("sys", [{"role": "user", "content": "q"}])
     assert captured["url"] == "https://api.x.ai/v1/chat/completions"
     assert captured["headers"]["Authorization"] == "Bearer test-key"
     body = json.loads(captured["body"])
-    assert body["model"] == "grok-4.20-non-reasoning"
+    assert body["model"] == "grok-test-id"
     assert "chat_template_kwargs" not in body, "a vLLM extension; xAI rejects unknown fields"
+
+
+def test_catalogue_model_id_matches_the_backend_default():
+    """One id, in one place.
+
+    It was spelled three different ways across backends.py, server.py and
+    artemis-cli - a transcription slip, not three choices. A mismatch does not
+    fail loudly: the readiness probe 404s and status reports "unavailable",
+    which reads as an outage rather than a typo.
+    """
+    import pathlib
+
+    import yaml
+
+    from artemis.backends import GROK_DEFAULT_MODEL
+
+    cfg = yaml.safe_load(
+        (pathlib.Path(__file__).resolve().parents[1] / "configs" / "business.yaml")
+        .read_text(encoding="utf-8"))
+    assert cfg["models"]["grok"]["model_id"] == GROK_DEFAULT_MODEL
+
+
+def test_server_default_comes_from_the_single_constant(monkeypatch):
+    """GROK_MODEL overrides it; absent that, there is exactly one default."""
+    from artemis.backends import GROK_DEFAULT_MODEL
+
+    monkeypatch.delenv("GROK_MODEL", raising=False)
+    monkeypatch.delenv("GROK_API_KEY", raising=False)
+    monkeypatch.setenv("XAI_API_KEY", "k")
+    assert added_models()["grok"].model == GROK_DEFAULT_MODEL
+
+    monkeypatch.setenv("GROK_MODEL", "grok-override")
+    assert added_models()["grok"].model == "grok-override"
 
 
 def test_system_prompt_forbids_answering_as_artemis(monkeypatch):

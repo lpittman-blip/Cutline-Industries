@@ -28,7 +28,9 @@ models:
     display: Grok
     provider: xai
     external: true
-    model_id: grok-4.20-non-reasoning
+    # Must match backends.GROK_DEFAULT_MODEL; a test asserts it. Unverified
+    # against the live API — see the note on that constant.
+    model_id: grok-4-fast-non-reasoning
     context_tokens: 1000000
     description: xAI's Grok, offered as an added service for long-context work.
 

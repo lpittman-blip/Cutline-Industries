@@ -28,7 +28,10 @@ import time
 import uuid
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
-from .backends import AzureAIBackend, ArtemisServerBackend, GrokBackend, LocalBackend, NotReadyBackend
+from .backends import (
+    GROK_DEFAULT_MODEL, AzureAIBackend, ArtemisServerBackend, GrokBackend,
+    LocalBackend, NotReadyBackend,
+)
 from .business import Business, PaymentRequired, RateLimited, Unauthorized
 from .memory import MemoryStore
 from .orchestrator import TIERS, Artemis, ToolAccess
@@ -51,7 +54,7 @@ def added_models() -> dict:
     out = {}
     key = os.environ.get("XAI_API_KEY") or os.environ.get("GROK_API_KEY")
     if key:
-        out["grok"] = GrokBackend(key, os.environ.get("GROK_MODEL", "grok-4.20-non-reasoning"))
+        out["grok"] = GrokBackend(key, os.environ.get("GROK_MODEL", GROK_DEFAULT_MODEL))
     return out
 
 
