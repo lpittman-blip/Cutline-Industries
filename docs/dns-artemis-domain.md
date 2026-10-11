@@ -7,6 +7,12 @@ This domain is a clean slate. It carries no mail and no Microsoft records, so
 none of the care required by [dns-migration.md](./dns-migration.md) applies —
 no nameserver switch, no 48-hour delegation wait, no cutover risk.
 
+**This replaces the company-domain migration.** Artemis is served from here, so
+`cutline-industries.studio` no longer needs to move to Vercel and is left alone
+on Microsoft DNS with its mail intact. The Vercel project's root is already the
+Artemis product — `site/index.html` is titled "Artemis AI", with the chat at
+`/artemisai/` — so this domain serves the right thing with no routing work.
+
 ## 1. Delete the Squarespace defaults first
 
 Squarespace pre-populated the zone, and it is serving the parking page:

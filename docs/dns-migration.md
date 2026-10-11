@@ -1,5 +1,23 @@
 # Moving DNS off Microsoft to Squarespace
 
+> **Superseded on 2026-10-11 — do not run this.**
+>
+> Artemis moved to its own domain,
+> [artemisai-bycutlineindustries.studio](./dns-artemis-domain.md). The only
+> reason to touch this zone was to move the website onto Vercel, and the website
+> is now served from that domain instead.
+>
+> So `cutline-industries.studio` stays exactly as it is: Microsoft nameservers,
+> Squarespace apex, mail untouched. `api.cutline-industries.studio` already
+> resolves to the gateway under Microsoft DNS and keeps working with no change.
+>
+> That removes the whole risky part of this plan — re-keying MX, SPF and two DKIM
+> selectors by hand, then a nameserver flip with up to 48 hours of delegation
+> during which mail could land nowhere. None of it is necessary any more.
+>
+> Kept below as a capture of the live zone, which is still accurate and still
+> the reference if the company site is ever moved.
+
 **Captured live on 2026-10-10.** Authoritative nameservers today are
 `ns1..ns4.bdm.microsoftonline.com` (Microsoft). The Squarespace DNS page is inert
 until the nameservers change.
