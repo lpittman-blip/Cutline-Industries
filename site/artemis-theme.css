@@ -336,4 +336,3 @@ body[data-start="account"] .shell-foot { position: relative; z-index: 1; }
 @media (prefers-reduced-motion: reduce) {
   .account-motion { display: none; }
 }
-

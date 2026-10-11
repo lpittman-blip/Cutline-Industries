@@ -7,7 +7,7 @@
 <link rel="manifest" href="../manifest.webmanifest">
 <link rel="icon" href="../artemis-icon.svg">
 <link rel="apple-touch-icon" href="../artemis-icon-192.png">
-<meta name="theme-color" content="#3279f9">
+<meta name="theme-color" content="#0e0e10">
 <meta name="description" content="Artemis AI chat, products, and account sign-in.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -15,12 +15,13 @@
 <link rel="stylesheet" href="../artemis-theme.css">
 <link rel="stylesheet" href="../mobile.css">
 <link rel="stylesheet" href="../workspace.css">
+<link rel="stylesheet" href="../chat-orb.css">
   <!-- Vercel Web Analytics. The site is static HTML, so this is the script
        Vercel serves on its own deployments; the @vercel/analytics npm package
        and its /next entry point are for bundled React apps and do not apply. -->
   <script defer src="/_vercel/insights/script.js"></script>
 </head>
-<body data-start="chat">
+<body data-start="chat" class="orb-mode orb-empty">
 <header class="nav">
 <div class="wrap">
 <a class="brand" href="../">
@@ -85,8 +86,7 @@ Artemis AI
 <script src="../polish.js" defer></script>
 <script src="../chat-stream.js" defer></script>
 <script src="../chat-render.js" defer></script>
-<script src="../api-client.js" defer></script>
 <script src="../workspace.js" defer></script>
+<script src="../chat-orb.js" defer></script>
 </body>
 </html>
-

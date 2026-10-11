@@ -9,7 +9,7 @@ function initShellRouter() {
     const path = location.pathname.replace(/\/index\.html$/, "");
     if (path === "/account" || path === "/account/") return "account";
     if (path === "/products" || path === "/products/") return "products";
-    if (path === "/chat" || path === "/artemisai/") return "chat";
+    if (path === "/chat" || path === "/chat/") return "chat";
     return "";
   }
   function show(name, push) {
@@ -21,10 +21,10 @@ function initShellRouter() {
     });
     navLinks.classList.remove("open");
     menuBtn.setAttribute("aria-expanded", "false");
-    const urls = { chat: "/artemisai/", products: "/products/", account: "/account/" };
+    const urls = { chat: "/chat/", products: "/products/", account: "/account/" };
     if (push) {
       const panel = new URLSearchParams(location.search).get("panel");
-      const next = (urls[name] || "/artemisai/") + (name === "chat" && panel ? "?panel=" + encodeURIComponent(panel) : "");
+      const next = (urls[name] || "/chat/") + (name === "chat" && panel ? "?panel=" + encodeURIComponent(panel) : "");
       try { history.pushState(null, "", next); } catch (e) {}
       window.scrollTo(0, 0);
     }
@@ -282,4 +282,3 @@ catch { const r = document.createRange(); r.selectNodeContents(document.getEleme
 setTimeout(() => e.target.textContent = "Copy email", 2000);
 });
 })();
-

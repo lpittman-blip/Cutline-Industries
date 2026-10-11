@@ -168,18 +168,6 @@ img, svg { display: block; }
 
 .pill-primary:hover { background: #000; }
 
-.pill-artemis {
-  background: var(--blue);
-  color: #fff;
-}
-
-.pill-artemis:hover { background: #1a5de0; }
-
-.nav-artemis {
-  color: var(--blue);
-  font-weight: 600;
-}
-
 .pill-on-dark { box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.28); }
 
 .pill-secondary {
@@ -803,4 +791,8 @@ article[id] { scroll-margin-top: calc(var(--header) + 16px); }
 .mesh .nodes circle:nth-child(4) { animation-delay: 1.05s; }
 .mesh .nodes circle:nth-child(5) { animation-delay: 1.4s; }
 @keyframes gpt-flow { to { stroke-dashoffset: -48; } }
-@keyframes gpt-hub { 50
+@keyframes gpt-hub { 50% { stroke-width: 3.5; filter: drop-shadow(0 0 10px rgba(47, 111, 237, 0.85)); } }
+@keyframes gpt-node { 50% { transform: scale(1.08); stroke-opacity: 1; } }
+@media (prefers-reduced-motion: reduce) {
+  .mesh .flows line, .mesh .hub, .mesh .nodes circle { animation: none; }
+}

@@ -24,4 +24,3 @@
   if (typeof module !== "undefined") module.exports = { readEvents };
   else root.ArtemisStream = { readEvents };
 })(globalThis);
-

@@ -50,4 +50,3 @@
 .tool-log .sources { list-style: none; padding: 4px 0 0; margin: 0; display: grid; gap: 2px; }
 .tool-log details { margin-top: 6px; display: grid; gap: 6px; } .tool-log summary { cursor: pointer; color: var(--body); }
 .tool-log[hidden] { display: none; }
-

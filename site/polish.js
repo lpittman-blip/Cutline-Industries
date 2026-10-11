@@ -35,4 +35,3 @@
     done.textContent = msg; form.hidden = ok; done.hidden = false;
   }, true);
 })();
-

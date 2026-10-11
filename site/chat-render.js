@@ -65,4 +65,3 @@ const button = (text,fn,cls) => {const el=node("button",cls,text);el.type="butto
 
 window.ArtemisUI={node,button,renderText,renderTools,codeBlock};
 })();
-

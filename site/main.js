@@ -213,7 +213,7 @@
       form.reportValidity();
       return;
     }
-    thanks.textContent = 'Nothing was sent. For private saved chats, choose Sign in to create an account or log in.';
+    form.hidden = true;
     thanks.hidden = false;
     thanks.focus();
   });
@@ -303,20 +303,71 @@
   });
 
   const clusterCanvas = document.getElementById("cluster-canvas");
+  function canvasPointer(el) {
+    const ptr = { x: -9999, y: -9999, on: false };
+    if (reduced) return ptr;
+    el.addEventListener("pointermove", function (event) {
+      const rect = el.getBoundingClientRect();
+      ptr.x = event.clientX - rect.left;
+      ptr.y = event.clientY - rect.top;
+      ptr.on = true;
+    });
+    el.addEventListener("pointerleave", function () { ptr.on = false; });
+    el.addEventListener("pointerdown", function (event) {
+      const rect = el.getBoundingClientRect();
+      ptr.x = event.clientX - rect.left;
+      ptr.y = event.clientY - rect.top;
+      ptr.on = true;
+      ptr.burst = performance.now();
+    });
+    return ptr;
+  }
+  const clusterPtr = canvasPointer(clusterCanvas.parentElement);
   const cluster = makeCanvasScene(clusterCanvas, function (now) {
     const ctx = cluster.ctx;
     const w = cluster.width;
     const h = cluster.height;
     ctx.clearRect(0, 0, w, h);
     const ease = reduced ? 1 : 0.075;
+    const parts = cluster.particles;
+    ctx.lineWidth = 1;
+    ctx.strokeStyle = "#2f6fed";
+    for (let i = 0; i < parts.length; i++) {
+      const a = parts[i];
+      const b = parts[(i + 1) % parts.length];
+      const dx = a.x - b.x, dy = a.y - b.y;
+      const d = Math.sqrt(dx * dx + dy * dy);
+      if (d < 70) {
+        ctx.globalAlpha = (1 - d / 70) * 0.22;
+        ctx.beginPath();
+        ctx.moveTo(a.x, a.y);
+        ctx.lineTo(b.x, b.y);
+        ctx.stroke();
+      }
+    }
+    const burst = clusterPtr.burst && now - clusterPtr.burst < 500 ? 1 - (now - clusterPtr.burst) / 500 : 0;
     cluster.particles.forEach(function (p, i) {
       p.x += (p.tx - p.x) * ease;
       p.y += (p.ty - p.y) * ease;
+      let px = 0, py = 0, lit = 0;
+      if (clusterPtr.on) {
+        const dx = p.x - clusterPtr.x, dy = p.y - clusterPtr.y;
+        const d = Math.sqrt(dx * dx + dy * dy) || 1;
+        const reach = 110 + burst * 120;
+        if (d < reach) {
+          const f = 1 - d / reach;
+          px = (dx / d) * f * (26 + burst * 40);
+          py = (dy / d) * f * (26 + burst * 40);
+          lit = f;
+        }
+      }
+      p.dx = (p.dx || 0) + (px - (p.dx || 0)) * 0.18;
+      p.dy = (p.dy || 0) + (py - (p.dy || 0)) * 0.18;
       const wobble = reduced ? 0 : Math.sin(now * 0.0015 + i) * 2.2;
-      ctx.globalAlpha = p.alpha;
+      ctx.globalAlpha = Math.min(1, p.alpha + lit * 0.3);
       ctx.fillStyle = p.color;
       ctx.beginPath();
-      ctx.arc(p.x, p.y + wobble, p.r, 0, Math.PI * 2);
+      ctx.arc(p.x + p.dx, p.y + p.dy + wobble, p.r * (1 + lit * 0.5), 0, Math.PI * 2);
       ctx.fill();
     });
     ctx.globalAlpha = 1;
@@ -396,11 +447,44 @@
   };
 
   const bandCanvas = document.getElementById("band-canvas");
+  const bandPtr = canvasPointer(bandCanvas.parentElement);
   const band = makeCanvasScene(bandCanvas, function (now) {
     const ctx = band.ctx;
     const w = band.width;
     const h = band.height;
     ctx.clearRect(0, 0, w, h);
+    const bp = band.particles;
+    ctx.lineWidth = 1;
+    ctx.strokeStyle = "#8eb0ff";
+    for (let i = 0; i < bp.length; i++) {
+      for (let j = i + 1; j < bp.length; j++) {
+        const dx = bp[i].x - bp[j].x, dy = bp[i].y - bp[j].y;
+        const d2 = dx * dx + dy * dy;
+        if (d2 < 120 * 120) {
+          ctx.globalAlpha = (1 - Math.sqrt(d2) / 120) * 0.18;
+          ctx.beginPath();
+          ctx.moveTo(bp[i].x, bp[i].y);
+          ctx.lineTo(bp[j].x, bp[j].y);
+          ctx.stroke();
+        }
+      }
+    }
+    if (bandPtr.on) {
+      ctx.strokeStyle = "#7aa2ff";
+      bp.forEach(function (q) {
+        const dx = q.x - bandPtr.x, dy = q.y - bandPtr.y;
+        const d = Math.sqrt(dx * dx + dy * dy);
+        if (d < 170) {
+          ctx.globalAlpha = (1 - d / 170) * 0.5;
+          ctx.beginPath();
+          ctx.moveTo(bandPtr.x, bandPtr.y);
+          ctx.lineTo(q.x, q.y);
+          ctx.stroke();
+          q.x += (bandPtr.x - q.x) * 0.004;
+          q.y += (bandPtr.y - q.y) * 0.004;
+        }
+      });
+    }
     band.particles.forEach(function (p) {
       if (!reduced) {
         p.x += p.vx;
@@ -419,11 +503,11 @@
     ctx.globalAlpha = 1;
   });
 
-  band.particles = Array.from({ length: 42 }, function (_, i) {
+  band.particles = Array.from({ length: 56 }, function (_, i) {
     return {
       x: (i * 97) % 1000,
       y: (i * 53) % 400,
-      vx: (i % 2 ? 0.15 : -0.12) * (0.4 + (i % 5) * 0.15),
+      vx: (i % 2 ? 0.22 : -0.18) * (0.4 + (i % 5) * 0.15),
       vy: (i % 3 ? 0.08 : -0.06),
       r: i % 6 === 0 ? 2.2 : 1.3,
       phase: i,
@@ -488,4 +572,3 @@ if (gptNote && !window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
     gptNote.textContent = gptNotes[i];
   }, 2800);
 }
-

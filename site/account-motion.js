@@ -78,4 +78,3 @@
   }
   requestAnimationFrame(frame);
 })();
-
