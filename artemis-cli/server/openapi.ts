@@ -29,7 +29,9 @@ export function buildOpenApi(serverUrl?: string) {
       summary: "Autonomous coding agent, OpenAI-compatible chat, agentic search, sessions and webhooks.",
       description: "The Artemis AI backend. The Artemis CLI talks to it, and so can your apps. Authenticate with `Authorization: Bearer art_...`. Every response carries `x-request-id`; authenticated routes are rate-limited per key and return `x-ratelimit-*` headers.",
     },
-    servers: [{ url: serverUrl ?? "http://127.0.0.1:7777" }],
+    // Callers reading the spec should see the host they can actually reach.
+    // A self-hosted server passes its own serverUrl.
+    servers: [{ url: serverUrl ?? "https://api.artemisai-bycutlineindustries.studio" }],
     security: [{ bearerAuth: [] }],
     tags: [
       { name: "System" }, { name: "Chat" }, { name: "Agent" }, { name: "Search" }, { name: "Sessions" }, { name: "Webhooks" }, { name: "Keys" },

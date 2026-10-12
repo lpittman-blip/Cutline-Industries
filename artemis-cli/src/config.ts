@@ -5,7 +5,30 @@ import { MockProvider } from "./agent/mock.ts";
 import { OpenAIProvider } from "./agent/openai.ts";
 import type { Provider } from "./agent/types.ts";
 
-export const DEFAULT_SERVER_URL = "http://127.0.0.1:7777";
+/**
+ * Where the CLI talks to Artemis when nothing else is configured.
+ *
+ * This used to be http://127.0.0.1:7777, which only works for someone running
+ * `artemis serve` on the same machine — so the out-of-the-box experience was a
+ * connection refused. The hosted gateway is the right default; a local server
+ * is the special case and is selected with --url, ARTEMIS_URL, or a saved
+ * login in ~/.artemis/config.json.
+ *
+ * Verified against the live host: GET /v1/models returns the artemis model,
+ * and POST /v1/chat/completions returns 401 without a Bearer art_ key, which
+ * is the route the provider uses.
+ */
+export const DEFAULT_SERVER_URL = "https://api.artemisai-bycutlineindustries.studio";
+
+/** A local `artemis serve`, for convenience in docs and examples. */
+export const LOCAL_SERVER_URL = "http://127.0.0.1:7777";
+
+/**
+ * Upstream third-party provider, reached ONLY via an explicit `--direct` plus
+ * an explicit provider key. Never the default path: Blueprint Decisions 5 and
+ * 12 keep external models out of Artemis's own work, and `--direct` is an
+ * escape hatch for debugging, not a fallback.
+ */
 export const DEFAULT_PROVIDER_BASE_URL = "https://api.x.ai/v1";
 
 export interface StoredConfig {

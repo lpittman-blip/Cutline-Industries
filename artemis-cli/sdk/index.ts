@@ -70,7 +70,9 @@ export class Artemis {
   private headers: Record<string, string>;
 
   constructor(opts: ClientOptions) {
-    this.baseUrl = (opts.baseUrl ?? "http://127.0.0.1:7777").replace(/\/$/, "");
+    // The hosted gateway, not localhost: an SDK whose default is 127.0.0.1
+    // fails for everyone who is not also running `artemis serve`.
+    this.baseUrl = (opts.baseUrl ?? "https://api.artemisai-bycutlineindustries.studio").replace(/\/$/, "");
     this.apiKey = opts.apiKey;
     this.f = opts.fetch ?? fetch;
     this.headers = opts.headers ?? {};

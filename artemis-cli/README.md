@@ -44,8 +44,15 @@ On first start it creates an **admin API key**. The key is printed once and stor
 ### 2. Log the CLI in
 
 ```bash
-artemis login --url http://127.0.0.1:7777 --key art_...   # saved to ~/.artemis/config.json (0600)
+artemis login --key art_...                               # hosted gateway, the default
 artemis status
+```
+
+The default server is `https://api.artemisai-bycutlineindustries.studio`. To
+use a local `artemis serve` instead, point at it explicitly:
+
+```bash
+artemis login --url http://127.0.0.1:7777 --key art_...   # saved to ~/.artemis/config.json (0600)
 ```
 
 ### Configuration
