@@ -7,7 +7,7 @@ day. Written for whoever drives the next run.
 
 ```
 STAGE=1 SIZE=100m SHARDS=43  STEPS=61589 bash scripts/train/stages.sh   # de-risk
-STAGE=1 SIZE=1b   SHARDS=284 STEPS=25423 bash scripts/train/stages.sh   # real
+STAGE=1 SIZE=1b   SHARDS=284 STEPS=25424 bash scripts/train/stages.sh   # real
 STAGE=2 bash scripts/train/stages.sh                                    # self-improvement
 ```
 
