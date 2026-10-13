@@ -6,10 +6,19 @@ day. Written for whoever drives the next run.
 ## Start here
 
 ```
-STAGE=1 SIZE=100m SHARDS=43 bash scripts/train/stages.sh    # ~1 hour, de-risk
-STAGE=1 SIZE=1b  SHARDS=284 bash scripts/train/stages.sh    # ~20 hours, real
-STAGE=2 bash scripts/train/stages.sh                        # self-improvement
+STAGE=1 SIZE=100m SHARDS=43  STEPS=61589 bash scripts/train/stages.sh   # de-risk
+STAGE=1 SIZE=1b   SHARDS=284 STEPS=25423 bash scripts/train/stages.sh   # real
+STAGE=2 bash scripts/train/stages.sh                                    # self-improvement
 ```
+
+**STEPS is not optional.** `SHARDS` sizes the pool the run samples from; `STEPS`
+is the only thing that bounds the run, and `stages.sh` defaults it to 60000 no
+matter the pool or the GPU count. `tokens_per_step` is
+`batch * accum * max_seq_len * world_size` (`artemis/train.py:137`), so that
+default at 1b on 8 GPUs trains 47B tokens from a 20B pool — each window about
+2.4 times over. The numbers above are a single pass: 11h for 1b on 8xH100, 1.4h
+for 100m on one. `scripts/train/rent-gpu-run.sh` computes `STEPS` from `SHARDS`
+and prints the ratio before downloading anything.
 
 Stage 2 refuses to run without a stage-1 checkpoint, deliberately:
 self-improvement amplifies a signal and cannot create one. A model that never

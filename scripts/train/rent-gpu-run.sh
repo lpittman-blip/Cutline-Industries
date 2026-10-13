@@ -6,8 +6,15 @@
 # accounts, no object-storage credentials, nothing to grant.
 #
 #   bash scripts/train/rent-gpu-run.sh --preflight    # check, download nothing
-#   bash scripts/train/rent-gpu-run.sh                # 100m, ~1.3h on one H100
-#   SIZE=1b SHARDS=284 bash scripts/train/rent-gpu-run.sh      # ~3.5 days
+#   bash scripts/train/rent-gpu-run.sh                # 100m, ~1.4h on one H100
+#   SIZE=1b SHARDS=85 bash scripts/train/rent-gpu-run.sh       # ~26h on one H100
+#
+# SHARDS SIZES THE POOL; STEPS SIZES THE RUN. They are separate numbers and the
+# run is bounded by STEPS, not by the corpus: artemis.train samples windows from
+# train.bin with a per-step seed, so a pool three times the token budget is three
+# times the download and disk for no extra training. The defaults below keep the
+# two within a few percent of each other, and the estimate is computed from the
+# step budget so the quoted hours are the hours you will actually be billed.
 #
 # WHY 100m FIRST. Compute is roughly 6 x params x tokens. The 100m rung is
 # ~1.8e18 FLOPs — about 1.3 hours and a few dollars on one H100. The 1b rung is
@@ -36,7 +43,7 @@ SOURCE_REVISION="${SOURCE_REVISION:-}"
 for arg in "$@"; do
   case "$arg" in
     --preflight) PREFLIGHT=1 ;;
-    -h|--help) sed -n '2,20p' "$0"; exit 0 ;;
+    -h|--help) sed -n '2,28p' "$0"; exit 0 ;;
     *) echo "unknown argument: $arg" >&2; exit 2 ;;
   esac
 done
@@ -70,32 +77,7 @@ log "${FREE_GIB} GiB free at $WORK (need >= ${MIN_FREE_GIB})"
   "not enough disk. Raw shards, the filtered corpus and checkpoints all land here.
    Mount a larger volume at $WORK, or lower SHARDS."
 
-# --- 2. estimate before spending ----------------------------------------------
-# 6 x params x tokens, against ~400 TFLOPS effective (about 40% MFU, realistic
-# at this scale). Rough, and stated as rough — it is a sanity check on the bill,
-# not a promise.
-PARAMS=$([ "$SIZE" = "1b" ] && echo 1000000000 || echo 100000000)
-TOKENS=$(( SHARDS * 70400000 ))
-# Values are passed as argv, not interpolated into the quoted program: nesting
-# quotes three deep silently produced a malformed expression and printed "?".
-HOURS=$(python3 -c \
-  "import sys;p,t,n=map(float,sys.argv[1:4]);print(f'{6*p*t/(4e14*n)/3600:.1f}')" \
-  "$PARAMS" "$TOKENS" "$NGPU" 2>/dev/null || echo "?")
-# The default rate scales with GPU count: an 8-GPU box costs about 8x a 1-GPU
-# box, so a flat per-machine default would understate a multi-GPU bill eightfold.
-# Override RATE_PER_HOUR with the real per-MACHINE price from your provider.
-RATE=$(python3 -c "import sys;print(f'{2.50*float(sys.argv[1]):.2f}')" "$NGPU" 2>/dev/null || echo 2.50)
-RATE="${RATE_PER_HOUR:-$RATE}"
-COST=$(python3 -c \
-  "import sys;print(f'{float(sys.argv[1])*float(sys.argv[2]):.0f}')" \
-  "$HOURS" "$RATE" 2>/dev/null || echo "?")
-log "estimate: ${TOKENS} tokens, ~${HOURS} wall-clock hours on this machine"
-log "          at \$${RATE}/hr for the box, roughly \$${COST} — rough, not a quote"
-# Total compute cost barely moves with GPU count; what you buy with more GPUs is
-# wall-clock. Adding GPUs only saves money if it shortens a run you are paying
-# for by the hour anyway, and only at a sane per-GPU rate.
-
-# --- 3. source, pinned --------------------------------------------------------
+# --- 2. source, pinned --------------------------------------------------------
 
 if [ -z "$SOURCE_REVISION" ]; then
   log "WARNING: SOURCE_REVISION unset — using the default branch tip."
@@ -116,6 +98,77 @@ else
   git pull --quiet --ff-only || true
 fi
 log "source at $(git rev-parse HEAD)"
+
+# --- 3. estimate before spending ----------------------------------------------
+# This has to come AFTER the checkout: the sequence length and the active
+# parameter count live in configs/models.yaml, and an estimate built from
+# remembered numbers instead of the pinned config is how the 1b rung came to be
+# quoted at 83 hours for a 26-hour run.
+#
+# 6 x active_params x tokens against ~400 TFLOPS effective (about 40% MFU,
+# realistic at this scale). Rough, and stated as rough — a sanity check on the
+# bill, not a promise.
+#
+# The token count is the STEP BUDGET, not the corpus: artemis.train computes
+# tokens_per_step = batch * accum * max_seq_len * world_size and runs exactly
+# --steps of them. SHARDS only sizes the pool it samples from.
+BATCH="${BATCH:-6}"
+ACCUM="${ACCUM:-4}"
+
+read -r SEQ_LEN PARAMS <<<"$(python3 - "$REPO_DIR/gateway/configs/models.yaml" "$SIZE" <<'PY'
+import sys, yaml
+cfg = yaml.safe_load(open(sys.argv[1]))[sys.argv[2]]
+# Active parameters, not total: a token passes through one expert per MoE layer,
+# so total (153M / 1.31B) overstates the FLOPs per token by about a third.
+active = {"100m": 111e6, "1b": 1.06e9, "3b": 3.38e9, "8b": 8.4e9}
+print(int(cfg["max_seq_len"]), int(active.get(sys.argv[2], 1e8)))
+PY
+)" || die "could not read $SIZE from configs/models.yaml"
+
+# SHARDS is the knob; STEPS follows from it unless set explicitly. Deriving it
+# is what makes "more GPUs buy wall-clock, not a bigger bill" actually true:
+# tokens_per_step scales with world size, so holding STEPS fixed across GPU
+# counts multiplies the tokens trained — and the cost — by the GPU count, while
+# the hours stay flat. Dividing STEPS by the same factor fixes the token budget,
+# and then the hours fall as the GPUs rise and the total cost barely moves.
+#
+# Values are passed as argv, not interpolated into the quoted program: nesting
+# quotes three deep silently produced a malformed expression and printed "?".
+read -r STEPS TPS TOKENS POOL RATIO HOURS <<<"$(python3 - \
+  "${STEPS:-0}" "$BATCH" "$ACCUM" "$SEQ_LEN" "$NGPU" "$SHARDS" "$PARAMS" <<'PY'
+import math, sys
+steps, batch, accum, seq, ngpu, shards, params = map(float, sys.argv[1:8])
+tps = batch * accum * seq * ngpu            # artemis.train's tokens_per_step
+pool = shards * 70.4e6                      # measured: 70.4M tokens per filtered shard
+if steps <= 0:
+    steps = max(1.0, math.ceil(pool / tps)) # one pass over the pool, in expectation
+tokens = steps * tps
+print(f"{steps:.0f} {tps:.0f} {tokens:.0f} {pool:.0f} {tokens/pool:.2f} "
+      f"{6*params*tokens/(4e14*ngpu)/3600:.1f}")
+PY
+)" || die "estimate failed"
+
+# The default rate scales with GPU count: an 8-GPU box costs about 8x a 1-GPU
+# box, so a flat per-machine default would understate a multi-GPU bill eightfold.
+# Override RATE_PER_HOUR with the real per-MACHINE price from your provider.
+RATE="${RATE_PER_HOUR:-$(python3 -c \
+  "import sys;print(f'{2.50*float(sys.argv[1]):.2f}')" "$NGPU")}"
+COST=$(python3 -c \
+  "import sys;print(f'{float(sys.argv[1])*float(sys.argv[2]):.0f}')" "$HOURS" "$RATE")
+
+log "estimate: $SIZE, seq ${SEQ_LEN}, ${STEPS} steps x ${TPS} tokens/step"
+log "          ${TOKENS} tokens trained from a ${POOL}-token pool (ratio ${RATIO})"
+log "          ~${HOURS} wall-clock hours at \$${RATE}/hr => roughly \$${COST} — rough, not a quote"
+
+# A pool far from the budget is a bug in the invocation, not a preference.
+# Under 0.5: you are paying to download and store tokens the run never reaches.
+# Over 1.5: the run samples the same windows repeatedly, which is memorisation.
+case "$(python3 -c "import sys;r=float(sys.argv[1]);print('low' if r<0.5 else 'high' if r>1.5 else 'ok')" "$RATIO")" in
+  low)  log "WARNING: pool is $(python3 -c "import sys;print(f'{1/float(sys.argv[1]):.1f}')" "$RATIO")x the token budget."
+        log "         Lower SHARDS to $(python3 -c "import sys;print(int(float(sys.argv[1])/70.4e6+1))" "$TOKENS"), or raise STEPS." ;;
+  high) log "WARNING: the budget is ${RATIO}x the pool — windows will repeat."
+        log "         Raise SHARDS to $(python3 -c "import sys;print(int(float(sys.argv[1])/70.4e6+1))" "$TOKENS"), or lower STEPS." ;;
+esac
 
 # --- 4. dependencies ----------------------------------------------------------
 # Ubuntu marks the system Python externally managed (PEP 668), so EVERY pip call
@@ -149,8 +202,12 @@ fi
 log "handing off to stages.sh (stage 1, size $SIZE)"
 write_status "training started"
 
+# STEPS, BATCH and ACCUM must be exported too, not just SIZE and SHARDS.
+# stages.sh defaults STEPS to 60000 independently, so leaving them out meant the
+# estimate above described one run and stages.sh ran another.
 set +e
 STAGE=1 SIZE="$SIZE" SHARDS="$SHARDS" WORK="$WORK" \
+  STEPS="$STEPS" BATCH="$BATCH" ACCUM="$ACCUM" \
   bash "$REPO_DIR/scripts/train/stages.sh"
 RC=$?
 set -e

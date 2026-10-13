@@ -208,10 +208,20 @@ Report those hashes.
 ## 9. Pipeline, and the five traps
 
 ```
-STAGE=1 SIZE=100m SHARDS=43  bash scripts/train/stages.sh    # ~1 hour, de-risk first
-STAGE=1 SIZE=1b   SHARDS=284 bash scripts/train/stages.sh    # ~20 hours, the real run
-STAGE=2                      bash scripts/train/stages.sh    # self-improvement
+STAGE=1 SIZE=100m SHARDS=43  STEPS=61589  bash scripts/train/stages.sh   # de-risk first
+STAGE=1 SIZE=1b   SHARDS=284 STEPS=25423  bash scripts/train/stages.sh   # the real run
+STAGE=2                                   bash scripts/train/stages.sh   # self-improvement
 ```
+
+**Always pass STEPS.** `SHARDS` sizes the sampling pool; `STEPS` alone decides
+how long the run is, and `stages.sh` defaults it to 60000 regardless of either
+the pool or the GPU count. `artemis/train.py:137` computes
+`tokens_per_step = batch * accum * max_seq_len * world_size`, so on the 8-GPU box
+at 1b that default trains 47B tokens out of a 20B pool — every window seen about
+2.4 times, which is memorisation, not a longer run. The figures above are one
+pass over the pool: 11 hours for 1b on 8xH100, 1.4 hours for 100m on one.
+`scripts/train/rent-gpu-run.sh` derives `STEPS` from `SHARDS` for you and prints
+the ratio before it spends anything; prefer it over calling `stages.sh` directly.
 
 Stage 2 refuses to run without a stage-1 checkpoint, deliberately:
 self-improvement amplifies a signal and cannot create one. A model that never
