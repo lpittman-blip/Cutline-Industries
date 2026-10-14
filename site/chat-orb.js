@@ -14,7 +14,7 @@
     sliders: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M4 8h9M17 8h3M4 16h3M11 16h9"/><circle cx="15" cy="8" r="2"/><circle cx="9" cy="16" r="2"/></svg>',
     stopSq: '<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="7" width="10" height="10" rx="2.5" fill="currentColor"/></svg>',
     close: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>',
-    plus: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4H7a3 3 0 0 0-3 3v10a3 3 0 0 0 3 3h10a3 3 0 0 0 3-3v-5"/><path d="M17.5 3.5a2.1 2.1 0 0 1 3 3L13 14l-4 1 1-4z"/></svg>',
+    plus: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>',
     mic: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>',
     micOff: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M15 10V6a3 3 0 0 0-5.7-1.3M9 9v2a3 3 0 0 0 4.9 2.3M5 11a7 7 0 0 0 11.2 5.6M19 11a7 7 0 0 1-.6 2.8M12 18v3M4 4l16 16"/></svg>'
   };
@@ -239,7 +239,7 @@
     if (analyser && buf) { analyser.getByteTimeDomainData(buf); let s = 0; for (let i = 0; i < buf.length; i += 4) { const v = (buf[i] - 128) / 128; s += v * v; } level += (Math.min(1, Math.sqrt(s / (buf.length / 4)) * 6) - level) * 0.3; mic.style.setProperty('--lvl', level.toFixed(3)); }
     const talk = speaking(), live = busy || talk;
     const stopState = live ? 'live' : voiceOn ? 'armed' : 'idle';
-    if (stopState !== wasLive) { wasLive = stopState; stop.classList.toggle('is-live', live); stop.classList.toggle('is-armed', !live && voiceOn); stop.innerHTML = ICON.stopSq; const shown = stopState !== 'idle'; stop.tabIndex = shown ? 0 : -1; stop.setAttribute('aria-hidden', String(!shown)); }
+    if (stopState !== wasLive) { wasLive = stopState; stop.classList.toggle('is-live', live); stop.classList.toggle('is-armed', !live && voiceOn); stop.innerHTML = live ? ICON.stopSq : ICON.close; const shown = true; stop.tabIndex = shown ? 0 : -1; stop.setAttribute('aria-hidden', String(!shown)); }
     energy += (((busy ? 0.85 : 0.22) + (talk ? 0.45 : 0) + level * 0.8 + burst) - energy) * 0.05 * f; burst *= Math.pow(0.94, f);
     tx += (ttx - tx) * 0.04 * f; ty += (tty - ty) * 0.04 * f; spin += spinV * f + (rm ? 0 : dt * 0.0001 * (1 + energy * 2)); spinV *= Math.pow(0.95, f);
     // Framing: ~40% of the viewport width on desktop, most of the width on phones.
@@ -451,18 +451,10 @@
     const fresh = performance.now() - A0 < 2600 && !reduced.matches; if (fresh) w.classList.add('orb-arrive');
     const h2 = w.querySelector('h2');
     if (h2) { const words = h2.textContent.split(' '); h2.textContent = ''; words.forEach((wd, i) => { const sp = el('span', 'orb-w', ''); sp.textContent = wd; sp.style.setProperty('--i', i); h2.append(sp, document.createTextNode(i < words.length - 1 ? ' ' : '')); }); h2.setAttribute('aria-label', words.join(' ')); }
-    const r = el('button', 'orb-rotator'); r.type = 'button';
-    const lead = el('span', 'orb-rot-lead'); lead.textContent = 'Artemis can '; const typed = el('span', 'orb-rot-typed'); const caret = el('span', 'orb-rot-caret');
-    const go = el('span', 'orb-rot-go', SVG('<path d="M5 12h14M13 6l6 6-6 6"/>'));
-    r.append(lead, typed, caret, go); r.setAttribute('aria-label', 'Use an example prompt');
-    r.addEventListener('click', () => { const i = Number(r.dataset.i || 0); fillComposer(ROTATE[i][1], r, '#4c8dff'); });
-    if (h2) h2.after(r);
-    rot = { el: r, typed }; rotI = 0; setTimeout(runRotator, fresh ? 1500 : 200);
+    { const pr = w.querySelector('.workspace-prompts'), sub = w.querySelector(':scope > p'); if (pr && sub && (pr.compareDocumentPosition(sub) & 4)) pr.before(sub); }
     w.querySelectorAll('.workspace-prompts button').forEach((b, i) => {
       const label = b.textContent.trim(), meta = CHIPS[label] || { color: '#4c8dff', icon: SVG('<path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/>') };
-      b.classList.add('orb-card'); b.style.setProperty('--c', meta.color); b.style.setProperty('--crgb', rgb(meta.color)); b.style.setProperty('--i', i);
-      b.innerHTML = ''; const ico = el('span', 'orb-card-ico', meta.icon), txt = el('span', 'orb-card-txt'), strong = el('strong'), small = el('small');
-      strong.textContent = label; small.textContent = PREVIEW[label] || ''; txt.append(strong, small); b.append(ico, txt); b.setAttribute('aria-label', label + ': ' + (PREVIEW[label] || ''));
+      b.classList.add('orb-pill'); b.style.setProperty('--c', meta.color); b.style.setProperty('--i', i);
       const on = () => { hover = { el: b, color: meta.color }; kick(0.15); }, off = () => { if (hover?.el === b) hover = null; b.style.removeProperty('--rx'); b.style.removeProperty('--ry'); };
       b.addEventListener('pointerenter', on); b.addEventListener('focus', on); b.addEventListener('pointerleave', off); b.addEventListener('blur', off);
       b.addEventListener('pointermove', e => { if (reduced.matches || e.pointerType !== 'mouse') return; const q = b.getBoundingClientRect(); b.style.setProperty('--rx', (((e.clientX - q.left) / q.width - 0.5) * 12).toFixed(1) + 'deg'); b.style.setProperty('--ry', (-((e.clientY - q.top) / q.height - 0.5) * 10).toFixed(1) + 'deg'); b.style.setProperty('--gx', ((e.clientX - q.left) / q.width * 100).toFixed(0) + '%'); });
@@ -475,7 +467,7 @@
   { const w = box.querySelector('.workspace-welcome'); if (w) enhanceWelcome(w); }
 
   // Cycling composer placeholder (only while idle and empty)
-  const PH = ['Message Artemis', 'Ask Artemis to explain some code…', 'Plan a project with Artemis…', 'Draft an email with Artemis…', 'Paste an error for Artemis to debug…'];
+  const PH = ['Message Artemis']; const PH_UNUSED = ['Ask Artemis to explain some code…', 'Plan a project with Artemis…', 'Draft an email with Artemis…', 'Paste an error for Artemis to debug…'];
   let phI = 0;
   setInterval(() => {
     if (!body.classList.contains('orb-mode') || document.activeElement === input || input.value || document.hidden) return;
