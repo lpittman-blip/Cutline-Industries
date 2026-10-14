@@ -133,11 +133,25 @@ print(f"\n(eff experts: exp(mean router entropy) — 10.00 is uniform across the
       f"single expert received.)")
 # The claim under test is a comparison, so state the gap, not just the numbers.
 d = {r[0]: r[2] for r in rows}
+def verdict(gap: float, better: str, worse: str) -> str:
+    # val_loss is recorded rounded to 4 decimals, so a gap of exactly 0.0000 is
+    # a tie at the precision available, not a win for either side. Saying
+    # "dense better" there — which this did — reports a result the numbers do
+    # not contain.
+    if gap == 0:
+        return "tie at the recorded precision"
+    return f"{better} better" if gap > 0 else f"{worse} better"
+
 if {"moe-sup", "dense"} <= d.keys():
     g = d["dense"] - d["moe-sup"]
-    print(f"\nsupervised MoE vs dense: {g:+.4f} "
-          f"({'MoE better' if g > 0 else 'dense better'})")
+    print(f"\nsupervised MoE vs dense:      {g:+.4f}  ({verdict(g, 'MoE', 'dense')})")
 if {"moe-sup", "moe-unsup"} <= d.keys():
     g = d["moe-unsup"] - d["moe-sup"]
-    print(f"routing supervision is worth: {g:+.4f}")
+    print(f"routing supervision is worth: {g:+.4f}  "
+          f"({verdict(g, 'supervision helps', 'supervision hurts')})")
+if {"moe-unsup", "dense"} <= d.keys():
+    # The arm pair that actually isolates the architecture: both routers
+    # unsupervised, so any gap is the mixture-of-experts itself.
+    g = d["dense"] - d["moe-unsup"]
+    print(f"MoE architecture alone:       {g:+.4f}  ({verdict(g, 'MoE', 'dense')})")
 PY
