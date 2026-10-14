@@ -29,6 +29,16 @@ SHARDS="${SHARDS:-284}"        # measured 70.4M tokens/shard at vocab 32000 -> ~
 STEPS="${STEPS:-60000}"
 BATCH="${BATCH:-6}"
 ACCUM="${ACCUM:-4}"
+LR="${LR:-3e-4}"
+SEED="${SEED:-1337}"
+# train.py defaults --warmup to 20, which is 10% of its own 200-step default
+# run and 0.01% of a real 203,386-step 1b run. Twenty steps from zero to peak
+# LR on a 1.3B model is how early loss spikes happen. Scale it with the run,
+# with a floor for short ones; a wrapper that decides STEPS owns the schedule
+# that depends on it.
+# 1% of the run, floored at 100 for short runs but never more than 10% of the
+# run, so a 200-step smoke test does not spend half of itself warming up.
+WARMUP="${WARMUP:-$(python3 -c "s=$STEPS; print(max(1, min(int(0.1*s), max(100, int(0.01*s)))))")}"
 VOCAB="${VOCAB:-32000}"        # must match configs/models.yaml for the GPU sizes
 DATASET="${DATASET:-codeparrot/github-code-clean}"
 REPO="${REPO:-$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)}"
@@ -107,8 +117,10 @@ print("train tokens:", m["train_tokens"], "val:", m["val_tokens"],
 PY
 
   log "pretraining on $NGPU GPU(s)"
+  log "schedule: $STEPS steps, warmup $WARMUP ($(python3 -c "print(f'{100*$WARMUP/$STEPS:.2f}')")% of the run), lr $LR, seed $SEED"
   ARGS=(--size "$SIZE" --data "$WORK/data" --out "$WORK/runs/$SIZE"
         --steps "$STEPS" --batch "$BATCH" --accum "$ACCUM"
+        --lr "$LR" --warmup "$WARMUP" --seed "$SEED"
         --eval-every 500 --eval-batches 50 --ckpt-every 1000)
   if [ "$NGPU" -gt 1 ]; then
     torchrun --nproc_per_node "$NGPU" -m artemis.train "${ARGS[@]}"
