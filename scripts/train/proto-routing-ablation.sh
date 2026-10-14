@@ -45,7 +45,7 @@ log() { echo "[$(date -u +%H:%M:%S)] $*"; }
 # The premise of the whole experiment. If this is false the run is the old run
 # again, and silently so: route_coef would multiply a term that is never set.
 python3 - "$DATA/manifest.json" <<'PY'
-import json, sys
+import json, math, sys
 m = json.load(open(sys.argv[1]))
 if not m.get("domain_labels"):
     raise SystemExit("manifest says domain_labels false — the router would have "
@@ -78,7 +78,7 @@ run dense     proto-dense 0
 
 log "comparison"
 python3 - "$WORK/runs" <<'PY'
-import json, sys
+import json, math, sys
 from pathlib import Path
 rows = []
 for name in ("moe-sup", "moe-unsup", "dense"):
@@ -88,12 +88,28 @@ for name in ("moe-sup", "moe-unsup", "dense"):
     recs = [json.loads(l) for l in (p / "metrics.jsonl").open() if l.strip()]
     val = [r for r in recs if "val_loss" in r]
     cfg = json.loads((p / "run.json").read_text())
+    # Val loss alone cannot distinguish an MoE that spread its traffic from one
+    # that collapsed onto a single expert, and that distinction is the whole
+    # question. exp(entropy) is the effective number of experts a token passes
+    # through: 10 means uniform, 1 means the MoE has become dense.
+    last = recs[-1]
+    ent = last.get("router_entropy")
+    eff = sum(math.exp(e) for e in ent) / len(ent) if ent else None
+    load = last.get("expert_load")
+    busiest = max(max(layer) for layer in load) if load else None
     rows.append((name, cfg["active_params"], min(r["val_loss"] for r in val),
-                 val[-1]["val_loss"], recs[-1]["step"]))
+                 val[-1]["val_loss"], recs[-1]["step"], eff, busiest))
 w = max(len(r[0]) for r in rows)
-print(f"{'arm':<{w}}  {'active':>10}  {'best val':>9}  {'final val':>9}  steps")
-for n, a, b, f, s in rows:
-    print(f"{n:<{w}}  {a:>10,}  {b:>9.4f}  {f:>9.4f}  {s}")
+print(f"{'arm':<{w}}  {'active':>10}  {'best val':>9}  {'final val':>9}  "
+      f"{'eff experts':>11}  {'busiest':>7}  steps")
+for n, a, b, f, s, eff, busy in rows:
+    e = f"{eff:>11.2f}" if eff else f"{'dense':>11}"
+    bu = f"{busy:>7.1%}" if busy else f"{'-':>7}"
+    print(f"{n:<{w}}  {a:>10,}  {b:>9.4f}  {f:>9.4f}  {e}  {bu}  {s}")
+print(f"\n(eff experts: exp(mean router entropy) — 10.00 is uniform across the "
+      f"ten experts,\n 1.00 means every token takes the same one and the MoE "
+      f"has become a dense model.\n busiest: largest share of routing slots any "
+      f"single expert received.)")
 # The claim under test is a comparison, so state the gap, not just the numbers.
 d = {r[0]: r[2] for r in rows}
 if {"moe-sup", "dense"} <= d.keys():
