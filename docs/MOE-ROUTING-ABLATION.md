@@ -1,6 +1,6 @@
 # Does the MoE earn its parameters? — proto routing ablation
 
-Status: **running**. Prediction below was written before any arm finished;
+Status: **complete**. Prediction below was written before any arm finished;
 results are appended underneath, whichever way they fall.
 
 ## Why the earlier answer does not count
@@ -118,4 +118,93 @@ suit them:
 
 ## Results
 
-_Appended when the arms finish._
+All three arms ran the full 2500 steps on identical data, tokenizer, seed and
+schedule. Validation loss recomputed from the final checkpoints over the same
+deterministic windows, at two eval sizes, because the in-run figure is rounded
+to four decimals and two arms collided on it.
+
+| arm | active params | val (20 batches) | val (100 batches) | eff. experts | busiest |
+| --- | --- | --- | --- | --- | --- |
+| `moe-sup` | 5,876,480 | 3.622228 | 3.623671 | 1.35 | 50.0% |
+| `moe-unsup` | 5,876,480 | **3.573236** | **3.577771** | 8.03 | 13.4% |
+| `dense` | 5,868,800 | 3.622172 | 3.624134 | — | — |
+
+| comparison | 20 batches | 100 batches | verdict |
+| --- | --- | --- | --- |
+| `moe-sup` vs `dense` | −0.000056 | +0.000463 | **tie — the sign flips** |
+| `moe-unsup` vs `dense` | +0.048936 | +0.046363 | MoE better, stable |
+| `moe-unsup` vs `moe-sup` | +0.048992 | +0.045900 | supervision hurts, stable |
+
+### Three findings
+
+**1. Routing supervision costs about 0.046–0.049 validation loss.** Stable in
+sign and magnitude across eval sizes. The ten-expert design trains *better*
+with `route_coef` at 0 than at its default 0.1.
+
+**2. The MoE architecture beats matched-compute dense by about the same
+margin, once the router is left alone.** `moe-unsup` 3.5778 against `dense`
+3.6241 at 100 batches. This reverses the original conclusion. The architecture
+was never the problem; the supervision was, and the original run could not see
+that because it had the supervision silently disabled *and* attributed the
+result to the architecture.
+
+**3. `moe-sup` and `dense` are indistinguishable.** The gap is 5e-5 to 5e-4 and
+**changes sign** when the validation set grows from 20 to 100 batches, while
+the other two gaps hold steady at ~0.046. A difference that reverses under more
+evaluation is noise. Supervised, the MoE is exactly as good as a dense model —
+which is what you would expect of a model that has become one.
+
+### Why, mechanically
+
+Final expert load, identical in all three MoE layers, for `moe-sup`:
+
+```
+intent 0.000   architecture 0.000   planning 0.000
+build  0.500   test         0.497   deploy   0.004
+memory 0.000   security     0.000   observability 0.000   cost 0.000
+```
+
+`experts_per_token` is 2, so 0.500/0.497 means `build` and `test` are in every
+token's top-2. Routing became **constant** — the same two experts for every
+token regardless of content — with seven experts dead and `deploy` at 0.004,
+tracking its 0.2% share of the labels. That is a dense model carrying nine
+unused parameter sets, and it scores exactly like one.
+
+With supervision off, the same architecture spreads across 8.03 effective
+experts, busiest at 13.4% against 10% for a perfectly even split, and balance
+loss 1.0192 against a theoretical ideal of exactly 1.0. The router solves load
+balancing by itself. It is supervision that breaks it.
+
+The predicted incentive was right: obeying the labels saves 0.2303 in
+supervision and costs 0.0641 in balance penalty, so the router obeys. The
+prediction that `moe-sup` would be "no better than dense, plausibly worse" was
+right on "no better" — it tied — but located the damage in the wrong
+comparison. The cost is visible against the MoE control, not against dense.
+
+### What to do about it
+
+Do not read this as "turn routing supervision off and ship". It says the
+supervision signal as currently built is harmful, and names three fixes, in the
+order worth trying:
+
+1. **Label more experts.** `classify()` labels 3 of 10 from paths and language,
+   which genuinely cannot evidence `intent` or `architecture`. This is the real
+   fix and the most work.
+2. **Supervise a subset of tokens**, leaving the rest to balance-driven
+   exploration so unlabelled experts stay reachable.
+3. **Lower `route_coef`** so the balance term can compete — at 0.1 against
+   `balance_coef` 0.01 it cannot.
+
+Until one of those lands, a 1b or 8b run should set `--route-coef 0`. On this
+evidence that is worth ~0.046 validation loss and the difference between ten
+working experts and three.
+
+### Standing limits
+
+The limits stated before the run still apply and are not softened by the
+result: 1.7 tokens per active parameter against a Chinchilla-optimal 20,
+108,398 validation tokens, three of ten experts labelled, and proto scale
+(5.9M active, `d_model` 256, seq 256). A ranking at this scale and budget is
+evidence about 8b, not proof. The mechanism — supervision collapsing the router
+onto the labelled experts — is scale-independent arithmetic and travels better
+than the loss numbers do.
