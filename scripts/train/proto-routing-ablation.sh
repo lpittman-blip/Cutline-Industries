@@ -65,7 +65,28 @@ run() {  # name, size, route_coef
   # $name in the same statement that declares it trips `set -u`.
   local name="$1" size="$2" coef="$3"
   local out="$WORK/runs/$name"
-  if [ -f "$out/latest.pt" ]; then log "$name already trained — skipping"; return; fi
+  # Skip only an arm that actually REACHED the target, not merely one that has
+  # a checkpoint. --ckpt-every 500 means an arm interrupted at step 1800 has a
+  # latest.pt too, and treating that as finished would quietly compare a
+  # half-trained arm against two full ones — a wrong answer rather than a
+  # missing one. artemis.train resumes from latest.pt, so re-running continues
+  # where it stopped.
+  local done_steps=0
+  if [ -f "$out/metrics.jsonl" ]; then
+    done_steps=$(python3 - "$out/metrics.jsonl" <<'PY'
+import json, sys
+last = 0
+for line in open(sys.argv[1]):
+    if line.strip():
+        last = json.loads(line).get("step", last)
+print(last)
+PY
+)
+  fi
+  if [ "$done_steps" -ge "$STEPS" ]; then
+    log "$name already at step $done_steps/$STEPS — skipping"; return
+  fi
+  [ "$done_steps" -gt 0 ] && log "$name resuming from step $done_steps/$STEPS"
   log "arm $name: size=$size route_coef=$coef"
   python3 -m artemis.train --size "$size" --data "$DATA" --out "$out" \
     --steps "$STEPS" --batch "$BATCH" --lr "$LR" --seed "$SEED" \
