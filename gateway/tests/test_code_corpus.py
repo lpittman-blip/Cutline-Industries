@@ -7,7 +7,8 @@ import json
 
 import pytest
 
-from artemis.code_corpus import PERMISSIVE, build, classify, is_permissive
+from artemis.code_corpus import (CONTENT_SIGNALS, PERMISSIVE, build, classify,
+                                 classify_content, is_permissive)
 from artemis.model import EXPERT_NAMES
 
 pa = pytest.importorskip("pyarrow")
@@ -46,6 +47,112 @@ def test_permissive_set_contains_no_copyleft():
 ])
 def test_domain_classification(path, lang, expected):
     assert classify(path, lang) == expected
+
+
+@pytest.mark.parametrize("code,expected", [
+    # One library-specific name is enough, because only telemetry uses it.
+    ("import structlog\nlog = structlog.get_logger()\n", "observability"),
+    ("from prometheus_client import Counter\nc = Counter('x', 'y')\n", "observability"),
+    ("import hashlib\nh = hashlib.sha256(pw).hexdigest()\n", "security"),
+    ("const jwt = require('jsonwebtoken'); jwt.verify(t, k)\n", "security"),
+    ("import redis\nr = redis.Redis()\nr.get('k')\n", "memory"),
+    ("cur.execute('SELECT id FROM users WHERE x = ?')\n", "memory"),
+    ("stripe.Charge.create(amount=500, currency='usd')\n", "cost"),
+])
+def test_content_signals_label_their_domain(code, expected):
+    assert classify_content(code) == expected
+
+
+@pytest.mark.parametrize("code,why", [
+    # Every one of these was a REAL false positive found by sampling the corpus.
+    # They are the reason the strong tier is library names and nothing else.
+    ("obs.observe(function (changes) { render(changes); });",
+     "observe( is RxJS/MobX, not a metrics observation"),
+    ("class RayTracer { trace(scene) { return this.tracer.cast(ray); } }",
+     "a ray tracer is not a distributed tracer"),
+    ("img_hist = cv2.calcHist([img], [0], None, [256], [0, 256])  # histogram",
+     "histogram is image processing here"),
+    ("<label>Name</label><input/>  // .labels( in a UI",
+     "UI labels are not prometheus labels"),
+    # Numerical code: `cost` means a loss function, `price` a simulation input.
+    ("def cost(theta, X, y):\n    return ((X @ theta - y) ** 2).mean()\n",
+     "cost is a loss function in ML code"),
+    ("prices = [random.gauss(100, 5) for _ in range(1000)]\n",
+     "price in a simulation is not billing"),
+    # Thin evidence of any kind stays unlabelled rather than being guessed.
+    ("logger = logging.getLogger(__name__)\n",
+     "a bare logger line is in nearly every file"),
+    ("", "empty input"),
+])
+def test_weak_evidence_is_left_unlabelled(code, why):
+    assert classify_content(code) is None, why
+
+
+def test_a_file_about_two_things_equally_is_left_unlabelled():
+    """The margin rule: no label beats a wrong one when the evidence is split."""
+    from artemis.code_corpus import _score_content
+    both = "import hashlib\nimport redis\n"
+    scores = _score_content(both)
+    assert scores["security"] == scores["memory"], "the fixture must actually tie"
+    assert classify_content(both) is None
+
+
+def test_the_margin_only_protects_a_near_tie():
+    """What the margin does NOT do, stated so the limit is not mistaken for safety.
+
+    MARGIN is 1.5 on small integer scores, so it separates a tie from a clear
+    winner and little else. A file with real evidence of two domains still gets
+    labelled once one side is half again ahead — here crypto imports lose to a
+    heavier database signal. That is a deliberate accepted cost, not a bug: the
+    alternative is leaving most mixed files unlabelled, which is the shortage
+    this change exists to fix.
+    """
+    from artemis.code_corpus import _score_content
+    mixed = ("import hashlib, hmac\nfrom cryptography.fernet import Fernet\n"
+             "import redis, sqlalchemy\nsession.query(User).all()\n"
+             "cur.execute('SELECT * FROM users')\n")
+    s = _score_content(mixed)
+    assert s["memory"] >= 1.5 * s["security"], "fixture no longer demonstrates the point"
+    assert classify_content(mixed) == "memory"
+
+
+def test_path_rules_outrank_content():
+    """A test that exercises crypto is still test work."""
+    assert classify("tests/test_crypto.py", "Python",
+                    "import hashlib\nhashlib.sha256(b'x')\n") == "test"
+    assert classify("Dockerfile", "Dockerfile", "import redis\nredis.Redis()\n") == "deploy"
+
+
+def test_content_outranks_the_build_catch_all():
+    assert classify("src/auth.py", "Python",
+                    "import jwt, hashlib\njwt.verify(tok)\n") == "security"
+    # ...but a file with no distinguishing content still falls through to build.
+    assert classify("src/util.py", "Python", "def add(a, b):\n    return a + b\n") == "build"
+
+
+def test_classify_without_code_keeps_the_original_behaviour():
+    """Callers holding only a path must be unaffected by content labelling."""
+    assert classify("src/server.py", "Python") == "build"
+    assert classify("tests/t.py", "Python") == "test"
+    assert classify("README.md", "Markdown") is None
+
+
+def test_unreachable_experts_are_never_assigned():
+    """intent, architecture and planning have no code signal and must not be guessed.
+
+    Source files evidence what code does, not why it was written or how it was
+    meant to fit together. A file containing the word "architecture" is not
+    architecture work, and labelling it so would reintroduce the failure that
+    docs/MOE-ROUTING-ABLATION.md measured.
+    """
+    unreachable = {"intent", "architecture", "planning"}
+    assert unreachable.isdisjoint(CONTENT_SIGNALS)
+    tempting = [
+        "# Architecture: this module is the planning layer for user intent.\n",
+        "class ArchitecturePlanner:\n    '''Plans intent.'''\n",
+    ]
+    for code in tempting:
+        assert classify_content(code) not in unreachable
 
 
 def test_every_assigned_domain_is_a_real_expert():

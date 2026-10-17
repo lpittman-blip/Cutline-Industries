@@ -42,13 +42,128 @@ DEPLOY_PATH = re.compile(
     r"|(^|/)(k8s|kubernetes|helm|charts|deploy|terraform|ansible)(/|$)"
     r"|\.(tf|tfvars)$|(^|/)\.gitlab-ci\.yml$|(^|/)Jenkinsfile$", re.I)
 
+# --- content signals ----------------------------------------------------------
+# Paths evidence three experts. The ablation in docs/MOE-ROUTING-ABLATION.md
+# measured what that costs: supervising 3 of 10 experts under top-2 routing
+# drove 85.7% of labelled tokens to one expert, killed the other seven outright,
+# and made the supervised MoE 0.046 WORSE than the same model with supervision
+# switched off. Widening the labels is the fix; turning route_coef off is the
+# workaround.
+#
+# These read the file's contents, which is weaker evidence than a path, so the
+# bar is higher rather than lower. A domain is assigned only when several
+# DISTINCT signals fire and no rival domain comes close — see _score_content.
+# Distinct patterns are counted, never occurrences, so a long file cannot
+# out-vote a short one by repeating itself.
+#
+# Three experts are deliberately absent. `intent`, `architecture` and `planning`
+# describe why code was written and how it was meant to fit together. Source
+# files do not carry that; a comment saying "architecture" is not architecture
+# work. Guessing them would reintroduce exactly the failure this is fixing, so
+# they stay unlabelled until a corpus that actually evidences them exists.
+_STRONG, _WEAK = 2, 1
+CONTENT_SIGNALS: dict[str, list[tuple[str, int]]] = {
+    "security": [
+        (r"\b(hashlib|hmac|bcrypt|scrypt|argon2|pbkdf2)", _STRONG),
+        (r"\b(?:import|from|require\()\s*['\"]?(?:cryptography|crypto/(?:aes|rsa|tls)|openssl|nacl)", _STRONG),
+        (r"\b(jsonwebtoken|jwt\.(?:sign|verify|decode)|oauth2?[._]client)\b", _STRONG),
+        (r"\b(csrf|xss|sql[\s_]*injection|clickjacking)\b", _STRONG),
+        (r"\bsecrets\.(?:token_|choice)|\bos\.urandom\b", _STRONG),
+        (r"\b(x509|ssl_context|tlsconfig|certificate[\s_]signing)\b", _STRONG),
+        (r"\b(authenticate|authoriz(?:e|ation)|access[\s_]control)\b", _WEAK),
+        (r"\b(sanitiz(?:e|ation)|escape_html)\b", _WEAK),
+        (r"\b(encrypt|decrypt|cipher)\w*\b", _WEAK),
+        (r"\b(nonce|salt_?round|constant_time)\b", _WEAK),
+    ],
+    # Observability has the worst vocabulary collisions in the whole set, and
+    # sampling real files proved it: `observe(` is RxJS and MobX, `tracer.` is a
+    # ray tracer in graphics code, `histogram` is image processing, `.labels(`
+    # is a UI. Each of those matched a file with nothing to do with telemetry.
+    # So the strong tier is restricted to names that belong to a telemetry
+    # library and nothing else; everything ambiguous is weak and must pair up.
+    "observability": [
+        (r"\b(prometheus|opentelemetry|open_telemetry|statsd|datadog|sentry_sdk|structlog)", _STRONG),
+        (r"\b(start_span|trace_id|span_id|span\.set_|tracer\.start)\w*", _STRONG),
+        (r"\b(alertmanager|pagerduty|grafana|opsgenie)\b", _STRONG),
+        (r"\blogging\.getLogger|\blogger\s*=|\blog\.(?:info|warn|warning|error|debug)\b", _WEAK),
+        (r"\b(counter\.inc|gauge\.set|histogram)\b", _WEAK),
+        (r"\b(metrics?|telemetry)\b", _WEAK),
+        (r"\b(health_?check|readiness|liveness)\b", _WEAK),
+    ],
+    "memory": [
+        (r"\b(redis|memcached|sqlalchemy|psycopg2?|mongoose|mongodb|dynamodb|sqlite3)", _STRONG),
+        (r"\b(CREATE\s+TABLE|INSERT\s+INTO|ALTER\s+TABLE|SELECT\s+[\w*,\s]+\s+FROM)\b", _STRONG),
+        (r"\b(session\.(?:query|add|commit)|\.save\(\)|objects\.filter\()", _STRONG),
+        (r"\b(cache\.(?:get|set)|lru_cache|memoize)\b", _WEAK),
+        (r"\b(persist|serializ(?:e|ation)|deserializ(?:e|ation))\w*\b", _WEAK),
+        (r"\b(migration|schema_version|primary_key|foreign_key)\b", _WEAK),
+    ],
+    # "cost" is the easiest domain to get wrong: in numerical and ML code `cost`
+    # means a loss function, and `price` appears in simulations. Only payment
+    # and metering vocabulary counts here — no bare `cost`, no bare `price`.
+    "cost": [
+        (r"\b(stripe|braintree|paypal|chargebee|paddle)", _STRONG),
+        (r"\b(invoice|billing_?(?:account|period|cycle)|subscription_?id|price_?id)\b", _STRONG),
+        (r"\b(payment_?(?:intent|method)|charge_?amount|checkout_?session)\b", _STRONG),
+        (r"\b(quota|metered_?usage|usage_?record|billable)\b", _WEAK),
+        (r"\b(currency|usd|cents|amount_due)\b", _WEAK),
+    ],
+}
 
-def classify(path: str, language: str) -> str | None:
-    """Domain for a source file, or None to leave it unlabelled."""
+_COMPILED: dict[str, list[tuple[re.Pattern, int]]] = {
+    d: [(re.compile(p, re.I), w) for p, w in sigs] for d, sigs in CONTENT_SIGNALS.items()
+}
+
+# A domain needs this much distinct evidence, and this much more than its
+# nearest rival, before it is assigned. Both thresholds matter: the first stops
+# an incidental `logger =` from labelling a file `observability`, the second
+# stops a file that is equally about two things from being filed under either.
+MIN_SCORE = 2
+MARGIN = 1.5
+# Signals live in imports, handlers and queries, which are not evenly spread
+# through a 40 000-character file. Scanning a bounded prefix keeps the pass
+# cheap without changing what it finds in practice.
+SCAN_CHARS = 20_000
+
+
+def _score_content(code: str) -> dict[str, int]:
+    """Distinct-signal score per domain. Occurrences are ignored by design."""
+    head = code[:SCAN_CHARS]
+    return {d: sum(w for pat, w in sigs if pat.search(head))
+            for d, sigs in _COMPILED.items()}
+
+
+def classify_content(code: str) -> str | None:
+    """Domain evidenced by a file's contents, or None when the evidence is thin."""
+    if not code:
+        return None
+    scores = _score_content(code)
+    ranked = sorted(scores.items(), key=lambda kv: -kv[1])
+    top, top_score = ranked[0]
+    runner_up = ranked[1][1] if len(ranked) > 1 else 0
+    if top_score < MIN_SCORE:
+        return None
+    if runner_up and top_score < MARGIN * runner_up:
+        return None
+    return top
+
+
+def classify(path: str, language: str, code: str | None = None) -> str | None:
+    """Domain for a source file, or None to leave it unlabelled.
+
+    `code` is optional so a caller with only a path keeps the original
+    behaviour; given the contents, four more experts become reachable.
+    """
     if TEST_PATH.search(path or ""):
         return "test"
     if DEPLOY_PATH.search(path or "") or language == "Dockerfile":
         return "deploy"
+    if code:
+        # Content outranks the `build` catch-all but not the path rules above:
+        # a test that exercises crypto is still test work.
+        found = classify_content(code)
+        if found:
+            return found
     if language in CODE_LANGUAGES:
         return "build"
     return None
@@ -94,7 +209,7 @@ def build(parquet_paths, out_jsonl: Path, *, min_chars: int = 200,
                     if not (min_chars <= len(code) <= max_chars):
                         stats["rejected_size"] += 1
                         continue
-                    domain = classify(d.get("path", [""] * n)[i], lang)
+                    domain = classify(d.get("path", [""] * n)[i], lang, code)
                     rec = {"text": code}
                     if domain:
                         rec["domain"] = domain
