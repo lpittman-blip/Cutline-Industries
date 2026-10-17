@@ -30,11 +30,16 @@ def main() -> None:
     src = Path(sys.argv[1])
     work = Path(sys.argv[2])
     target = int(sys.argv[3]) if len(sys.argv) > 3 else 10_000_000
+    # An explicit stride pins WHICH documents the slice takes. Deriving it
+    # from file size is fine for a fresh run, but label names change the
+    # file size, so a relabelled corpus would silently select a different
+    # slice and the token stream would stop being comparable.
+    forced_stride = int(sys.argv[4]) if len(sys.argv) > 4 else 0
     work.mkdir(parents=True, exist_ok=True)
 
     want_chars = int(target * CHARS_PER_TOKEN)
     total_chars = src.stat().st_size
-    stride = max(1, total_chars // want_chars)
+    stride = forced_stride or max(1, total_chars // want_chars)
     print(f"corpus {total_chars/1e6:.0f} MB, want ~{want_chars/1e6:.0f} MB "
           f"for ~{target/1e6:.0f}M tokens -> every {stride}th document")
 

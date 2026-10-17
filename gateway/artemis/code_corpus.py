@@ -148,11 +148,21 @@ def classify_content(code: str) -> str | None:
     return top
 
 
-def classify(path: str, language: str, code: str | None = None) -> str | None:
+def classify(path: str, language: str, code: str | None = None,
+             residual_build: bool = True) -> str | None:
     """Domain for a source file, or None to leave it unlabelled.
 
     `code` is optional so a caller with only a path keeps the original
     behaviour; given the contents, four more experts become reachable.
+
+    `residual_build` controls the catch-all. With it on, any source file that
+    matched nothing specific is labelled `build`, which is 77% of the corpus
+    even after content labelling. That is not a domain — it is "source code
+    that matched nothing else" — and supervising on it teaches the router that
+    one expert means everything, which is the collapse measured in
+    docs/MOE-ROUTING-ABLATION.md. Turning it off leaves those files unlabelled
+    so routing supervision applies only where there is positive evidence and
+    the rest is free for the balance term to spread.
     """
     if TEST_PATH.search(path or ""):
         return "test"
@@ -164,7 +174,7 @@ def classify(path: str, language: str, code: str | None = None) -> str | None:
         found = classify_content(code)
         if found:
             return found
-    if language in CODE_LANGUAGES:
+    if residual_build and language in CODE_LANGUAGES:
         return "build"
     return None
 
@@ -174,7 +184,8 @@ def is_permissive(license_id: str | None) -> bool:
 
 
 def build(parquet_paths, out_jsonl: Path, *, min_chars: int = 200,
-          max_chars: int = 40_000, languages=None) -> dict:
+          max_chars: int = 40_000, languages=None,
+          residual_build: bool = True) -> dict:
     """Stream parquet shards into a labelled JSONL corpus for data.prepare.
 
     Returns counts so the caller can see what was kept and why, rather than
@@ -209,7 +220,8 @@ def build(parquet_paths, out_jsonl: Path, *, min_chars: int = 200,
                     if not (min_chars <= len(code) <= max_chars):
                         stats["rejected_size"] += 1
                         continue
-                    domain = classify(d.get("path", [""] * n)[i], lang, code)
+                    domain = classify(d.get("path", [""] * n)[i], lang, code,
+                                      residual_build=residual_build)
                     rec = {"text": code}
                     if domain:
                         rec["domain"] = domain
@@ -227,8 +239,11 @@ def main(argv=None):
     ap.add_argument("parquet", nargs="+")
     ap.add_argument("--min-chars", type=int, default=200)
     ap.add_argument("--max-chars", type=int, default=40_000)
+    ap.add_argument("--no-residual-build", action="store_true",
+                    help="leave unmatched source unlabelled instead of calling it build")
     a = ap.parse_args(argv)
-    s = build(a.parquet, Path(a.out), min_chars=a.min_chars, max_chars=a.max_chars)
+    s = build(a.parquet, Path(a.out), min_chars=a.min_chars, max_chars=a.max_chars,
+              residual_build=not a.no_residual_build)
     print(json.dumps(s, indent=2))
     return s
 
