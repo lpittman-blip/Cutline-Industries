@@ -199,6 +199,99 @@ Until one of those lands, a 1b or 8b run should set `--route-coef 0`. On this
 evidence that is worth ~0.046 validation loss and the difference between ten
 working experts and three.
 
+---
+
+# Second ablation: fixes 1 and 2, tested
+
+Fixes 1 and 2 above were built and run. Both were measured; one helped a
+little, one made things worse, and the recommendation did not change.
+
+`classify()` was widened to read file contents, reaching `security`,
+`observability`, `memory` and `cost` — 7 of 10 experts, up from 3. The residual
+`build` label was made optional so supervision could be restricted to tokens
+with positive evidence.
+
+Two new arms. `dense`, `moe-unsup` and `moe-sup` were carried over, which is
+sound only because none of them reads domain labels: `route_coef 0` never adds
+the supervision term and `proto-dense` has no router. The carry-over was
+asserted, not assumed — `sha256(train.bin)` and `sha256(val.bin)` matched
+across label sets (`d8fdc434bce7…`, `cd5bdef6b794…`), as did `tokenizer.json`.
+All five arms therefore share one token stream, one seed and one schedule.
+
+## Results
+
+| arm | setup | val | lm loss | balance | eff. experts | dead |
+| --- | --- | --- | --- | --- | --- | --- |
+| `moe-unsup` | route_coef 0 | **3.5732** | **3.1778** | **1.019** | **8.03** | **0** |
+| `moe-wide` | 7 labels + build | 3.6115 | 3.2483 | 4.167 | 2.05 | 7 |
+| `dense` | no MoE | 3.6222 | 3.2278 | — | — | — |
+| `moe-sup` | 3 labels + build | 3.6222 | 3.2572 | 4.965 | 1.35 | 7 |
+| `moe-nores` | 7 labels, no build | 3.6624 | 3.2951 | 3.289 | 3.01 | 4 |
+
+| comparison | gap |
+| --- | --- |
+| widening the labels 3 → 7 | **+0.0107** (helps; 22% of the penalty) |
+| dropping the `build` residual | **−0.0509** (hurts) |
+| best supervised vs no supervision | **−0.0892** (no supervision wins) |
+
+## The finding that was not expected
+
+Dropping the residual did exactly what was predicted to the ROUTER and the
+opposite of what was predicted to the MODEL. Every routing metric improved —
+effective experts 2.05 → 3.01, dead experts 7 → 4, balance loss 4.167 → 3.289
+— and validation loss got **worse** by 0.051, the worst arm in the set.
+
+**Expert utilisation is not a proxy for quality.** That assumption was being
+made implicitly while the runs were in flight, reading "more live experts" as
+progress. It is false here: the arm with the second-highest utilisation
+performs worst. The `lm_loss` column locates the damage — 3.2951, the highest
+of any arm. Routing supervision does not merely fail to help; it competes with
+next-token prediction for the same gradient, and spreading it across more
+experts spreads the damage rather than diluting it.
+
+That also explains why widening helped only 22%. More labels reduce how
+cheaply the router can obey (route_loss rose 0.146 → 0.922 at step 1000), which
+loosens the collapse, but the supervision term is still pulling against the
+objective that validation measures.
+
+Thin labels never earned an expert either. `security` (1.1% of tokens), `cost`
+(0.8%), `observability` (0.6%) and `deploy` (0.2%) stayed at 0.000 load in
+`moe-wide`. Under top-2 routing a label covering under ~1% of tokens loses to
+whatever is larger, every time. Widening changed WHICH experts won — `memory`
+displaced `test` for the second slot — not HOW MANY.
+
+## Conclusion
+
+Tested four ways, the ranking is unambiguous: **`route_coef 0` wins on every
+measure** — best validation loss, best lm loss, balance loss 1.019 against a
+theoretical ideal of exactly 1.0, all ten experts live, none dead. The router
+solves load balancing better alone than with any supervision signal
+constructible from this corpus.
+
+**Set `--route-coef 0` for the 1b and 8b runs.** This is now the conclusion of
+two independent experiments rather than one, and the second was built
+specifically to overturn it and failed to.
+
+The labelling work is not wasted. It is worth 0.0107 if supervision is ever
+wanted, and `classify()` reaching 7 of 10 experts is needed for per-expert
+EVALUATION regardless of whether it is used for training. What it is not is a
+fix for the supervision penalty.
+
+Fix 3 — lowering `route_coef` so the balance term can compete — remains
+untested. Given that the damage is to `lm_loss` rather than to routing, the
+expected result is that lowering `route_coef` approaches `moe-unsup` from
+below and never beats it, with the best value being 0. That is a prediction,
+not a measurement.
+
+## Limits, unchanged
+
+Everything in the first ablation's limits section still applies and is not
+softened by these results: 1.7 tokens per active parameter against a
+Chinchilla-optimal 20, 108,398 validation tokens, proto scale (5.9M active,
+`d_model` 256, seq 256), and three of ten experts that no corpus of source
+code can evidence. The mechanism — a supervision term competing with the
+language-model objective — is scale-independent; the loss numbers are not.
+
 ### Standing limits
 
 The limits stated before the run still apply and are not softened by the
