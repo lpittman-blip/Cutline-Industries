@@ -78,13 +78,27 @@ from artemis.model import EXPERT_NAMES
 src, dst = Path(sys.argv[1]), Path(sys.argv[2])
 build = EXPERT_NAMES.index("build")
 for split in ("train", "val"):
-    d = np.fromfile(src / f"{split}.dom", dtype=np.uint8)
+    orig = np.fromfile(src / f"{split}.dom", dtype=np.uint8)
+    d = orig.copy()
     before = int((d == build).sum())
     d[d == build] = UNLABELED
     d.tofile(dst / f"{split}.dom")
     left = int((d != UNLABELED).sum())
     print(f"{split}: {before:,} build tokens unlabelled, {left:,} still supervised "
           f"({100*left/len(d):.1f}%)")
+    # The arms must differ in exactly one thing. Assert that here rather than
+    # trusting the rewrite: a label shard of the wrong length would silently
+    # misalign every label against its token, and an altered non-build label
+    # would make this a comparison of two different things at once.
+    out = np.fromfile(dst / f"{split}.dom", dtype=np.uint8)
+    assert len(out) == len(orig), f"{split}.dom changed length"
+    assert (out == build).sum() == 0, f"{split}.dom still contains build labels"
+    kept = orig != build
+    assert (out[kept] == orig[kept]).all(), f"{split}.dom altered a non-build label"
+    tokens = (src / f"{split}.bin").stat().st_size // np.dtype(
+        json.loads((src / "manifest.json").read_text())["dtype"]).itemsize
+    assert len(out) == tokens, (
+        f"{split}.dom has {len(out)} labels for {tokens} tokens — misaligned")
 PY
 else
   log "no-residual shard already present"
