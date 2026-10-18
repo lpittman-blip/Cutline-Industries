@@ -68,7 +68,17 @@ apt-get install -y -qq \
   git curl
 
 echo "[setup] Creating app user and directory…"
-id "$APP_USER" &>/dev/null || useradd -r -s /bin/false -d "$APP_DIR" "$APP_USER"
+id "$APP_USER" &>/dev/null || useradd -r -U -s /bin/false -d "$APP_DIR" "$APP_USER"
+# `useradd -r` WITHOUT -U does not create a matching group on Debian/Ubuntu: the
+# account lands in `users` (gid 100), the group every human account shares. Two
+# consequences, both real — this ran on Ubuntu 24.04 and failed:
+#   1. `chown artemis:artemis` below exits 1, "invalid group", aborting setup.
+#   2. Anything group-readable under $APP_DIR would be readable by every member
+#      of `users`, which is not what a service account is for.
+# Create the group and make it primary, repairing an account left behind by an
+# earlier run of this script as well as a fresh one.
+getent group "$APP_USER" >/dev/null || groupadd -r "$APP_USER"
+usermod -g "$APP_USER" "$APP_USER"
 mkdir -p "$APP_DIR"
 
 echo "[setup] Cloning/pulling repo…"
