@@ -195,8 +195,15 @@ echo " Gateway live at: https://$DOMAIN"
 echo " Health check:    curl https://$DOMAIN/api/health"
 echo "====================================================="
 echo ""
-echo "SAVE THIS — DB password (stored in /etc/artemis-chat.env on server):"
-echo "  artemis_chat DB password: $DB_PASSWORD"
+# The password is NOT printed. It is generated on the host, written to
+# /etc/artemis-chat.env (root-owned, 0600) and re-read from there on a re-run,
+# so nothing needs it in a human's hands. Echoing it put the secret into
+# terminal scrollback, CI logs, and — when this script is driven by
+# `az vm run-command` — into the command output and whatever transcript
+# captured it. That happened. Read it from the host if it is ever genuinely
+# needed:
+#   sudo grep '^ARTEMIS_DATABASE_URL=' /etc/artemis-chat.env
+echo "Database credentials are in /etc/artemis-chat.env on the server (root, 0600)."
 echo ""
 echo "Next steps:"
 echo "  1. Run infra/prepare-vercel.py --gateway-url https://$DOMAIN"
