@@ -211,6 +211,35 @@ evidence them.
    exists. Nothing in this container can raise Azure GPU quota. A human must
    either file the ticket in the portal or buy a support plan.
 
+   The quota API itself has now refused **three** requests, including the
+   smallest one Azure could possibly grant, so do not retry it in a new shape:
+   ```
+   Standard NCASv3_T4 Family -> 4   eastus    Failed — "Request failed."
+   cores (regional)          -> 24  eastus    Failed — "Request failed."
+   Standard NCASv3_T4 Family -> 4   eastus2   Failed — "Request failed."
+   ```
+   The third was deliberately minimal: `Standard_NC4as_T4_v3` is 4 vCPUs with
+   one whole T4, eastus2 has all 10 of its regional vCPUs free, and that SKU is
+   unrestricted there — so it needed *one* family limit moved 0 → 4 and no
+   regional increase at all. Still refused, with no reason given.
+
+   Two facts rule out the usual explanations. The subscription is healthy:
+   `quotaId: PayAsYouGo_2014-09-01`, `state: Enabled`, `spendingLimit: Off` —
+   not a free trial. And the hardware is *offered*: `az vm list-skus` shows
+   A100, H100, A10 v5 and T4 SKUs with no `restrictions` entry in most regions
+   (only GermanyWestCentral and westeurope are `NotAvailableForSubscription`
+   for T4). Every modern GPU family simply sits at limit 0, and automated
+   increases are refused — which for GPU families is Azure's normal posture on
+   a young subscription. The portal's quota flow files the free support ticket
+   that gets human review; that is the only route.
+
+   Also worth knowing before planning any Azure GPU run: **the regional vCPU
+   cap is 10 in every region checked** (eastus 8/10 used, all others 0/10), so
+   anything past a single small card needs that raised too. A full A10 is
+   `NV36ads_A10_v5` at 36 vCPUs; the fractional `NV6ads_A10_v5` is 1/6 of a
+   card. The only modern GPU that fits under a 10-vCPU cap is
+   `Standard_NC4as_T4_v3`.
+
 2. **Nebius is the live GPU path, and it is one click from running.** A
    different account entirely — tenant `tenant-e00wxvkryxs522aaxt`, reached via
    the `nebius` MCP server, profile `artemis`, service account
