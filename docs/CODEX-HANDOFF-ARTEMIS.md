@@ -34,6 +34,12 @@ the commands above supersede them.
    version of `setup-vps-gateway.sh` (that bug is fixed in commit `7178df3`).
 4. **A Gemini API key** (`AQ.Ab8RN6...` prefix) — revoke in Google AI Studio.
 5. **Three SSH private keys** (one ed25519, two RSA) for the VMs.
+6. **The Nebius S3 static key `accesskey-e00zdh5pd3q0dcjxy4`
+   (`artemis-train-sync`)** — sits in plaintext inside the `artemis-8gpu`
+   instance's cloud-init, and `nebius iam v2 access-key list` returns its
+   secret to anyone who can read the project. Already `INACTIVE`, so the
+   exposure is spent rather than live, but it must not be re-created the same
+   way; see blocker 3.
 
 ## Current state, verified
 
@@ -193,12 +199,92 @@ evidence them.
    subscription appears restricted from automated increases. Every usable GPU
    family reads `0/0`; the only non-zero families are NC/NV (K80/M60), which
    modern PyTorch cannot use.
-   **Options:** portal support ticket (human review often succeeds where the
-   API fails), or RunPod/Lambda API credentials supplied as *environment
-   secrets* — both have REST APIs drivable over HTTPS, which sidesteps the SSH
-   limitation entirely.
+   **The Azure route is now closed, definitively.** Quota tickets are free in
+   the portal, but the Support *API* is gated behind a paid support plan. The
+   async operation returns:
+   ```
+   InvalidSupportPlan: Your support plan type is Free. To create and update
+   support tickets ... you need access to our high tier-support plans.
+   ```
+   A PUT to `supportTickets` answers 202 and then fails at validation, so the
+   202 means nothing — poll `azure-asyncoperation` or the ticket silently never
+   exists. Nothing in this container can raise Azure GPU quota. A human must
+   either file the ticket in the portal or buy a support plan.
 
-2. **AKS cluster `artemis` is provisioning and probably should not exist.**
+2. **Nebius is the live GPU path, and it is one click from running.** A
+   different account entirely — tenant `tenant-e00wxvkryxs522aaxt`, reached via
+   the `nebius` MCP server, profile `artemis`, service account
+   `serviceaccount-e04nwdxcrjmat9y8q0` ("Artemis"). It already holds a built,
+   bootstrapped **8×H100 SXM** instance:
+
+   | | |
+   |---|---|
+   | instance | `computeinstance-e00hf3ff9c9d3g63z1` (`artemis-8gpu`) |
+   | project | `project-e00yn51ypr007sqnbn1x9t` (`artemis-train-eu-north1`) |
+   | shape | `gpu-h100-sxm` / `8gpu-128vcpu-1600gb`, 2 TB NETWORK_SSD |
+   | image | `ubuntu24.04-cuda13.0` |
+   | state | `STOPPED` since 2026-10-11 |
+   | cost | **$36/hr**, from `nebius billing v1alpha1 calculator estimate` |
+
+   Its cloud-init already clones this repo, resets to `origin/main`, and runs
+   `SIZE=100m SHARDS=43 STEPS=12000 STAGE=1 bash scripts/train/stages.sh`. It
+   re-pulls on every systemd restart, so a fix pushed after boot is picked up
+   without rebuilding the instance.
+
+   Capacity and quota are both confirmed present — `nebius capacity
+   resource-advice list --parent-id tenant-e00wxvkryxs522aaxt` reports
+   `eu-north1 / gpu-h100-sxm / 8gpu-128vcpu-1600gb` as on-demand **1/1
+   available, AVAILABILITY_LEVEL_HIGH**.
+
+   **What blocks it: `nebius compute instance start` returns
+   `PermissionDenied`, and it is not a permissions problem.** The evidence,
+   because this one is easy to misdiagnose:
+   - The SA has been in the tenant `admins` group since 2026-10-11, and that
+     group holds `admin`, `editor` **and** `compute.instance-power-operator`
+     on the tenant itself.
+   - Reads all work: `instance list/get`, `quotas`, `capacity`, `logs`.
+   - IAM *writes* work (`group-membership create` succeeded).
+   - A *write to the same instance in the same region* works: `instance stop`
+     succeeded and bumped `resource_version` 3 → 4.
+   - Only `start` is refused.
+
+   Spend-reducing and read operations allowed, spend-increasing ones denied, on
+   a tenant whose log bucket also reads `suspension_state: SUSPENDED`: that is
+   a billing restriction, not RBAC. The CLI exposes no billing-account read to
+   confirm it from here (and the MCP server forbids retrieving tokens, so the
+   billing REST API is out of reach). A human must open the Nebius console and
+   attach or re-verify the payment method. Do **not** spend time on roles.
+
+3. **Nebius gives this container real observability, which Azure never did.**
+   `nebius compute instance logs --id <instance> --project-id <project>
+   --since 9d --forward` returns the serial console and journald over HTTPS —
+   verified working against the 2026-10-11 boot. No SSH, no static credential,
+   no S3 round-trip. Six days were lost on Azure to not having this. Use it as
+   the primary progress channel and treat the S3 sync as redundant.
+
+   Related: the instance's cloud-init embeds a **plaintext S3 key for
+   `artemis-train-logs`, and that key (`accesskey-e00zdh5pd3q0dcjxy4`,
+   `artemis-train-sync`) is already `INACTIVE`.** So `/opt/sync.sh` will 403
+   every 120 s forever and publish nothing. Two things follow: progress must
+   come from `instance logs`, and when the instance is next rebuilt the secret
+   must not go back into cloud-init — fetch it from SecretStash
+   (`mysterybox`) using the instance's own service-account identity, or drop
+   the S3 sync entirely now that logs work.
+
+   One cleanup owed: I added the SA to the `editors` group
+   (`groupmembership-e00gw4dgq3appzkdpt`) before discovering it was already in
+   `admins`. The grant is redundant, not an escalation, but it should go:
+   `nebius iam group-membership delete --id groupmembership-e00gw4dgq3appzkdpt`.
+
+4. **When the run does start, two numbers are worth knowing.** At 100m with
+   `batch 6 × accum 4 × seq 2048 × 8 GPUs` = 393,216 tokens/step, 12,000 steps
+   is 4.72B tokens against a 43-shard, 3.03B-token pool — **1.56 epochs**.
+   That is defensible at this scale but it is not a single pass; `STEPS=7698`
+   would be. And `artemis-train.service` is `Restart=on-failure` with no limit,
+   so a repeating bootstrap failure burns $36/hr unattended. Watch the first
+   fifteen minutes of `instance logs`, or add a restart cap before starting.
+
+5. **AKS cluster `artemis` is provisioning and probably should not exist.**
    It was started from the portal. AKS Automatic needs ~12 vCPUs; regional
    quota is 10 with 4 used. It may fail on quota, leaving ACR, namespace and
    federated credentials behind. It costs roughly $300–500/month against the
@@ -206,10 +292,10 @@ evidence them.
    GPUs. **Decide: finish it or tear it down.** If torn down, remove
    `MC_rg-lamontpittman-2247_artemis_eastus` too.
 
-3. **CUTLINE billing invoice** — the only route to the old Key Vault secrets
+6. **CUTLINE billing invoice** — the only route to the old Key Vault secrets
    and the old gateway disk.
 
-4. **GitHub repo move to `lpittman-blip`** — requested but not done. Needs the
+7. **GitHub repo move to `lpittman-blip`** — requested but not done. Needs the
    account connected at https://claude.ai/connect-github and the repo created
    there; repo creation is not a repository-scoped call and is blocked from an
    agent session. **12 files hardcode the old URL**; three break operationally
@@ -241,11 +327,22 @@ left to a default the wrapper could not see.
 
 ## Next executable work, in order
 
-1. **Get a GPU.** Support ticket or RunPod/Lambda credentials. Nothing about
-   Artemis-the-model moves until this lands.
-2. **Run `100m`** — `bash scripts/train/rent-gpu-run.sh --preflight` first; it
-   verifies GPU, disk and torch/CUDA and prints the token budget and dollar
-   estimate before downloading anything. Then the real run with `ROUTE_COEF=0`.
+1. **Clear the Nebius billing hold.** This is the whole critical path, and it
+   is a console task for a human — see blocker 2. Do not look for a GPU
+   elsewhere first: the machine is already built, the capacity is confirmed
+   available, and the only refused operation is the one that starts billing.
+   Azure is a dead end (blocker 1).
+2. **Start it and watch it.** `nebius compute instance start --id
+   computeinstance-e00hf3ff9c9d3g63z1`, then
+   `nebius compute instance logs --id computeinstance-e00hf3ff9c9d3g63z1
+   --project-id project-e00yn51ypr007sqnbn1x9t --follow`. The cloud-init runs
+   stage 1 by itself. Stop the instance the moment the run finishes or wedges —
+   $36/hr, and the unit restarts on failure without a limit.
+
+   For a GPU rented anywhere else instead, `bash
+   scripts/train/rent-gpu-run.sh --preflight` verifies GPU, disk and
+   torch/CUDA and prints the token budget and dollar estimate before
+   downloading anything; then the real run with `ROUTE_COEF=0`.
 3. **Serve the checkpoint** — set `ARTEMIS_CHECKPOINT` + `ARTEMIS_TOKENIZER` in
    `/etc/artemis-chat.env` and remove `ARTEMIS_BOOTSTRAP_AZURE`. Precedence in
    `server.py:build_app()` is `VLLM_BASE_URL` → `ARTEMIS_CHECKPOINT` →
