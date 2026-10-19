@@ -230,14 +230,50 @@ ONSTART=$(cat <<'OS'
 #!/bin/bash
 exec > >(tee -a /var/log/artemis-onstart.log) 2>&1
 set -uo pipefail
-ID="${VAST_CONTAINERLABEL#C.}"; [ -n "$ID" ] || ID="${CONTAINER_ID:-}"
+# Every expansion here is :-guarded. Under `set -u` a bare
+# ${VAST_CONTAINERLABEL#C.} ABORTS this whole script when the variable is
+# unset, which would have killed the training run before it started -- the
+# exact opposite of what a cost guard is for.
+resolve_id() {
+  local id="${VAST_CONTAINERLABEL:-}"; id="${id#C.}"
+  if [ -n "$id" ]; then echo "$id"; return 0; fi
+  id="${CONTAINER_ID:-}"
+  if [ -n "$id" ]; then echo "$id"; return 0; fi
+  # Vast documents no stable env var for the contract id, but it does document
+  # that CONTAINER_API_KEY "can only start, stop, or destroy that specific
+  # instance" -- so ask the API who we are rather than guessing a variable
+  # name. Accept the answer ONLY when exactly one instance comes back: if a
+  # restricted key ever returned the whole account, picking the first row would
+  # destroy somebody else's running job.
+  [ -n "${CONTAINER_API_KEY:-}" ] || return 1
+  curl -sS -H "Authorization: Bearer $CONTAINER_API_KEY" \
+    "https://console.vast.ai/api/v0/instances/" 2>/dev/null \
+  | python3 -c '
+import json, sys
+try:
+    d = json.load(sys.stdin)
+except Exception:
+    sys.exit(1)
+rows = d.get("instances")
+if isinstance(rows, dict):
+    rows = [rows]
+rows = rows or []
+if len(rows) != 1:          # 0 = cannot tell; >1 = ambiguous, refuse to guess
+    sys.exit(1)
+print(rows[0].get("id") or "")
+' 2>/dev/null
+}
 destroy() {
-  if [ -n "$ID" ] && [ -n "${CONTAINER_API_KEY:-}" ]; then
-    echo "ARTEMIS destroying instance $ID ($1)"
+  local id; id="$(resolve_id || true)"
+  if [ -n "$id" ] && [ -n "${CONTAINER_API_KEY:-}" ]; then
+    echo "ARTEMIS destroying instance $id ($1)"
     curl -sS -X DELETE -H "Authorization: Bearer $CONTAINER_API_KEY" \
-      "https://console.vast.ai/api/v0/instances/$ID/" || true
+      "https://console.vast.ai/api/v0/instances/$id/" || true
   else
-    echo "ARTEMIS cannot self-destroy ($1): no contract id or restricted key in env"
+    # Not fatal, and worth saying loudly: the orchestrator's poll loop and the
+    # account's prepaid credit are still in front of you.
+    echo "ARTEMIS cannot self-destroy ($1): could not determine this instance's"
+    echo "ARTEMIS id unambiguously. Destroy it by hand; the run itself is fine."
   fi
 }
 ( sleep __MAX_SECONDS__; echo "ARTEMIS watchdog fired"; destroy "watchdog ${0}" ) &
