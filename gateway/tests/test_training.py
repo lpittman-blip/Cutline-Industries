@@ -1,5 +1,6 @@
 """End-to-end: tokenizer -> data shards -> train from scratch -> resume -> generate."""
 import json
+import math
 import sysconfig
 from pathlib import Path
 
@@ -36,6 +37,57 @@ def test_prepare_records_lineage(corpus):
 def test_prepare_rejects_unlicensed(corpus, tmp_path):
     with pytest.raises(ValueError, match="license"):
         prepare([{"path": str(corpus["dir"] / "stdlib.txt")}], str(corpus["tok"]), str(tmp_path / "x"))
+
+
+def test_fp16_loss_scaling_trains_checkpoints_and_resumes(corpus, tmp_path):
+    """The fp16 path, which is the only one Turing/Pascal can run.
+
+    No GPU in CI, so --amp-dtype fp16 forces the scaler on while autocast stays
+    off. That still covers what the change actually risks: that unscale_ runs
+    before anything reads a gradient, that scaler.step replaces opt.step
+    without dropping updates, and that the scale factor survives a checkpoint.
+    """
+    out = tmp_path / "fp16"
+    args = ["--size", "smoke", "--data", str(corpus["data"]), "--out", str(out),
+            "--batch", "8", "--lr", "3e-3", "--amp-dtype", "fp16"]
+    first = train_main([*args, "--steps", "120", "--eval-every", "60", "--ckpt-every", "60"])
+    lines = [json.loads(l) for l in (out / "metrics.jsonl").read_text().splitlines()]
+    assert lines[-1]["loss"] < lines[0]["loss"] * 0.75, "fp16 run should learn, not just not crash"
+    assert first["val_loss"] < 6.0
+
+    # grad_norm is the TRUE norm, so it must be order 1. clip_grad_norm_
+    # returns the norm it measured before clipping, so values above the 1.0
+    # clip bound are expected; what must not happen is a norm still multiplied
+    # by the loss scale, which starts at 65536 and would show up here as
+    # thousands. This is the assertion that would have caught unscale_ running
+    # too late, or not at all.
+    worst = max(l["grad_norm"] for l in lines)
+    assert all(math.isfinite(l["grad_norm"]) for l in lines)
+    assert worst < 50.0, f"grad_norm looks loss-scaled, not unscaled: max {worst}"
+
+    run = json.loads((out / "run.json").read_text())
+    assert run["precision"]["loss_scaling"] is True
+
+    ck = torch.load(out / "latest.pt", weights_only=False)
+    assert ck["scaler"]["scale"] > 0, "scale factor must be checkpointed for an exact resume"
+
+    train_main([*args, "--steps", "150", "--eval-every", "30", "--ckpt-every", "30"])
+    steps = [json.loads(l)["step"] for l in (out / "metrics.jsonl").read_text().splitlines()]
+    assert steps[120] == 121 and steps[-1] == 150 and len(steps) == 150
+
+
+def test_bf16_run_checkpoints_no_scaler_state(corpus, tmp_path):
+    """A bf16 checkpoint carries no scaler key, and resume must not demand one."""
+    out = tmp_path / "bf16"
+    args = ["--size", "smoke", "--data", str(corpus["data"]), "--out", str(out),
+            "--batch", "8", "--lr", "3e-3", "--amp-dtype", "bf16"]
+    train_main([*args, "--steps", "40", "--eval-every", "40", "--ckpt-every", "40"])
+    ck = torch.load(out / "latest.pt", weights_only=False)
+    assert "scaler" not in ck
+    assert json.loads((out / "run.json").read_text())["precision"]["loss_scaling"] is False
+    train_main([*args, "--steps", "60", "--eval-every", "20", "--ckpt-every", "20"])
+    steps = [json.loads(l)["step"] for l in (out / "metrics.jsonl").read_text().splitlines()]
+    assert steps[-1] == 60
 
 
 def test_train_learns_and_resumes(corpus, tmp_path):

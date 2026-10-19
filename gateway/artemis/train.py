@@ -81,6 +81,9 @@ def main(argv=None) -> dict:
     ap.add_argument("--eval-every", type=int, default=50)
     ap.add_argument("--eval-batches", type=int, default=10)
     ap.add_argument("--ckpt-every", type=int, default=100)
+    ap.add_argument("--amp-dtype", choices=("auto", "bf16", "fp16", "fp32"), default="auto",
+                    help="autocast precision. auto picks bf16 on Ampere and newer, fp16 on Turing/Pascal "
+                         "(which have no bf16). Force fp16 on a bf16-capable card to reproduce a T4 run.")
     ap.add_argument("--seed", type=int, default=1337)
     args = ap.parse_args(argv)
 
@@ -104,6 +107,29 @@ def main(argv=None) -> dict:
     model.route_coef = args.route_coef
     opt = torch.optim.AdamW(model.parameters(), lr=args.lr, betas=(0.9, 0.95), weight_decay=0.1, fused=device.type == "cuda")
 
+    # Autocast was hardcoded to bfloat16 on CUDA, which silently restricted
+    # this trainer to Ampere and newer. Turing and Pascal (T4, V100, P100) have
+    # no bf16 at all, and those are the only cards on the two paths that cost
+    # nothing or fit a small quota: every free Kaggle GPU, and NC4as_T4_v3 —
+    # the one modern Azure GPU that fits under the 10-vCPU regional cap.
+    # Pick the dtype the device actually has. fp16 carries ~3 fewer exponent
+    # bits than bf16 and will overflow gradients to inf without loss scaling,
+    # so it gets a GradScaler; bf16 and CPU do not need one.
+    if args.amp_dtype == "auto":
+        amp_dtype = (torch.bfloat16 if device.type == "cuda" and torch.cuda.is_bf16_supported()
+                     else torch.float16 if device.type == "cuda" else torch.float32)
+    else:
+        amp_dtype = {"bf16": torch.bfloat16, "fp16": torch.float16, "fp32": torch.float32}[args.amp_dtype]
+    use_amp = device.type == "cuda" and amp_dtype is not torch.float32
+    # The scaler follows the dtype, not the device. Forcing --amp-dtype fp16 on
+    # CPU leaves autocast off (CPU fp16 autocast is not worth relying on) but
+    # still runs the scale/unscale/step sequence, so the ordering this file
+    # depends on is testable without a Turing card in the room.
+    scaler = torch.amp.GradScaler(device.type, enabled=amp_dtype is torch.float16)
+    if main_proc and use_amp:
+        print(f"autocast {str(amp_dtype).removeprefix('torch.')}"
+              f"{' with loss scaling' if scaler.is_enabled() else ''} on {torch.cuda.get_device_name(device)}")
+
     step = 0
     latest = out / "latest.pt"
     if latest.exists():
@@ -118,6 +144,12 @@ def main(argv=None) -> dict:
             torch.set_rng_state(ck["rng"]["torch"].cpu())
             np.random.set_state(ck["rng"]["numpy"])
             random.setstate(ck["rng"]["python"])
+        # The scale factor is part of the training state: restoring it keeps a
+        # resumed fp16 run exact, instead of spending the first steps after
+        # every resume re-discovering a scale it had already found. Absent when
+        # the checkpoint came from a bf16 run, which needs no scaler.
+        if ck.get("scaler") and scaler.is_enabled():
+            scaler.load_state_dict(ck["scaler"])
         if main_proc:
             print(f"resumed from step {step}" + (" (migrated checkpoint)" if ck.get("migration") else ""))
     audit = optimizer_audit(model, opt)
@@ -133,7 +165,11 @@ def main(argv=None) -> dict:
     if main_proc:
         (out / "run.json").write_text(json.dumps({"config": cfg.to_dict(), "params": cfg.param_count(),
                                                   "active_params": cfg.active_param_count(), "optimizer": audit,
-                                                  "args": vars(args), "data_manifest": manifest}, indent=2))
+                                                  "args": vars(args), "data_manifest": manifest,
+                                                  "precision": {"autocast": str(amp_dtype).removeprefix("torch.") if use_amp else "fp32",
+                                                                "loss_scaling": scaler.is_enabled(),
+                                                                "device": torch.cuda.get_device_name(device) if use_amp else "cpu"}},
+                                                 indent=2))
     tokens_per_step = args.batch * args.accum * cfg.max_seq_len * (dist.get_world_size() if ddp else 1)
     t0 = time.time()
     end = min(args.stop_at, args.steps) if args.stop_at else args.steps
@@ -146,9 +182,13 @@ def main(argv=None) -> dict:
             x, y, d = train.batch(args.batch, with_domains=True)
             sync = not ddp or micro == args.accum - 1
             ctx = model.no_sync() if ddp and not sync else torch.enable_grad()
-            with ctx, torch.autocast(device.type, dtype=torch.bfloat16, enabled=device.type == "cuda"):
-                _, loss = model(x.to(device), y.to(device), d.to(device) if cfg.moe_layers else None)
-                (loss / args.accum).backward()
+            # backward stays inside ctx so DDP's no_sync still covers it, but
+            # outside autocast: gradients are produced in fp32 regardless, and
+            # scaling them is the scaler's job, not autocast's.
+            with ctx:
+                with torch.autocast(device.type, dtype=amp_dtype, enabled=use_amp):
+                    _, loss = model(x.to(device), y.to(device), d.to(device) if cfg.moe_layers else None)
+                scaler.scale(loss / args.accum).backward()
             total += loss.item() / args.accum
             for k in ("lm_loss", "balance_loss", "z_loss", "route_loss"):
                 if k in raw.last_stats:
@@ -157,9 +197,20 @@ def main(argv=None) -> dict:
             raise RuntimeError(f"non-finite loss at step {step}; stopping before the run is wasted")
         step += 1
         record_eval = step % args.eval_every == 0 or step == end
+        # Unscale before anything reads a gradient. Under fp16 the gradients
+        # are still multiplied by the scale factor (order 1e4) at this point,
+        # so clipping to 1.0 would clip essentially everything to nothing and
+        # both the reported grad_norm and the per-expert router norms would be
+        # off by that factor — the router diagnostics the ablation relies on
+        # would be meaningless.
+        if scaler.is_enabled():
+            scaler.unscale_(opt)
         norms = grad_norms(raw) if main_proc and cfg.moe_layers and (record_eval or step == 1) else None
         grad_norm = torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0).item()
-        opt.step()
+        # scaler.step skips the update when this step's gradients overflowed
+        # and lowers the scale; with the scaler disabled it is just opt.step().
+        scaler.step(opt)
+        scaler.update()
         opt.zero_grad(set_to_none=True)
         if main_proc:
             rec = {"step": step, "loss": round(total, 4), **{k: round(v, 4) for k, v in parts.items()},
@@ -176,7 +227,8 @@ def main(argv=None) -> dict:
             log.write(json.dumps(rec) + "\n")
             log.flush()
             if step % args.ckpt_every == 0 or step == end:
-                checkpoint.save(latest, raw, opt, step, vars(args))
+                checkpoint.save(latest, raw, opt, step, vars(args),
+                                extra={"scaler": scaler.state_dict()} if scaler.is_enabled() else None)
     result = {}
     if main_proc:
         result = json.loads(open(out / "metrics.jsonl").read().strip().splitlines()[-1])
