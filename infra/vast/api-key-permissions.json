@@ -1,0 +1,39 @@
+{
+  "_comment": [
+    "Scoped Vast.ai API key for automation that rents GPUs — vast-rent.sh, CI,",
+    "or an agent. Create it with:",
+    "",
+    "  vastai create api-key --name artemis-train \\",
+    "    --permission_file infra/vast/api-key-permissions.json",
+    "",
+    "The console's +New button creates a FULL-ACCESS key by default. That key",
+    "can transfer credit, mint more keys, and read the whole account. None of",
+    "that is needed to rent a GPU, and a full-access key in a CI secret or an",
+    "agent's environment is a standing liability.",
+    "",
+    "WHAT THIS GRANTS",
+    "  misc            search offers (the rent path starts here)",
+    "  instance_read   poll status, read logs — needed by the poll loop",
+    "  instance_write  create and destroy instances, and volumes",
+    "  user_read       read the credit balance for the pre-flight check",
+    "",
+    "WHAT IT DELIBERATELY WITHHOLDS",
+    "  billing_write   cannot transfer credit out of the account",
+    "  user_write      cannot mint new keys, change the account, or alter the",
+    "                  spending thresholds. Set those once yourself with",
+    "                  scripts/train/vast-limits.sh and a key that has it.",
+    "  team_read/write cannot enumerate or change team membership",
+    "  machine_*       host-side operations; irrelevant to renting",
+    "",
+    "A leaked key with this scope can still cost money by renting GPUs, so it",
+    "is not harmless — it is bounded. Rotate it with `vastai delete api-key",
+    "<id>` after a run if it ever left a trusted machine. The prepaid credit",
+    "balance remains the only hard ceiling on what any key can spend."
+  ],
+  "api": {
+    "misc": {},
+    "instance_read": {},
+    "instance_write": {},
+    "user_read": {}
+  }
+}

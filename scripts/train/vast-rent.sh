@@ -35,9 +35,14 @@
 # 1-3 are software and can be defeated by a crash, a lost network, or this
 # process being killed. Only 4 survives everything, because Vast cannot charge
 # a card that is not there. Load the credit you are willing to lose and no
-# more. If you DO save a card for autobilling, set the autobilling threshold
-# near one day of spend and a low-balance alert at ~75% of it, or autobilling
-# turns the cap back into an open tab.
+# more.
+#
+# The account-side controls (low-balance alert, and autobilling if you choose
+# to save a card) are settable over the API, not just in the console — see
+# scripts/train/vast-limits.sh, which also explains why autobilling is the
+# opposite of a limit. Run that once; this script does not change account
+# settings, and the scoped key in infra/vast/api-key-permissions.json
+# deliberately cannot.
 #
 # Storage bills for as long as the instance EXISTS, including while stopped —
 # so this destroys, never stops. A stopped instance is a slow leak.
