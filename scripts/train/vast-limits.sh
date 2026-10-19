@@ -34,11 +34,14 @@ API="${VAST_API_BASE:-https://console.vast.ai/api/v0}"
 ALERT_AT=""
 AUTOBILL_AT=""
 
+CHARGES_DAYS=""
+
 while [ $# -gt 0 ]; do
   case "$1" in
     --alert-at) ALERT_AT="${2:?--alert-at needs a dollar amount}"; shift 2 ;;
     --autobill-at) AUTOBILL_AT="${2:?--autobill-at needs a dollar amount}"; shift 2 ;;
     --disable-alert) ALERT_AT="off"; shift ;;
+    --charges) CHARGES_DAYS="${2:-30}"; shift 2 ;;
     -h|--help) sed -n '2,32p' "${BASH_SOURCE[0]}"; exit 0 ;;
     *) echo "unknown argument: $1" >&2; exit 2 ;;
   esac
@@ -73,7 +76,42 @@ PY
 log "current state:"
 show
 
-[ -n "$ALERT_AT$AUTOBILL_AT" ] || { echo; log "read-only; pass --alert-at or --autobill-at to change"; exit 0; }
+# --- what it actually cost ---------------------------------------------------
+# A limit you cannot audit is a guess. /api/v0/charges reports real per-contract
+# spend broken down into gpu / disk / bwd / bwu, which is the only way to
+# confirm an estimate or notice that a destroyed-looking instance is still
+# billing storage. Needs billing_read, which the scoped rent key does NOT have
+# -- deliberately; run this with your own key.
+if [ -n "$CHARGES_DAYS" ]; then
+  FROM=$(python3 -c "import time;print(int(time.time())-86400*int('$CHARGES_DAYS'))")
+  TO=$(python3 -c "import time;print(int(time.time()))")
+  log "charges, last $CHARGES_DAYS days:"
+  curl -sS -G -H "Authorization: Bearer $VAST_API_KEY" \
+      --data-urlencode "select_filters={\"day\":{\"gte\":$FROM,\"lte\":$TO}}" \
+      --data-urlencode "limit=100" \
+      "$API/charges" > "$TMP/charges.json" || die "could not read charges"
+  python3 - "$TMP/charges.json" <<'PY'
+import json, sys
+d = json.load(open(sys.argv[1]))
+if d.get("success") is False:
+    raise SystemExit(f"  rejected: {d.get('msg') or d}  (key needs billing_read)")
+rows = d.get("results") or []
+if not rows:
+    print("  no charges in this window")
+    raise SystemExit(0)
+total = 0.0
+for r in rows:
+    amt = float(r.get("amount") or 0)
+    total += amt
+    print(f"  {r.get('source','?'):<24} ${amt:>8.3f}  {r.get('description','')}")
+    for it in r.get("items") or []:
+        print(f"      {it.get('type','?'):<6} ${float(it.get('amount') or 0):>8.3f}  {it.get('description','')}")
+print(f"  {'TOTAL':<24} ${total:>8.3f}"
+      + ("" if d.get("next_token") is None else "   (more pages; this is a partial total)"))
+PY
+fi
+
+[ -n "$ALERT_AT$AUTOBILL_AT" ] || { echo; log "read-only; pass --alert-at, --autobill-at or --charges N"; exit 0; }
 
 # Build only the fields being changed. Sending the whole user object back would
 # rewrite unrelated profile fields with whatever this script happened to read.

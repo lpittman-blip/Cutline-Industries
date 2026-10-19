@@ -296,7 +296,18 @@ ONSTART="${ONSTART//__MAX_SECONDS__/$(python3 -c "print(int(float('$MAX_HOURS')*
 ONSTART="${ONSTART//__COMMIT__/$COMMIT}"
 ONSTART="${ONSTART//__SIZE__/$SIZE}"
 ONSTART="${ONSTART//__SHARDS__/$SHARDS}"
-[ "${#ONSTART}" -lt 16000 ] || die "onstart is ${#ONSTART} bytes; Vast caps it at 16KB"
+# Vast's own docs disagree about this cap: the CLI guide says 16KB, the
+# OpenAPI spec's "Key Quirks" says 4048 characters. Enforce the SMALLER one.
+# Being wrong in this direction costs nothing; being wrong the other way means
+# a silently truncated boot script on a box that is already billing. Currently
+# ~2.7KB, so there is headroom, but an edit that crosses 4048 should fail here
+# rather than in production.
+ONSTART_MAX="${ONSTART_MAX:-4048}"
+[ "${#ONSTART}" -le "$ONSTART_MAX" ] || die \
+  "onstart is ${#ONSTART} chars, over the ${ONSTART_MAX} limit. Either trim it,
+   or gzip+base64 it as the docs describe:
+     printf %s \"\$ONSTART\" | gzip -9 | base64 -w0
+   and have the wrapper decode it. Do not raise ONSTART_MAX on a guess."
 
 # The script body reaches Python through the environment and json.dumps does
 # the quoting. Interpolating it into a Python string literal would corrupt the
@@ -312,16 +323,35 @@ PY
 [ -s "$TMP/body.json" ] || die "request build failed"
 
 log "renting offer $OFFER_ID (watchdog ${MAX_HOURS}h, pinned ${COMMIT:0:12})"
-curl -sS -X PUT -H "Authorization: Bearer $VAST_API_KEY" -H "Content-Type: application/json" \
-     --data @"$TMP/body.json" "$API/asks/$OFFER_ID/" > "$TMP/created.json" || die "create failed"
-INSTANCE=$(python3 - "$TMP/created.json" <<'PY'
+# The two published docs disagree on the method for this endpoint: the CLI
+# guide shows `-X PUT /asks/{id}/` with a worked response, the OpenAPI spec
+# says POST. Try PUT first (it is the one with a documented example) and fall
+# back to POST rather than failing on a docs discrepancy. Creating twice is the
+# one thing to avoid, so the fallback runs ONLY when the first attempt returned
+# no contract id at all.
+read_contract() {
+  python3 - "$1" <<'PY'
 import json, sys
-d = json.load(open(sys.argv[1]))
-if not d.get("success"):
+try:
+    d = json.load(open(sys.argv[1]))
+except Exception:
     raise SystemExit(0)
-print(d["new_contract"])
+if isinstance(d, dict) and d.get("new_contract"):
+    print(d["new_contract"])
 PY
-)
+}
+create_with() {
+  curl -sS -X "$1" -H "Authorization: Bearer $VAST_API_KEY" \
+       -H "Content-Type: application/json" --data @"$TMP/body.json" \
+       "$API/asks/$OFFER_ID/" > "$TMP/created.json" 2>/dev/null || true
+  read_contract "$TMP/created.json"
+}
+INSTANCE=$(create_with PUT)
+if [ -z "$INSTANCE" ]; then
+  log "PUT returned no contract id; retrying as POST (docs disagree on the method)"
+  log "  PUT said: $(head -c 200 "$TMP/created.json")"
+  INSTANCE=$(create_with POST)
+fi
 [ -n "$INSTANCE" ] || die "create rejected: $(cat "$TMP/created.json")"
 log "instance $INSTANCE created — storage billing starts now, GPU billing at running"
 
