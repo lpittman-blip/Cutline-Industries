@@ -31,6 +31,21 @@ BATCH="${BATCH:-6}"
 ACCUM="${ACCUM:-4}"
 LR="${LR:-3e-4}"
 SEED="${SEED:-1337}"
+# Routing supervision OFF by default. train.py defaults --route-coef to 0.1, and
+# stages.sh did not pass it, so every real run so far would have used 0.1 — the
+# setting two independent ablations measured as WORSE. From
+# docs/MOE-ROUTING-ABLATION.md, matched arms at proto scale:
+#
+#   moe-unsup (route_coef 0)      val 3.5732   8.03 effective experts, 0 dead
+#   moe-wide  (7 labels + build)  val 3.6115   2.05 effective experts, 7 dead
+#   moe-sup   (3 labels + build)  val 3.6222   1.35 effective experts, 7 dead
+#
+# Supervision costs ~0.046 validation loss and kills seven of ten experts,
+# because the term competes with next-token prediction for the same gradient.
+# Widening the labels to 7 of 10 recovered only 22% of that, and dropping the
+# `build` residual made it worse still. Set ROUTE_COEF=0.1 to override, but the
+# evidence says do not.
+ROUTE_COEF="${ROUTE_COEF:-0}"
 # train.py defaults --warmup to 20, which is 10% of its own 200-step default
 # run and 0.01% of a real 203,386-step 1b run. Twenty steps from zero to peak
 # LR on a 1.3B model is how early loss spikes happen. Scale it with the run,
@@ -118,9 +133,11 @@ PY
 
   log "pretraining on $NGPU GPU(s)"
   log "schedule: $STEPS steps, warmup $WARMUP ($(python3 -c "print(f'{100*$WARMUP/$STEPS:.2f}')")% of the run), lr $LR, seed $SEED"
+  log "route_coef $ROUTE_COEF ($([ "$ROUTE_COEF" = "0" ] && echo "supervision off — see docs/MOE-ROUTING-ABLATION.md" || echo "supervision ON, against the measured result"))"
   ARGS=(--size "$SIZE" --data "$WORK/data" --out "$WORK/runs/$SIZE"
         --steps "$STEPS" --batch "$BATCH" --accum "$ACCUM"
         --lr "$LR" --warmup "$WARMUP" --seed "$SEED"
+        --route-coef "$ROUTE_COEF"
         --eval-every 500 --eval-batches 50 --ckpt-every 1000)
   if [ "$NGPU" -gt 1 ]; then
     torchrun --nproc_per_node "$NGPU" -m artemis.train "${ARGS[@]}"
