@@ -66,6 +66,71 @@ language cannot evidence them. `code_corpus` says so in its own docstring and
 leaves them unlabelled rather than guessing, which is the right call and also
 the reason this corpus can only partly test the design.
 
+### After widening `classify()`: measured on a full shard
+
+The numbers above predate the content-signal work in `e4f3962` / `06ccdab`,
+which was meant to reach more experts. It did. Re-measured on the whole of
+`data/train-00000-of-00880.parquet` (355 MB, 126,925 rows, ~1m55s on 4 cores):
+
+| | |
+| --- | --- |
+| rows read | 126,925 |
+| kept | 55,728 (43.9%) |
+| rejected, non-permissive licence | 45,232 (35.6%) |
+| rejected, language | 20,820 |
+| rejected, size | 5,145 |
+| characters kept | 241,146,886 |
+
+35.6% non-permissive matches the 35.0% and 36% measured before, on different
+data — the licence filter is stable. 241.1M chars against the documented
+70.4M tokens/shard implies 3.43 chars/token, so that constant holds too.
+
+Widening moved the labelled expert count from three to **seven**. But running
+the same shard with `--no-residual-build` separates real labels from the
+catch-all, and the distribution is worse than the headline suggests:
+
+| domain | documents | share of labelled | share of corpus |
+| --- | --- | --- | --- |
+| `test` | 8,171 | 64.6% | 14.7% |
+| `memory` | 3,589 | 28.4% | 6.4% |
+| `security` | 312 | 2.5% | 0.6% |
+| `cost` | 262 | 2.1% | 0.5% |
+| `deploy` | 182 | 1.4% | 0.3% |
+| `observability` | 123 | 1.0% | 0.2% |
+| **labelled total** | **12,639** | 100% | **22.7%** |
+| unlabelled (becomes `build`) | 43,089 | — | 77.3% |
+| `intent`, `architecture`, `planning` | **0** | 0% | 0% |
+
+Three things follow, and they matter for the architecture rather than for this
+ablation alone.
+
+**77.3% of the corpus carries no real label.** With the residual on, all of it
+becomes `build`, so `build` is not a domain here — it is "everything we could
+not identify". The 85.7% `build` share in the earlier table was the same
+artifact at a different scale.
+
+**`test` and `memory` are 93.0% of all genuine labels.** `observability` is one
+document in 103 labelled, one in 453 of the corpus. A router cannot learn a
+useful decision boundary from 123 documents, and the load-balance loss will
+fight to send it traffic it has no basis for.
+
+**Three of ten experts are not merely unlabelled, they are unlabelable from
+this corpus.** `intent`, `architecture` and `planning` are properties of a
+conversation or a design discussion, not of a source file; no amount of
+widening the path and content heuristics will find them in GitHub code.
+
+This is independent corroboration of the ablation's result rather than a new
+one. Supervising a router against labels where one synthetic catch-all holds
+77%, two real classes hold 93% of the remainder, and three classes are
+permanently empty cannot help — and `route_coef=0.1` losing 0.046 validation
+loss while killing seven of ten experts is exactly what that predicts. The
+`ROUTE_COEF=0` default in `stages.sh` is not a tuning preference; it is the
+only setting this corpus supports.
+
+What would change it is chat and design data — the stage `sft` corpus, where
+`intent`, `architecture` and `planning` actually occur. Routing supervision is
+worth re-testing there, and nowhere else.
+
 ## Prediction, written in advance
 
 The supervision term and the load-balance term want opposite things, and the
