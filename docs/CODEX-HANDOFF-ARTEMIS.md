@@ -240,78 +240,57 @@ evidence them.
    card. The only modern GPU that fits under a 10-vCPU cap is
    `Standard_NC4as_T4_v3`.
 
-2. **Nebius is the live GPU path, and it is one click from running.** A
-   different account entirely — tenant `tenant-e00wxvkryxs522aaxt`, reached via
-   the `nebius` MCP server, profile `artemis`, service account
-   `serviceaccount-e04nwdxcrjmat9y8q0` ("Artemis"). It already holds a built,
-   bootstrapped **8×H100 SXM** instance:
+2. **Nebius: abandoned by decision, 2026-10-19.** It was the closest thing to
+   working — an 8xH100 SXM instance `computeinstance-e00hf3ff9c9d3g63z1`
+   (`artemis-8gpu`, project `project-e00yn51ypr007sqnbn1x9t`, eu-north1) was
+   already built and bootstrapped to run stage 1 from `origin/main` on boot,
+   with capacity confirmed on-demand 1/1 AVAILABILITY_HIGH. The tenant is
+   nonetheless barred from creating or starting billable compute:
 
-   | | |
-   |---|---|
-   | instance | `computeinstance-e00hf3ff9c9d3g63z1` (`artemis-8gpu`) |
-   | project | `project-e00yn51ypr007sqnbn1x9t` (`artemis-train-eu-north1`) |
-   | shape | `gpu-h100-sxm` / `8gpu-128vcpu-1600gb`, 2 TB NETWORK_SSD |
-   | image | `ubuntu24.04-cuda13.0` |
-   | state | `STOPPED` since 2026-10-11 |
-   | cost | **$36/hr**, from `nebius billing v1alpha1 calculator estimate` |
+   - `instance start` and a fresh `instance create` in a *different* region and
+     project both return `PermissionDenied`, so it is not instance- or
+     region-specific.
+   - It is not RBAC. The service account has been in the tenant `admins` group
+     since 2026-10-11, and that group holds `admin`, `editor` and
+     `compute.instance-power-operator` on the tenant itself. Reads work, IAM
+     writes work, and `instance stop` on the same instance in the same region
+     succeeded and bumped `resource_version`.
+   - Only operations that *begin* billing are refused, on a tenant whose log
+     bucket also reads `suspension_state: SUSPENDED`. That is a billing hold.
 
-   Its cloud-init already clones this repo, resets to `origin/main`, and runs
-   `SIZE=100m SHARDS=43 STEPS=12000 STAGE=1 bash scripts/train/stages.sh`. It
-   re-pulls on every systemd restart, so a fix pushed after boot is picked up
-   without rebuilding the instance.
+   Do not spend time on roles, regions or quota here. The decision is to use
+   Vast.ai instead; this entry exists so nobody re-derives the diagnosis.
 
-   Capacity and quota are both confirmed present — `nebius capacity
-   resource-advice list --parent-id tenant-e00wxvkryxs522aaxt` reports
-   `eu-north1 / gpu-h100-sxm / 8gpu-128vcpu-1600gb` as on-demand **1/1
-   available, AVAILABILITY_LEVEL_HIGH**.
+   **One loose end that can cost money.** That instance still exists, stopped,
+   with a 2000 GiB NETWORK_SSD boot disk attached. Storage normally bills while
+   an instance exists, stopped or not. Nothing appears to be accruing while the
+   hold is in force, but if the hold is ever cleared the disk starts billing
+   immediately — and nobody will be watching, because this path is abandoned.
+   Delete it in the console, or:
+   `nebius compute instance delete --id computeinstance-e00hf3ff9c9d3g63z1`
+   (the MCP server in use refuses commands containing "delete", so this one is
+   a human or a direct CLI call). The same applies to the `artemis-train-logs`
+   bucket and the two `artemis-train-*` projects.
 
-   **What blocks it: `nebius compute instance start` returns
-   `PermissionDenied`, and it is not a permissions problem.** The evidence,
-   because this one is easy to misdiagnose:
-   - The SA has been in the tenant `admins` group since 2026-10-11, and that
-     group holds `admin`, `editor` **and** `compute.instance-power-operator`
-     on the tenant itself.
-   - Reads all work: `instance list/get`, `quotas`, `capacity`, `logs`.
-   - IAM *writes* work (`group-membership create` succeeded).
-   - A *write to the same instance in the same region* works: `instance stop`
-     succeeded and bumped `resource_version` 3 → 4.
-   - Only `start` is refused.
-
-   Spend-reducing and read operations allowed, spend-increasing ones denied, on
-   a tenant whose log bucket also reads `suspension_state: SUSPENDED`: that is
-   a billing restriction, not RBAC. The CLI exposes no billing-account read to
-   confirm it from here (and the MCP server forbids retrieving tokens, so the
-   billing REST API is out of reach). A human must open the Nebius console and
-   attach or re-verify the payment method. Do **not** spend time on roles.
-
-3. **Nebius gives this container real observability, which Azure never did.**
-   `nebius compute instance logs --id <instance> --project-id <project>
-   --since 9d --forward` returns the serial console and journald over HTTPS —
-   verified working against the 2026-10-11 boot. No SSH, no static credential,
-   no S3 round-trip. Six days were lost on Azure to not having this. Use it as
-   the primary progress channel and treat the S3 sync as redundant.
-
-   Related: the instance's cloud-init embeds a **plaintext S3 key for
-   `artemis-train-logs`, and that key (`accesskey-e00zdh5pd3q0dcjxy4`,
-   `artemis-train-sync`) is already `INACTIVE`.** So `/opt/sync.sh` will 403
-   every 120 s forever and publish nothing. Two things follow: progress must
-   come from `instance logs`, and when the instance is next rebuilt the secret
-   must not go back into cloud-init — fetch it from SecretStash
-   (`mysterybox`) using the instance's own service-account identity, or drop
-   the S3 sync entirely now that logs work.
-
-   One cleanup owed: I added the SA to the `editors` group
-   (`groupmembership-e00gw4dgq3appzkdpt`) before discovering it was already in
-   `admins`. The grant is redundant, not an escalation, but it should go:
-   `nebius iam group-membership delete --id groupmembership-e00gw4dgq3appzkdpt`.
+3. **What Nebius did prove, and Vast now provides.** `nebius compute instance
+   logs` returned serial console and journald over plain HTTPS — the readback
+   this container never had on Azure, and the absence of which cost six days to
+   a misdiagnosed "sshd problem" that was really a powered-off VM plus a
+   container with no outbound SSH at all. Any future provider should be judged
+   partly on whether it offers that. On Vast the equivalent is the instance's
+   own log endpoint plus the journal written by the onstart script, which is why
+   `vast-rent.sh` sends everything through `tee` to a log file.
 
 4. **When the run does start, two numbers are worth knowing.** At 100m with
-   `batch 6 × accum 4 × seq 2048 × 8 GPUs` = 393,216 tokens/step, 12,000 steps
-   is 4.72B tokens against a 43-shard, 3.03B-token pool — **1.56 epochs**.
-   That is defensible at this scale but it is not a single pass; `STEPS=7698`
-   would be. And `artemis-train.service` is `Restart=on-failure` with no limit,
-   so a repeating bootstrap failure burns $36/hr unattended. Watch the first
-   fifteen minutes of `instance logs`, or add a restart cap before starting.
+   `batch 6 x accum 4 x seq 2048` on ONE GPU, tokens/step is 49,152 and a
+   single pass over the 43-shard, 3.03B-token pool is 61,589 steps. On eight
+   GPUs tokens/step is 393,216 and the same pass is 7,698 steps — holding STEPS
+   fixed across GPU counts multiplies the tokens trained, and the bill, by the
+   GPU count. `rent-gpu-run.sh` derives STEPS from SHARDS for exactly this
+   reason. And `ROUTE_COEF=0`: see docs/MOE-ROUTING-ABLATION.md, where a full
+   shard measures 77.3% of documents carrying no real label, `test` and
+   `memory` holding 93% of the genuine ones, and `intent`/`architecture`/
+   `planning` permanently empty.
 
 5. **AKS cluster `artemis` is provisioning and probably should not exist.**
    It was started from the portal. AKS Automatic needs ~12 vCPUs; regional
@@ -356,22 +335,40 @@ left to a default the wrapper could not see.
 
 ## Next executable work, in order
 
-1. **Clear the Nebius billing hold.** This is the whole critical path, and it
-   is a console task for a human — see blocker 2. Do not look for a GPU
-   elsewhere first: the machine is already built, the capacity is confirmed
-   available, and the only refused operation is the one that starts billing.
-   Azure is a dead end (blocker 1).
-2. **Start it and watch it.** `nebius compute instance start --id
-   computeinstance-e00hf3ff9c9d3g63z1`, then
-   `nebius compute instance logs --id computeinstance-e00hf3ff9c9d3g63z1
-   --project-id project-e00yn51ypr007sqnbn1x9t --follow`. The cloud-init runs
-   stage 1 by itself. Stop the instance the moment the run finishes or wedges —
-   $36/hr, and the unit restarts on failure without a limit.
+1. **Get a GPU. Vast.ai is the chosen route; Nebius is abandoned by decision,
+   Azure by exhaustion.** Two human steps, about five minutes, and neither can
+   be done from a container because both need a payment instrument and a
+   verified email:
 
-   For a GPU rented anywhere else instead, `bash
-   scripts/train/rent-gpu-run.sh --preflight` verifies GPU, disk and
-   torch/CUDA and prints the token budget and dollar estimate before
-   downloading anything; then the real run with `ROUTE_COEF=0`.
+   - `cloud.vast.ai/billing/` → add credit. ~$20 is ample; the whole 100m run
+     is $3–5. **Do not save a card** if you want a hard ceiling: prepaid credit
+     with no card on file is the only spending limit on this platform that
+     cannot be defeated by software (see `scripts/train/vast-limits.sh`).
+   - `cloud.vast.ai/manage-keys/` → create a key, preferably scoped:
+     `vastai create api-key --name artemis-train --permission_file
+     infra/vast/api-key-permissions.json`. The console's +New button mints a
+     FULL-ACCESS key, which can move credit and mint more keys; the scoped one
+     cannot. Supply it to automation as an environment secret, never as a
+     command argument or pasted into a transcript.
+
+2. **Run it.** `VAST_API_KEY=... bash scripts/train/vast-rent.sh --preflight`
+   prices the cheapest eligible offer and spends nothing. Drop `--preflight` to
+   rent, train and destroy. The box self-destructs on completion, a watchdog
+   caps it at MAX_HOURS, and the script tears down on success, failure, timeout
+   and Ctrl-C. Afterwards, confirm what it actually cost:
+   `bash scripts/train/vast-limits.sh --charges 7`.
+
+   **Cheapest $/hr is not cheapest $/run.** Measured on the live market
+   2026-10-19: RTX 3090 $0.170/hr ≈ 26h ≈ $4.46; A100 40GB $0.483/hr ≈ 6h ≈
+   $2.88; H100 $2.206/hr ≈ 1.9h ≈ $4.15. Prefer the A100
+   (`GPU_QUERY='gpu_name=A100_SXM4'`) and set MAX_HOURS to ~12 so the watchdog
+   ceiling stays near $6 instead of $17.
+
+   **On owned hardware instead, this is free and no account is needed.**
+   `WORK=$HOME/artemis-work REPO_DIR=$HOME/artemis-src RATE_PER_HOUR=0 bash
+   scripts/train/rent-gpu-run.sh --preflight` checks GPU, VRAM, disk and
+   torch/CUDA and prints hours derived from the detected card. Needs ~150 GiB
+   free; lower SHARDS to shrink it.
 3. **Serve the checkpoint** — set `ARTEMIS_CHECKPOINT` + `ARTEMIS_TOKENIZER` in
    `/etc/artemis-chat.env` and remove `ARTEMIS_BOOTSTRAP_AZURE`. Precedence in
    `server.py:build_app()` is `VLLM_BASE_URL` → `ARTEMIS_CHECKPOINT` →
