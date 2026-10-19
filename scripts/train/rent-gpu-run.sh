@@ -115,6 +115,16 @@ log "source at $(git rev-parse HEAD)"
 BATCH="${BATCH:-6}"
 ACCUM="${ACCUM:-4}"
 
+# pyyaml is needed HERE, by the estimate, which also runs under --preflight —
+# but dependency installation below is gated on PREFLIGHT=0. On a machine that
+# does not already have it (any fresh box, including a home desktop) the read
+# below failed and reported "could not read $SIZE from configs/models.yaml",
+# which sends you looking at the config file instead of at a missing import.
+python3 -c "import yaml" 2>/dev/null \
+  || python3 -m pip install -q --break-system-packages pyyaml 2>/dev/null \
+  || die "the estimate needs pyyaml. Install it, then re-run:
+   python3 -m pip install --break-system-packages pyyaml"
+
 read -r SEQ_LEN PARAMS <<<"$(python3 - "$REPO_DIR/gateway/configs/models.yaml" "$SIZE" <<'PY'
 import sys, yaml
 cfg = yaml.safe_load(open(sys.argv[1]))[sys.argv[2]]
@@ -134,31 +144,54 @@ PY
 #
 # Values are passed as argv, not interpolated into the quoted program: nesting
 # quotes three deep silently produced a malformed expression and printed "?".
-read -r STEPS TPS TOKENS POOL RATIO HOURS <<<"$(python3 - \
-  "${STEPS:-0}" "$BATCH" "$ACCUM" "$SEQ_LEN" "$NGPU" "$SHARDS" "$PARAMS" <<'PY'
+# The hours come from the DETECTED card, not a fixed 400 TFLOPS. The old flat
+# assumption is datacenter-class: on an H100 it is about right, but it told a
+# 3090 owner "1.4 hours" for a run that takes nearer 26, because a 3090 is
+# ~71 TFLOPS peak bf16 against an H100's ~990. A 19x error in the one number
+# the operator plans their day around.
+read -r STEPS TPS TOKENS POOL RATIO HOURS EFF <<<"$(python3 - \
+  "${STEPS:-0}" "$BATCH" "$ACCUM" "$SEQ_LEN" "$NGPU" "$SHARDS" "$PARAMS" "$GPU_NAME" <<'PY'
 import math, sys
 steps, batch, accum, seq, ngpu, shards, params = map(float, sys.argv[1:8])
+name = sys.argv[8]
 tps = batch * accum * seq * ngpu            # artemis.train's tokens_per_step
 pool = shards * 70.4e6                      # measured: 70.4M tokens per filtered shard
 if steps <= 0:
     steps = max(1.0, math.ceil(pool / tps)) # one pass over the pool, in expectation
 tokens = steps * tps
+# Peak DENSE bf16 tensor-core throughput per GPU. Figures vendors quote with
+# sparsity are halved; sparsity does not apply to this workload.
+PEAK = {"H200": 990e12, "H100": 990e12, "A100": 312e12, "L40S": 362e12,
+        "B200": 2250e12, "5090": 210e12, "4090": 165e12, "4080": 97e12,
+        "A6000": 155e12, "A5000": 58e12, "3090": 71e12, "A40": 150e12,
+        "2080": 54e12, "T4": 65e12, "V100": 125e12}
+peak = next((v for k, v in PEAK.items() if k.lower() in name.lower()), None)
+MFU = 0.30
+eff = (peak * MFU) if peak else 4e14        # fall back to the old assumption
+hours = 6 * params * tokens / (eff * ngpu) / 3600
 print(f"{steps:.0f} {tps:.0f} {tokens:.0f} {pool:.0f} {tokens/pool:.2f} "
-      f"{6*params*tokens/(4e14*ngpu)/3600:.1f}")
+      f"{hours:.1f} {'measured' if peak else 'assumed'}")
 PY
 )" || die "estimate failed"
 
-# The default rate scales with GPU count: an 8-GPU box costs about 8x a 1-GPU
-# box, so a flat per-machine default would understate a multi-GPU bill eightfold.
-# Override RATE_PER_HOUR with the real per-MACHINE price from your provider.
+# RATE_PER_HOUR=0 is the right answer for hardware you own, and saying "$0/hr"
+# beats quoting a rental price at someone training on their own desktop.
 RATE="${RATE_PER_HOUR:-$(python3 -c \
   "import sys;print(f'{2.50*float(sys.argv[1]):.2f}')" "$NGPU")}"
 COST=$(python3 -c \
-  "import sys;print(f'{float(sys.argv[1])*float(sys.argv[2]):.0f}')" "$HOURS" "$RATE")
+  "import sys;print(f'{float(sys.argv[1])*float(sys.argv[2]):.2f}')" "$HOURS" "$RATE")
 
 log "estimate: $SIZE, seq ${SEQ_LEN}, ${STEPS} steps x ${TPS} tokens/step"
 log "          ${TOKENS} tokens trained from a ${POOL}-token pool (ratio ${RATIO})"
-log "          ~${HOURS} wall-clock hours at \$${RATE}/hr => roughly \$${COST} — rough, not a quote"
+if [ "$(python3 -c "print(float('$RATE') == 0)")" = "True" ]; then
+  log "          ~${HOURS} wall-clock hours on your own hardware — no hourly cost"
+else
+  log "          ~${HOURS} wall-clock hours at \$${RATE}/hr => roughly \$${COST} — rough, not a quote"
+  log "          set RATE_PER_HOUR=0 if this machine is yours"
+fi
+# 'assumed' means the card is not in the throughput table and the hours fall
+# back to a datacenter-class guess, so they may be badly optimistic. Say which.
+log "          (throughput for '${GPU_NAME}': ${EFF})"
 
 # A pool far from the budget is a bug in the invocation, not a preference.
 # Under 0.5: you are paying to download and store tokens the run never reaches.
