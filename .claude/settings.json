@@ -6,7 +6,7 @@
       "Bash(az vm create *)",
       "Bash(modal *)",
       "Bash(az rest --method PUT --url *SaaS/resources*)",
-      "Bash(ssh -i * azureuser@172.203.229.191 *)",
+      "Bash(ssh -i * azureuser@40.90.251.232 *)",
       "Bash(az vm show *)",
       "Bash(az vm list *)",
       "Bash(az account show *)",

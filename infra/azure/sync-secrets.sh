@@ -30,7 +30,7 @@ umask 077
 
 VAULT="${VAULT:-artemis-kv-6b22c1}"
 VAULT_SUB="${VAULT_SUB:-bd193cb1-661c-44cc-bb7f-04d545296da8}"   # not the VM's subscription
-SSH_TARGET="${SSH_TARGET:-azureuser@172.203.229.191}"
+SSH_TARGET="${SSH_TARGET:-azureuser@40.90.251.232}"
 ENV_FILE="${ENV_FILE:-/etc/artemis-chat.env}"
 SERVICE="${SERVICE:-artemis-chat}"
 HEALTH_URL="${HEALTH_URL:-https://api.artemisai-bycutlineindustries.studio/api/health}"

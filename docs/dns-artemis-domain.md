@@ -34,7 +34,7 @@ one produces a site that looks broken while `dig` says everything is correct.
 | --- | --- | --- | --- |
 | A | `@` | `76.76.21.21` | Vercel. Serves the Artemis product site. |
 | CNAME | `www` | `cname.vercel-dns.com` | Already added to Vercel as a 308 redirect to the apex. |
-| A | `api` | `172.203.229.191` | `cutline-vps`, the Artemis gateway. |
+| A | `api` | `40.90.251.232` | `cutline-vps`, the Artemis gateway. |
 
 ## The site needs no API work
 
@@ -71,7 +71,7 @@ hostname is a breaking change for customers.
 
 ```
 dig +short artemisai-bycutlineindustries.studio      # expect 76.76.21.21
-dig +short api.artemisai-bycutlineindustries.studio  # expect 172.203.229.191
+dig +short api.artemisai-bycutlineindustries.studio  # expect 40.90.251.232
 curl -sS https://api.artemisai-bycutlineindustries.studio/v1/status
 curl -sSI https://www.artemisai-bycutlineindustries.studio   # expect 308 to apex
 ```

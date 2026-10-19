@@ -28,8 +28,8 @@ The uploaded handoff flagged this as an open question and told you not to
 assume. It is now settled — same machine, same process, one nginx server block:
 
 ```
-api.cutline-industries.studio             A = 172.203.229.191
-api.artemisai-bycutlineindustries.studio  A = 172.203.229.191
+api.cutline-industries.studio             A = 40.90.251.232
+api.artemisai-bycutlineindustries.studio  A = 40.90.251.232
 
 nginx:  server_name api.cutline-industries.studio api.artemisai-bycutlineindustries.studio;
 ```
@@ -51,7 +51,7 @@ find, and no need to reconcile two configurations.
 | | |
 | --- | --- |
 | Azure VM | `cutline-vps`, resource group `ARTM-RG` |
-| public IP | `172.203.229.191` |
+| public IP | `40.90.251.232` |
 | size | `Standard_D2as_v4` — 2 vCPU, **no GPU** (`nvidia-smi: not found`) |
 | OS | Ubuntu 22.04 (jammy) |
 | state | running |

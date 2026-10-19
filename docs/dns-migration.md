@@ -54,7 +54,7 @@ Currently `www` is a CNAME to `ext-sq.squarespace.com`.
 
 | Type | Host | Value |
 | --- | --- | --- |
-| A | `api` | `172.203.229.191` |
+| A | `api` | `40.90.251.232` |
 
 This is what makes `api.cutline-industries.studio` serve Artemis. Losing it takes
 the chat on the site down.
@@ -99,7 +99,7 @@ away, and the records above become live.
 # the site should leave Squarespace
 dig +short cutline-industries.studio          # expect 76.76.21.21
 # the API must not move
-dig +short api.cutline-industries.studio      # expect 172.203.229.191
+dig +short api.cutline-industries.studio      # expect 40.90.251.232
 # mail must still route to Microsoft
 dig +short MX cutline-industries.studio
 dig +short TXT cutline-industries.studio

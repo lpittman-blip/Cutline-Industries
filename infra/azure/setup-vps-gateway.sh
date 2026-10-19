@@ -22,7 +22,7 @@
 #
 # Usage (from your local machine via SSH):
 #   export DOMAIN=api.artemis-ai.net DB_PASSWORD=... VLLM_BASE_URL=... VLLM_MODEL=artemis LETSENCRYPT_EMAIL=...
-#   ssh azureuser@172.203.229.191 "$(cat infra/azure/setup-vps-gateway.sh)"
+#   ssh azureuser@40.90.251.232 "$(cat infra/azure/setup-vps-gateway.sh)"
 #
 # Or via az vm run-command (requires Azure CLI):
 #   az vm run-command invoke -g artm-rg -n cutline-vps \
