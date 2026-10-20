@@ -302,3 +302,53 @@ def test_api_server_loads_the_checkpoint_and_streams_model_tokens(labeled, tmp_p
         assert events[-1]["type"] == "done" and calls["router"] >= 1
     finally:
         srv.shutdown()
+
+
+def test_route_coef_zero_skips_supervision_but_keeps_balance_and_z():
+    """route_coef=0 must disable ONLY the supervision term.
+
+    It is easy to read an absent `route_loss` as "routing is off". It is not:
+    the router, the top-k dispatch, the load-balance loss and the router z-loss
+    all still run and still shape the gradient. What route_coef=0 must do is
+    skip computing a supervision loss that would be discarded -- previously
+    ExpertMixture built one F.nll_loss per MoE layer per step and threw it away.
+    """
+    import torch
+    import artemis.model as M
+    from artemis.model import ModelConfig, ArtemisLM
+
+    cfg = ModelConfig(vocab_size=512, d_model=64, n_layers=4, n_heads=4, n_kv_heads=2,
+                      max_seq_len=64, moe_every=2, expert_ffn_mult=0.5)
+    x = torch.randint(0, 512, (2, 64))
+    y = torch.randint(0, 512, (2, 64))
+    d = torch.randint(-1, 10, (2, 64))
+
+    def forward_with(route_coef):
+        torch.manual_seed(0)
+        model = ArtemisLM(cfg)
+        model.route_coef = route_coef
+        calls = []
+        original = M.F.nll_loss
+        M.F.nll_loss = lambda *a, **k: (calls.append(1), original(*a, **k))[1]
+        try:
+            _, loss = model(x, y, d)
+        finally:
+            M.F.nll_loss = original
+        return loss, len(calls), dict(model.last_stats)
+
+    n_moe = len(cfg.moe_layers)
+    loss_off, calls_off, stats_off = forward_with(0.0)
+    loss_on, calls_on, stats_on = forward_with(0.1)
+
+    # off: supervision neither computed nor reported
+    assert calls_off == 0, f"supervision still computed at route_coef=0 ({calls_off} calls)"
+    assert "route_loss" not in stats_off
+
+    # off: the OTHER router losses are still very much on
+    assert "balance_loss" in stats_off and "z_loss" in stats_off
+    assert cfg.balance_coef > 0 and cfg.router_z_coef > 0
+
+    # on: supervision computed once per MoE layer, reported, and changes the loss
+    assert calls_on == n_moe, f"expected {n_moe} supervision calls, got {calls_on}"
+    assert "route_loss" in stats_on
+    assert not torch.isclose(loss_off, loss_on), "route_coef=0.1 should change the loss"

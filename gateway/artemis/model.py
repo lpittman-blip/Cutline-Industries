@@ -239,8 +239,14 @@ class ArtemisLM(nn.Module):
         """Returns (logits, loss). loss = next-token loss + the router terms; each part is in self.last_stats."""
         x = self.embed(idx)
         aux = []
+        # Domain labels reach the routers ONLY to build the supervision term. At
+        # route_coef=0 that term is discarded, but ExpertMixture still computed an
+        # F.nll_loss per MoE layer per step -- measured: 3 calls per forward on a
+        # 3-MoE-layer model, all thrown away. Withholding the labels skips it
+        # exactly, because `domains` has no other use inside ExpertMixture.
+        dom = domains if self.route_coef else None
         for blk in self.blocks:
-            x, a = blk(x, self.cos, self.sin, domains)
+            x, a = blk(x, self.cos, self.sin, dom)
             if a is not None:
                 aux.append(a)
         logits = self.head(self.norm(x))
