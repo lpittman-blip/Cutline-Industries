@@ -42,11 +42,14 @@ of the architecture is the `model.py` module docstring plus `models.yaml`;
 
 **Extrapolated, and labelled as such from here on:**
 
-- "62.2B unique corpus tokens" = 880 × 70,702,756. **This is one shard
-  multiplied by the shard count.** It is not a measured corpus total and not a
-  verified unique count. Shard composition varies by language and licence mix;
-  the true figure could plausibly differ by 10% in either direction, and
-  cross-shard duplicates would push the unique count *down*.
+- "62.2B unique corpus tokens" = 880 × 70,702,756. **This was one shard
+  multiplied by the shard count.** SINCE SUPERSEDED: four shards have now been
+  measured (00000/00200/00500/00800), giving a mean of 71,995,701 tokens with a
+  1.25% standard deviation and a corrected projection of **63.36B (band
+  61.77–64.94B)**. The original figure was low by 1.8%. Cross-shard exact
+  duplication measured 0 in 170,528 documents, so duplicates do not erode the
+  ceiling; near-duplicates remain unmeasured. Still a projection from 4 of 880
+  shards, but now a bounded one.
 - Every tokens/second, hour and dollar figure anywhere in this repo.
 
 **Untested, on GPU or at scale:**

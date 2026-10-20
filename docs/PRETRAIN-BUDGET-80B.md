@@ -13,36 +13,48 @@ record rather than an accident.
 
 ## The constraint that shapes everything: 80B > the dataset
 
-Measured on shard 00000 of `codeparrot/github-code-clean`, end to end through
-Artemis's own tokenizer at vocab 32000:
+**Updated with measurements across four shards; the single-shard figure this
+section originally carried was low by 1.8%.**
+
+Four shards spread across the dataset, all tokenised with the same Artemis
+tokenizer at vocab 32000, after licence filtering and exact dedup:
+
+| shard | tokens | documents | tokens/doc |
+| --- | --- | --- | --- |
+| 00000 | 70,702,756 | 55,728 | 1,269 |
+| 00200 | 72,583,398 | 56,592 | 1,283 |
+| 00500 | 72,629,636 | 57,144 | 1,271 |
+| 00800 | 72,067,013 | 56,792 | 1,269 |
+| **mean** | **71,995,701** | 56,564 | 1,273 |
+| stdev | 898,898 (**1.25%**) | | |
+
+Shard composition is far more uniform than feared — a 2.68% spread between the
+smallest and largest. Note shard 00000 is the lowest, and it is also the shard
+the tokenizer was trained on; the remaining three agree within 0.8% of each
+other.
+
+**Corrected corpus projection:**
 
 | | |
 | --- | --- |
-| tokens per shard, after licence filter + dedup | **70,702,756** |
-| constant assumed project-wide until now | 70,400,000 |
-| ratio measured / assumed | **1.004** |
+| point estimate (880 x mean) | **63.36B tokens** |
+| ±2 stdev band | 61.77B – 64.94B |
+| previously reported (880 x shard 00000) | 62.22B — low by 1.8% |
+| 80B target | **1.263 epochs** |
 
-The constant every cost estimate rests on is correct to 0.4%. But:
+This is still a projection from 4 of 880 shards, not an aggregate of real
+counts. But with a 1.25% stdev the extrapolation is now bounded rather than
+speculative, and the conclusion is unchanged: **80B exceeds the unique corpus,
+so roughly 16.6B tokens must be repeated exposure or come from a second
+source.**
 
-| | |
-| --- | --- |
-| shards in the dataset | 880 |
-| **unique token ceiling** | **62.2B** |
-| target | 80B |
-| target / ceiling | **1.29x** |
-
-**80B is 1.29 times the entire filtered corpus.** 17.8B tokens cannot be unique
-and must come from one of:
-
-1. **Repeated exposure** — 1.29 epochs over the full corpus. Simplest, and at
-   this scale defensible; the second pass sees 29% of the data twice.
-2. **Additional corpora** — a second permissively-licensed source. This also
-   fixes the dead-domain problem below, so it is the better answer if the
-   licence review is affordable.
-
-Either way `train.py` must report unique tokens separately from total tokens
-trained, so "80B" never silently means "62.2B seen 1.29 times" without saying
-so.
+**Cross-shard duplication, measured.** Shards 00200, 00500 and 00800 were
+ingested through one global dedup ledger: **170,528 documents, 0 exact
+duplicates detected.** Between widely separated shards, exact cross-shard
+duplication in this dataset is effectively zero. That is a real result and it
+means the unique ceiling is not materially eroded by duplicates — but it says
+nothing about *near*-duplicates (vendored libraries, forks, generated files),
+which remain unmeasured and are the more likely contaminant.
 
 ## Storage: the tokenised corpus does not fit anywhere local
 
