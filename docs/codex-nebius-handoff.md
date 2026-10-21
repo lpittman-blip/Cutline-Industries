@@ -77,8 +77,8 @@ Both exposed keys on `serviceaccount-e04nwdxcrjmat9y8q0` are now **INACTIVE**:
 
 | key | aws id | why | state |
 | --- | --- | --- | --- |
-| `accesskey-e04vgf5etvwrs9zcv7` | `NAKI7IMXPX2AHHEALYCR` | posted in a chat message | INACTIVE |
-| `accesskey-e00zdh5pd3q0dcjxy4` | `NAKITSIEJ5JHCENYJJ01` | its secret was leaked into a transcript | INACTIVE |
+| `accesskey-e04vgf5etvwrs9zcv7` | `<REDACTED-ACCESS-KEY-ID>` | posted in a chat message | INACTIVE |
+| `accesskey-e00zdh5pd3q0dcjxy4` | `<REDACTED-ACCESS-KEY-ID>` | its secret was leaked into a transcript | INACTIVE |
 
 Deactivated rather than deleted, because deactivation is immediate, reversible
 and provably sufficient — the leaked material no longer authenticates. Delete
@@ -95,7 +95,7 @@ replacement is installed on the VM, status and checkpoint sync will fail. The
 VM is stopped, so nothing is broken right now, but Codex's preflight must not
 mistake it for a bug.
 
-A third id mentioned earlier, `NAKI2D49M860DKZS905G`, does not exist on this
+A third id mentioned earlier, `<REDACTED-ACCESS-KEY-ID>`, does not exist on this
 service account. It was either already removed or never belonged here.
 
 ## What you do — three steps, no secrets in chat
