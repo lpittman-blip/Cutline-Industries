@@ -57,7 +57,7 @@ of the architecture is the `model.py` module docstring plus `models.yaml`;
 - Any GPU execution whatsoever. No GPU has ever run this code.
 - Measured MFU, tokens/second, or multi-GPU scaling efficiency.
 - bf16 numerics (the CPU run was fp32; `--amp-dtype` autocast never engaged).
-- FSDP/ZeRO sharding, which 14B requires and which has no code path yet.
+- FSDP/ZeRO sharding, which 14B requires. IMPLEMENTED since this audit (`--shard fsdp`), but validated only on CPU with gloo — see the note below.
 - Anything at 1B parameters or above.
 
 **What the dry run proves:** the pipeline executes end to end on real data and
@@ -284,8 +284,26 @@ on provider. Single-GPU is infeasible: 131 days on one H100.
 | sharded across 8 GPUs | 27.4 GB/GPU of 80 GB |
 | activations (seq 8192, mb 1, recompute) | ~8 GB |
 
-14B does not fit on one 80 GB card. FSDP or ZeRO-3 is **required**, and
-`train.py` currently implements plain DDP only — a genuine gap.
+14B does not fit on one 80 GB card. FSDP or ZeRO-3 is **required**.
+
+**Status update (after this audit).** `train.py` now takes `--shard fsdp` and
+shards parameters, gradients and optimizer state. Four tests run it as two real
+processes, and the decisive one loads the resulting checkpoint into an ordinary
+unsharded `ArtemisLM` — the failure mode for sharded training is not a crash
+but a checkpoint nothing can read back.
+
+Implementing it exposed four bugs that DDP had been hiding, one of which was
+never about sharding at all: `ExpertMixture` only *called* an expert when some
+token selected it, so unselected experts received **no gradient**. DDP tolerated
+that via `find_unused_parameters`; under FSDP it makes two ranks issue different
+collectives and the job dies intermittently, data-dependently. Experts are now
+always called.
+
+**This is not proof.** The tests run on CPU over gloo, which exercises the
+sharding logic, the gradient sync and the state-dict gathering — but not NCCL,
+not CUDA kernels, and not memory behaviour at 13.7B parameters. Memory is the
+whole reason FSDP is needed, and it is the one property these tests cannot
+check. Budget time for the first real multi-GPU run to find things.
 
 **Disk, from measured dtypes (uint16 / uint8):** 160 GB `train.bin` + 80 GB
 `train.dom` = **240 GB** for 80B tokens, plus raw-shard and prep peaks, plus
@@ -338,7 +356,8 @@ supervision), `gateway/artemis/tests/test_neural_core.py` (regression test).
 `route_coef=0` does not disable routing or the balance/z losses; the
 A100/H100/T4 cost table applies to 100M only.
 
-**Blockers:** no GPU credential of any kind. FSDP/ZeRO absent from `train.py`,
+**Blockers:** no GPU credential of any kind. FSDP/ZeRO now present in `train.py`
+but unproven on GPUs,
 required for 14B. Streaming shard preparation not yet implemented. Near-duplicate
 detection and contamination audit absent.
 
