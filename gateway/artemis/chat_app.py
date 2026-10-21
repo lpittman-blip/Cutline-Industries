@@ -44,6 +44,34 @@ def make_chat_handler(app, biz, records, jobs, site=None):
     origins = ALLOWED_ORIGINS | {"http://localhost:8080", "http://127.0.0.1:8080"}
 
     class Handler(base):
+        def _cors(self):
+            """Emit credentialed CORS headers when the Origin is allow-listed.
+
+            The app routes used to refuse cross-origin credentials outright,
+            which was right while the site and the gateway shared an origin.
+            They no longer can: the site is static-hosted and cannot proxy
+            /api/*, so the browser calls api.<domain> from <domain>.
+
+            Enabling this does NOT weaken CSRF here, because CSRF does not rest
+            on the Origin check. Every write compares X-CSRF-Token against the
+            session's token with hmac.compare_digest, and an attacker's page
+            cannot read that token -- it is delivered in a response body the
+            same-origin policy keeps from them. The Origin allow-list is the
+            second lock, not the only one.
+
+            The exact origin is echoed, never a wildcard (a wildcard is invalid
+            with credentials anyway), and `Vary: Origin` is mandatory: without
+            it any cache in front of this can hand one origin's
+            Access-Control-Allow-Origin to another.
+            """
+            origin = self.headers.get("Origin", "")
+            if origin and origin in origins:
+                self.send_header("Access-Control-Allow-Origin", origin)
+                self.send_header("Access-Control-Allow-Credentials", "true")
+                self.send_header("Vary", "Origin")
+                return True
+            return False
+
         def _json(self, code, body, cookie=None):
             data = json.dumps(body, ensure_ascii=False).encode()
             self.send_response(code)
@@ -51,6 +79,7 @@ def make_chat_handler(app, biz, records, jobs, site=None):
             self.send_header("Content-Length", str(len(data)))
             self.send_header("Cache-Control", "no-store")
             self.send_header("X-Content-Type-Options", "nosniff")
+            self._cors()
             if cookie is not None:
                 suffix = "; Secure" if cookie_secure else ""
                 self.send_header("Set-Cookie", f"artemis_session={cookie}; Path=/; HttpOnly; SameSite=Lax; Max-Age={30*86400 if cookie else 0}{suffix}")
@@ -72,6 +101,13 @@ def make_chat_handler(app, biz, records, jobs, site=None):
         def _check_origin(self):
             origin = self.headers.get("Origin")
             if origin and origin not in origins:
+                raise ChatError(403, "origin", "This website origin is not allowed.")
+            # A write with NO Origin header used to pass. Browsers always send
+            # one on POST/PATCH/DELETE, so the only callers this turns away are
+            # non-browsers replaying a stolen cookie -- which is exactly the
+            # case the allow-list above is meant to stop, and it was skipping.
+            # Bearer clients are unaffected: they do not use the session cookie.
+            if not origin and self._token() and not self._bearer():
                 raise ChatError(403, "origin", "This website origin is not allowed.")
             if not self.headers.get("Content-Type", "").lower().startswith("application/json"):
                 raise ChatError(415, "content_type", "Use a JSON request.")
@@ -177,6 +213,7 @@ def make_chat_handler(app, biz, records, jobs, site=None):
                         if "text/event-stream" not in self.headers.get("Accept", ""):
                             self._json(200, {"state": request["state"], "events": chunks}); return True
                         self.send_response(200); self.send_header("Content-Type", "text/event-stream"); self.send_header("Cache-Control", "no-store")
+                        self._cors()   # EventSource/fetch with credentials needs these on the stream too
                         self.send_header("X-Accel-Buffering", "no"); self.end_headers()
                         records.lifecycle(rid, "stream_connected", {"after_sequence": after})
                         try:
@@ -252,9 +289,20 @@ def make_chat_handler(app, biz, records, jobs, site=None):
             if not self._route("DELETE"): super().do_DELETE()
 
         def do_OPTIONS(self):
-            # Application routes use same-origin cookies; do not enable cross-origin credentials.
+            # Was a bare 204 with no CORS headers, which is a refusal: the
+            # browser reads the missing Access-Control-Allow-Origin and never
+            # sends the real request. Now a genuine preflight for allow-listed
+            # origins, and still a bare 204 for everything else, so an
+            # unknown origin is rejected rather than told what is permitted.
             if self.path.startswith("/api/"):
-                self.send_response(204); self.end_headers()
+                self.send_response(204)
+                if self._cors():
+                    self.send_header("Access-Control-Allow-Methods", "GET, POST, PATCH, DELETE, OPTIONS")
+                    # X-CSRF-Token must be listed or the browser blocks the
+                    # header that every write depends on.
+                    self.send_header("Access-Control-Allow-Headers", "Content-Type, X-CSRF-Token")
+                    self.send_header("Access-Control-Max-Age", "600")
+                self.end_headers()
             else: super().do_OPTIONS()
 
     return Handler

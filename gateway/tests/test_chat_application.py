@@ -19,6 +19,22 @@ from artemis.conversations import ChatError, Conversations
 from artemis.orchestrator import Artemis
 from test_chat_failures import server
 
+SITE = "https://artemisai-bycutlineindustries.studio"   # allow-listed; the static site's origin
+HOSTILE = "https://hostile.example"
+
+
+def raw(base, path, body=None, method=None, headers=None):
+    """Like `call`, but keeps the response headers -- which is the thing under test."""
+    req = urllib.request.Request(base + path, method=method,
+                                 data=json.dumps(body).encode() if body is not None else None,
+                                 headers={"Content-Type": "application/json", **(headers or {})})
+    try: response = urllib.request.urlopen(req)
+    except urllib.error.HTTPError as error: response = error
+    status, head = response.status, dict(response.headers)
+    try: payload = response.read()
+    finally: response.close()
+    return status, head, payload
+
 
 class Model:
     def __init__(self): self.calls = []
@@ -200,6 +216,7 @@ def test_authenticated_http_handlers_enforce_csrf_and_return_saved_history(servi
         assert call(base, '/api/conversations')[0] == 401
         assert call(base, '/api/conversations', {}, headers={"Cookie": headers["Cookie"]})[0] == 403
         assert call(base, '/api/conversations', {}, headers={**headers, "Origin": "https://hostile.example"})[0] == 403
+        headers = {**headers, "Origin": SITE}       # browsers send Origin on every write
         code, conversation = call(base, '/api/conversations', {}, headers=headers); assert code == 201
         code, request = call(base, '/api/conversations/'+conversation['id']+'/messages', {'text': 'Hello', 'idempotency_key': 'http-request-key'}, headers=headers)
         assert code == 202; complete(records, user["id"], request["request_id"])
@@ -275,3 +292,84 @@ def test_directory_serving_does_not_expose_parent_files(service):
         with pytest.raises(urllib.error.HTTPError) as error:
             urllib.request.urlopen(base + '/../configs/business.yaml')
         assert error.value.code == 404
+
+
+# --- cross-origin app routes -------------------------------------------------
+# The static site cannot proxy /api/*, so the browser calls api.<domain> from
+# <domain>. These are the same site but different ORIGINS, so CORS applies even
+# though SameSite=Lax still sends the cookie.
+
+def test_preflight_grants_credentials_to_the_site_origin_only(service):
+    biz, records, _, app, jobs = service
+    with server(make_chat_handler(app, biz, records, jobs)) as base:
+        code, head, _ = raw(base, '/api/conversations', method="OPTIONS", headers={"Origin": SITE})
+        assert code == 204
+        assert head.get("Access-Control-Allow-Origin") == SITE
+        assert head.get("Access-Control-Allow-Credentials") == "true"
+        # Without Vary, a cache in front of this can hand one origin's
+        # allow-origin header to another. It is not optional.
+        assert head.get("Vary") == "Origin"
+        # Every write sends X-CSRF-Token; if it is not advertised here the
+        # browser blocks the header and all writes fail.
+        assert "X-CSRF-Token" in head.get("Access-Control-Allow-Headers", "")
+        for verb in ("GET", "POST", "PATCH", "DELETE"):
+            assert verb in head.get("Access-Control-Allow-Methods", "")
+
+
+def test_preflight_tells_an_unknown_origin_nothing(service):
+    biz, records, _, app, jobs = service
+    with server(make_chat_handler(app, biz, records, jobs)) as base:
+        code, head, _ = raw(base, '/api/conversations', method="OPTIONS", headers={"Origin": HOSTILE})
+        assert code == 204
+        assert "Access-Control-Allow-Origin" not in head
+        assert "Access-Control-Allow-Credentials" not in head
+        assert "Access-Control-Allow-Methods" not in head
+
+
+def test_credentialed_response_echoes_the_exact_origin_never_a_wildcard(service):
+    biz, records, _, app, jobs = service
+    user, token = account(records)
+    headers = {"Cookie": "artemis_session=" + token, "X-CSRF-Token": user["csrf"], "Origin": SITE}
+    with server(make_chat_handler(app, biz, records, jobs)) as base:
+        code, head, _ = raw(base, '/api/conversations', headers=headers)
+        assert code == 200
+        # A wildcard is invalid with credentials and the browser would reject
+        # the response; it is also the classic way this gets made permissive.
+        assert head.get("Access-Control-Allow-Origin") == SITE != "*"
+        assert head.get("Access-Control-Allow-Credentials") == "true"
+        assert head.get("Vary") == "Origin"
+
+
+def test_a_hostile_origin_gets_no_cors_headers_on_a_real_response(service):
+    biz, records, _, app, jobs = service
+    user, token = account(records)
+    with server(make_chat_handler(app, biz, records, jobs)) as base:
+        code, head, _ = raw(base, '/api/conversations',
+                            headers={"Cookie": "artemis_session=" + token,
+                                     "X-CSRF-Token": user["csrf"], "Origin": HOSTILE})
+        assert "Access-Control-Allow-Origin" not in head
+
+
+def test_csrf_still_required_even_from_the_allowed_origin(service):
+    """Enabling credentialed CORS must not turn the Origin check into the only lock."""
+    biz, records, _, app, jobs = service
+    _, token = account(records)
+    with server(make_chat_handler(app, biz, records, jobs)) as base:
+        code, _, _ = raw(base, '/api/conversations', {},
+                         headers={"Cookie": "artemis_session=" + token, "Origin": SITE})
+        assert code == 403                       # no X-CSRF-Token
+        code, _, _ = raw(base, '/api/conversations', {},
+                         headers={"Cookie": "artemis_session=" + token,
+                                  "X-CSRF-Token": "wrong-token", "Origin": SITE})
+        assert code == 403                       # wrong X-CSRF-Token
+
+
+def test_a_cookie_write_with_no_origin_at_all_is_refused(service):
+    """Browsers always send Origin on a write, so only a non-browser replaying
+    a stolen cookie arrives without one. That used to pass the check."""
+    biz, records, _, app, jobs = service
+    user, token = account(records)
+    with server(make_chat_handler(app, biz, records, jobs)) as base:
+        code, _, _ = raw(base, '/api/conversations', {},
+                         headers={"Cookie": "artemis_session=" + token, "X-CSRF-Token": user["csrf"]})
+        assert code == 403

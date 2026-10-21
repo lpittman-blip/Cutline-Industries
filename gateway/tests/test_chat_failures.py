@@ -1,5 +1,6 @@
 """Regression checks with simulated inference; these do not certify trained model quality."""
 import json
+import email
 import io
 import urllib.error
 import urllib.request
@@ -50,10 +51,15 @@ def server(handler):
         handler(sock, ("127.0.0.1", 1234), None)
         head, _, payload = bytes(sock.output).partition(b"\r\n\r\n")
         code = int(head.split(b" ", 2)[1])
+        # Response headers used to be dropped on the floor here, so no test in
+        # this suite could assert on one -- not Set-Cookie, not Cache-Control,
+        # not CORS. Parse them and hand them back the way a real response does.
+        parsed = email.message_from_string("\r\n".join(head.decode("latin-1").split("\r\n")[1:]))
         response = io.BytesIO(payload)
         response.status = code
+        response.headers = parsed
         if code >= 400:
-            raise urllib.error.HTTPError(req.full_url, code, "test response", {}, response)
+            raise urllib.error.HTTPError(req.full_url, code, "test response", parsed, response)
         return response
 
     with patch("urllib.request.urlopen", open_request):
