@@ -6,12 +6,12 @@
   "redirects": [
     {
       "source": "/har",
-      "destination": "/harlow",
+      "destination": "/harlow/",
       "permanent": false
     },
     {
       "source": "/har/",
-      "destination": "/harlow",
+      "destination": "/harlow/",
       "permanent": false
     }
   ],
