@@ -112,7 +112,21 @@ for name in ("moe-sup", "moe-unsup", "dense"):
     # Val loss alone cannot distinguish an MoE that spread its traffic from one
     # that collapsed onto a single expert, and that distinction is the whole
     # question. exp(entropy) is the effective number of experts a token passes
-    # through: 10 means uniform, 1 means the MoE has become dense.
+    # through in ONE layer: 10 means uniform, 1 means that layer has become
+    # dense. This averages that per-layer figure ACROSS layers -- mean of
+    # exp(entropy), not exp(mean entropy). The two are not equal (by Jensen,
+    # mean-of-exp >= exp-of-mean), and the caption below used to claim the
+    # latter while the code computed the former, overstating nothing but
+    # describing the wrong quantity.
+    #
+    # LIMITATION, because this number gets quoted: it is read from the LAST
+    # metrics record -- a single training step's routers, not an average over
+    # evaluation batches. Per-layer entropy moves materially between adjacent
+    # evals (observed on the 100m run: 2.12 -> 1.86 -> 1.38 -> 1.70 -> 1.47 in
+    # layer 0 over 200 steps), so this figure does not support the two decimal
+    # places it is printed with. Treat it as "roughly N experts in use", and
+    # prefer artemis.evaluate's routing matrix for any claim about which
+    # expert serves which domain.
     last = recs[-1]
     ent = last.get("router_entropy")
     eff = sum(math.exp(e) for e in ent) / len(ent) if ent else None
@@ -127,7 +141,8 @@ for n, a, b, f, s, eff, busy in rows:
     e = f"{eff:>11.2f}" if eff else f"{'dense':>11}"
     bu = f"{busy:>7.1%}" if busy else f"{'-':>7}"
     print(f"{n:<{w}}  {a:>10,}  {b:>9.4f}  {f:>9.4f}  {e}  {bu}  {s}")
-print(f"\n(eff experts: exp(mean router entropy) — 10.00 is uniform across the "
+print(f"\n(eff experts: mean over layers of exp(that layer's router entropy), "
+      f"from a single\n final training step — 10.00 is uniform across the "
       f"ten experts,\n 1.00 means every token takes the same one and the MoE "
       f"has become a dense model.\n busiest: largest share of routing slots any "
       f"single expert received.)")

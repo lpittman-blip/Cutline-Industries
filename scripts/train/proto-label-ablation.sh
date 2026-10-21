@@ -149,7 +149,15 @@ for name, note in arms:
     ent = recs[-1].get("router_entropy")
     eff = sum(math.exp(e) for e in ent) / len(ent) if ent else None
     load = recs[-1].get("expert_load")
-    dead = sum(1 for v in load[0] if v < 0.0005) if load else None
+    # Count an expert dead only if EVERY MoE layer starves it. The previous
+    # version read load[0] alone, so "0 dead" meant "no dead expert in the
+    # first MoE layer" while reporting as if it covered the model -- on a 12
+    # layer model with moe_every 2 that is one layer out of six. An expert
+    # that is unused in five layers and busy in one is not dead, so the test
+    # is across layers rather than per layer; the published figures in
+    # docs/MOE-ROUTING-ABLATION.md predate this and are layer-0 only.
+    dead = (sum(1 for e in range(len(load[0]))
+                if all(layer[e] < 0.0005 for layer in load)) if load else None)
     rows.append((name, note, min(val), eff, dead, recs[-1]["step"]))
 
 w = max(len(r[0]) for r in rows)

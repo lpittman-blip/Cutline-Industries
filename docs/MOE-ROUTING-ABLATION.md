@@ -293,6 +293,33 @@ All five arms therefore share one token stream, one seed and one schedule.
 | `moe-sup` | 3 labels + build | 3.6222 | 3.2572 | 4.965 | 1.35 | 7 |
 | `moe-nores` | 7 labels, no build | 3.6624 | 3.2951 | 3.289 | 3.01 | 4 |
 
+### What the last two columns do and do not mean
+
+Added after an audit found both were being quoted more confidently than their
+definitions support. The val and loss columns are unaffected.
+
+**`eff. experts`** is the mean across MoE layers of `exp(that layer's router
+entropy)` — not `exp(mean entropy)`, which the script's caption used to claim.
+It is read from **one** metrics record: the routers at a single training step,
+not an average over evaluation batches. Per-layer entropy moves a lot between
+adjacent evaluations — on the 100m run, layer 0 went 2.12 → 1.86 → 1.38 → 1.70
+→ 1.47 across 200 steps — so **8.03 does not carry two significant decimals**.
+Read it as "most of the ten experts are carrying traffic", which is the claim
+the ablation actually needs, and nothing finer.
+
+**`dead`** counted experts receiving under 0.05% of routing slots **in the
+first MoE layer only**. The figures in this table were produced that way, so
+"0 dead" means no starved expert in layer 0, not across the model — one layer
+of six on a 12-layer `moe_every: 2` config. `proto-label-ablation.sh` now
+requires an expert to be starved in *every* layer before calling it dead;
+re-running these arms would be needed to restate the column on that basis.
+
+Neither metric is computed by `artemis.evaluate`. For any claim about *which*
+expert serves *which* domain — the question these numbers are usually invoked
+to answer — the routing matrix and the ablation specialisation test in
+`artemis.evaluate` are the measurements that actually bear on it, and they are
+per-domain rather than aggregate.
+
 | comparison | gap |
 | --- | --- |
 | widening the labels 3 → 7 | **+0.0107** (helps; 22% of the penalty) |
