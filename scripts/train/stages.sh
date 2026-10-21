@@ -25,7 +25,16 @@ set -euo pipefail
 STAGE="${STAGE:-both}"
 WORK="${WORK:-/mnt/artemis}"
 SIZE="${SIZE:-1b}"
-SHARDS="${SHARDS:-284}"        # measured 70.4M tokens/shard at vocab 32000 -> ~20B
+# Measured, not assumed: 4 shards averaged 71,995,701 tokens at vocab 32000
+# (stdev 1.25%), so 284 shards is ~20.4B. The dataset has 880 shards in total,
+# which caps this corpus at ~63.4B unique tokens -- BELOW the 80B budget in
+# docs/PRETRAIN-BUDGET-80B.md. Reaching 80B needs a second licensed source, not
+# a larger SHARDS; see that document.
+SHARDS="${SHARDS:-284}"
+# Optional token budget. The loop stops once this many tokens are on disk, even
+# if SHARDS remain, so the budget rather than the shard count is the thing that
+# ends preparation.
+TARGET_TOKENS="${TARGET_TOKENS:-}"
 STEPS="${STEPS:-60000}"
 BATCH="${BATCH:-6}"
 ACCUM="${ACCUM:-4}"
@@ -87,49 +96,18 @@ stage1() {
   pip_install torch numpy pyyaml tokenizers huggingface_hub pyarrow awscli
   command -v aws >/dev/null || echo "WARNING: aws CLI unavailable; progress sync disabled"
 
-  log "downloading $SHARDS shards of $DATASET"
-  mkdir -p "$WORK/raw"
-  python3 - "$WORK/raw" "$SHARDS" "$DATASET" <<'PY'
-import sys
-from pathlib import Path
-from huggingface_hub import hf_hub_download
-out, n, repo = Path(sys.argv[1]), int(sys.argv[2]), sys.argv[3]
-for i in range(n):
-    name = f"data/train-{i:05d}-of-00880.parquet"
-    try:
-        hf_hub_download(repo, name, repo_type="dataset", local_dir=str(out))
-    except Exception as e:
-        print("stopped at", name, e); break
-    if i % 20 == 0:
-        print("shard", i, flush=True)
-PY
-
-  log "filtering to permissive licences and labelling domains"
+  # ONE pass that downloads, licence-filters, tokenises and DELETES each shard
+  # before fetching the next. The previous version downloaded every shard, then
+  # filtered every shard, then tokenised the lot in Python lists -- which needs
+  # ~15 GB of parquet plus ~11 GB of JSONL on disk simultaneously, and roughly
+  # 640 GB of RAM at the 80B-token budget. This holds one shard at a time, and
+  # resumes exactly if it is interrupted, so a spot preemption costs one shard
+  # rather than the whole corpus. See docs/PRETRAIN-BUDGET-80B.md.
+  log "preparing corpus: $SHARDS shards of $DATASET, one at a time"
   cd "$REPO/gateway"
-  python3 -m artemis.code_corpus --out "$WORK/corpus.jsonl" "$WORK"/raw/data/*.parquet
-
-  log "training tokenizer (vocab $VOCAB) and tokenising"
-  python3 - "$WORK" "$VOCAB" <<'PY'
-import json, sys
-from pathlib import Path
-sys.path.insert(0, ".")
-from artemis.tokenizer import train_tokenizer
-from artemis.data import prepare
-
-work, vocab = Path(sys.argv[1]), int(sys.argv[2])
-flat = work / "corpus.txt"
-with flat.open("w", encoding="utf-8") as f:
-    for line in (work / "corpus.jsonl").open(encoding="utf-8"):
-        if line.strip():
-            f.write(json.loads(line)["text"].replace("\n", " ") + "\n")
-train_tokenizer([str(flat)], vocab, str(work / "tokenizer.json"))
-m = prepare([{"path": str(work / "corpus.jsonl"),
-              "license": "permissive-only (filtered by artemis.code_corpus)",
-              "origin": "codeparrot/github-code-clean, human-written source"}],
-            str(work / "tokenizer.json"), str(work / "data"), val_fraction=0.002)
-print("train tokens:", m["train_tokens"], "val:", m["val_tokens"],
-      "domain labels:", m["domain_labels"])
-PY
+  python3 -m artemis.stream_corpus \
+    --work "$WORK" --shards "$SHARDS" --dataset "$DATASET" \
+    --vocab "$VOCAB" ${TARGET_TOKENS:+--target-tokens "$TARGET_TOKENS"}
 
   log "pretraining on $NGPU GPU(s)"
   log "schedule: $STEPS steps, warmup $WARMUP ($(python3 -c "print(f'{100*$WARMUP/$STEPS:.2f}')")% of the run), lr $LR, seed $SEED"

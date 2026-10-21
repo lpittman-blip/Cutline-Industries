@@ -33,6 +33,11 @@ SHARDS="${SHARDS:-43}"          # measured 70.4M tokens/filtered shard -> ~3.0B
 WORK="${WORK:-/mnt/artemis}"
 REPO_URL="${REPO_URL:-https://github.com/lpittman-g/Cutline-Industries.git}"
 REPO_DIR="${REPO_DIR:-/opt/artemis/source}"
+# Peak disk is no longer the whole corpus. stages.sh consumes one shard at a
+# time and deletes it, so what grows is the token bins (~2 bytes + 1 label byte
+# per token), the dedup ledger (8 bytes per document) and checkpoints. 20B
+# tokens is ~60 GB of bins; 150 GiB keeps headroom for checkpoints and slack,
+# and for a bigger SHARDS. Lower it deliberately for a smaller pool.
 MIN_FREE_GIB="${MIN_FREE_GIB:-150}"
 PREFLIGHT=0
 
@@ -247,8 +252,10 @@ set -e
 
 if [ "$RC" -ne 0 ]; then
   write_status "training FAILED rc=$RC"
-  die "stage 1 failed (rc=$RC). The run is resumable: re-run this script; the
-   downloaded shards under $WORK/raw are reused."
+  die "stage 1 failed (rc=$RC). The run is resumable: re-run this script.
+   Corpus preparation continues from $WORK/prep-state.json, skipping shards
+   already tokenised and truncating any shard that was cut off mid-write, and
+   training resumes from $WORK/runs/$SIZE/latest.pt."
 fi
 
 write_status "training finished"

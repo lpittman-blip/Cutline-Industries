@@ -88,27 +88,32 @@ it up or move the WSL disk to another drive before starting.
 
 ## Disk, and how to need less
 
-The preflight requires **150 GiB free** by default and refuses below it. That
-default is conservative — adding up what actually lands on disk for a full
-43-shard run gives about **43 GB**:
+The preflight requires **150 GiB free** by default and refuses below it.
+
+Corpus preparation downloads, filters and tokenises **one shard at a time and
+deletes it before fetching the next**, so the raw parquet and the filtered JSONL
+never accumulate. Peak disk for a full 43-shard run is about **10 GB**:
 
 | | size |
 | --- | --- |
-| 43 raw parquet shards | ~15 GB (355 MB each, measured) |
-| filtered corpus (`corpus.jsonl`) | ~11 GB (257 MB per shard, measured) |
-| flat text for the tokenizer | ~11 GB |
+| one shard in flight (parquet + filtered JSONL) | ~0.6 GB, reused and deleted |
 | `train.bin` + `val.bin` (3.03B tokens, uint16) | ~6 GB |
+| `train.dom` + `val.dom` (one label byte per token) | ~3 GB |
+| dedup ledger (8 bytes per document) | ~30 MB |
 
-So `MIN_FREE_GIB=150` carries roughly 3.5x headroom over the measured figure.
-That is defensible for an unattended rented box, where running out of disk
-eight hours in wastes real money — but on your own machine you can set it to
-something closer to reality. **80 GiB is ample for the full run**, and still
-leaves room for checkpoints and slack:
+So `MIN_FREE_GIB=150` carries a large margin, which is defensible on a rented
+box where running out of disk eight hours in wastes real money. On your own
+machine **30 GiB is ample for the full 43-shard run**, with room for
+checkpoints:
 
 ```bash
-MIN_FREE_GIB=80 WORK=$HOME/artemis-work REPO_DIR=$HOME/artemis-src \
+MIN_FREE_GIB=30 WORK=$HOME/artemis-work REPO_DIR=$HOME/artemis-src \
   RATE_PER_HOUR=0 bash scripts/train/rent-gpu-run.sh --preflight
 ```
+
+Preparation is also resumable: completed shards are recorded in
+`$WORK/prep-state.json` and skipped, and a shard interrupted mid-write is
+truncated away rather than counted twice. Closing the lid costs one shard.
 
 If you have less than that, lower the pool as well:
 
