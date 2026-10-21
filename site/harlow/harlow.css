@@ -1,0 +1,32 @@
+/* Apollo page (/harlow). Builds on liftoff.css; only page-specific rules here. */
+.ap-hero{padding:96px 0 72px;position:relative;isolation:isolate;overflow:hidden}
+.ap-hero::before{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;background:radial-gradient(60% 60% at 50% 120%,rgba(70,90,255,.22),transparent 70%),radial-gradient(34% 40% at 84% 20%,rgba(124,92,255,.12),transparent 72%)}
+.ap-title{font-size:clamp(40px,5.8vw,76px);line-height:1.04;font-weight:400;letter-spacing:-.045em;max-width:980px}
+.ap-title .g{color:#6f7690;display:block}
+.ap-sub{margin-top:26px;max-width:640px;font-size:18px;line-height:1.6;color:var(--ink-2)}
+.ap-ctas{display:flex;gap:12px;margin-top:36px;flex-wrap:wrap}
+.ap-ctas .pill{height:52px;padding:0 28px;font-size:16px}
+.ap-note{margin-top:28px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:14.5px;color:var(--ink-2);max-width:720px}
+.ap-badge{font-family:var(--mono);font-size:11.5px;padding:3px 10px;border-radius:999px;border:1px solid rgba(242,180,92,.4);color:#f2c27b}
+.ap-shots{padding-top:40px}
+.ap-grid{display:grid;grid-template-columns:1fr 1fr;gap:28px;margin-top:56px}
+.ap-shot{margin:0;border-radius:var(--r-md);background:var(--card);border:1px solid var(--card-line);box-shadow:var(--shadow);overflow:hidden}
+.ap-shot img{display:block;width:100%;height:auto;background:#f4f5f8}
+.ap-shot figcaption{padding:16px 20px;font-size:14px;color:var(--ink-2);border-top:1px solid var(--card-line)}
+.ap-steps{list-style:none;padding:0;margin-top:64px}
+.ap-steps li{background:var(--bg);padding:36px 32px 40px}
+.ap-steps h3{margin-top:14px;font-weight:500;font-size:16.5px;letter-spacing:-.01em}
+.ap-steps p{margin-top:8px;color:var(--ink-2);font-size:15px}
+.ap-cols{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:56px}
+.ap-col{padding:28px 28px 30px;border-radius:var(--r-md);background:var(--card);border:1px solid var(--card-line)}
+.ap-col h3{display:flex;align-items:center;gap:10px;font-size:17px;font-weight:500;letter-spacing:-.01em}
+.ap-col ul{margin-top:16px;padding-left:18px;display:flex;flex-direction:column;gap:10px;color:var(--ink-2);font-size:15px;line-height:1.55}
+.ap-fine{margin-top:24px;font-size:14px;color:var(--ink-3);max-width:720px}
+.ap-ctas.left{margin-top:28px}
+@media (max-width:960px){.ap-grid,.ap-cols{grid-template-columns:1fr}}
+@media (max-width:640px){
+  .ap-hero{padding:56px 0 40px}
+  .ap-sub{font-size:16.5px}
+  .ap-ctas{flex-direction:column;align-items:stretch;max-width:320px}
+  .ap-col{padding:22px}
+}

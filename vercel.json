@@ -3,6 +3,18 @@
   "framework": null,
   "buildCommand": null,
   "installCommand": null,
+  "redirects": [
+    {
+      "source": "/har",
+      "destination": "/harlow",
+      "permanent": false
+    },
+    {
+      "source": "/har/",
+      "destination": "/harlow",
+      "permanent": false
+    }
+  ],
   "rewrites": [
     {
       "source": "/api/:path*",
