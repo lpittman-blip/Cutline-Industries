@@ -168,8 +168,21 @@ class ExpertMixture(nn.Module):
         out = torch.zeros_like(flat)
         for e in range(self.n):
             rows, slot = (top_i == e).nonzero(as_tuple=True)
-            if rows.numel():
-                out.index_add_(0, rows, self.experts[e](flat[rows]) * top_w[rows, slot, None].to(flat.dtype))
+            # Every expert is CALLED every step, even with zero rows selected.
+            # Skipping the call when `rows` is empty saved nothing measurable --
+            # the matmuls are on an empty tensor -- but it left that expert's
+            # parameters out of the graph, so they received no gradient. That
+            # is what DDP's find_unused_parameters existed to tolerate, and it
+            # is why FSDP could not work at all: a parameter with no gradient
+            # on one rank and a gradient on another makes the two ranks issue
+            # different collectives, and the job dies in reduce_scatter with a
+            # buffer-size mismatch rather than anything that names the cause.
+            # Which experts a rank happens to select is data dependent, so the
+            # failure is intermittent -- it survived 2 steps here and died at 4.
+            # Running the expert on an empty slice yields a zero gradient
+            # instead of no gradient; the arithmetic is unchanged, because
+            # index_add_ of zero rows adds nothing.
+            out.index_add_(0, rows, self.experts[e](flat[rows]) * top_w[rows, slot, None].to(flat.dtype))
         # Load balancing (Switch Transformer form): fraction of routing slots each expert receives times
         # the mean router probability it gets, scaled so a perfectly even spread scores 1.0.
         load = F.one_hot(top_i, self.n).sum(1).float().mean(0) / self.k

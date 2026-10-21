@@ -85,26 +85,67 @@ def main(argv=None) -> dict:
                     help="autocast precision. auto picks bf16 on Ampere and newer, fp16 on Turing/Pascal "
                          "(which have no bf16). Force fp16 on a bf16-capable card to reproduce a T4 run.")
     ap.add_argument("--seed", type=int, default=1337)
+    # DDP replicates the whole model on every GPU, so the largest model it can
+    # train is the one that fits on ONE card -- with its gradients and its Adam
+    # moments, which together cost about 16 bytes per parameter in mixed
+    # precision. The 14B target (13.7B total) needs ~219 GB by that arithmetic
+    # and cannot be trained with DDP on any single GPU that exists. FSDP shards
+    # parameters, gradients and optimizer state across the world, so the per
+    # GPU cost falls by roughly the world size.
+    ap.add_argument("--shard", choices=("ddp", "fsdp"), default="ddp",
+                    help="multi-process strategy: ddp replicates, fsdp shards "
+                         "(required above ~1.5B parameters)")
     args = ap.parse_args(argv)
 
-    ddp = int(os.environ.get("WORLD_SIZE", "1")) > 1
-    if ddp:
-        dist.init_process_group("nccl")
+    distributed = int(os.environ.get("WORLD_SIZE", "1")) > 1
+    if distributed:
+        # Backend and device were hardcoded to nccl/cuda, so the entire
+        # multi-process path could only be exercised on a multi-GPU box --
+        # which is precisely the configuration that was never available to
+        # test it. gloo on CPU runs the same code paths (sharding, gradient
+        # sync, state-dict gathering) and is how the FSDP tests run here.
+        dist.init_process_group("nccl" if torch.cuda.is_available() else "gloo")
         rank = dist.get_rank()
-        device = torch.device("cuda", int(os.environ["LOCAL_RANK"]))
-        torch.cuda.set_device(device)
+        if torch.cuda.is_available():
+            device = torch.device("cuda", int(os.environ["LOCAL_RANK"]))
+            torch.cuda.set_device(device)
+        else:
+            device = torch.device("cpu")
     else:
         rank = 0
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    fsdp = distributed and args.shard == "fsdp"
+    ddp = distributed and not fsdp
     main_proc = rank == 0
 
     out = Path(args.out)
     out.mkdir(parents=True, exist_ok=True)
     manifest = json.loads((Path(args.data) / "manifest.json").read_text())
     cfg = model_config(args.size)
-    torch.manual_seed(args.seed + rank)
+    # The model is built from the SAME seed on every rank. DDP hides this by
+    # broadcasting rank 0's parameters when it wraps the model, so `seed + rank`
+    # was harmless there; FSDP does no such broadcast, and each rank would keep
+    # its shard of its OWN random init -- the assembled model becoming a splice
+    # of world_size different initialisations. Still random, so it would train
+    # and never announce itself, which is what makes it worth being explicit
+    # about. Per-rank variation belongs in the data, and lives there already:
+    # TokenStream reseeds from [seed, rank, step] on every step.
+    torch.manual_seed(args.seed)
     model = ArtemisLM(cfg).to(device)
     model.route_coef = args.route_coef
+    if fsdp:
+        # Shard each block, then the root. Per-block sharding is what lets FSDP
+        # gather one block's parameters at a time instead of the whole model,
+        # which is the difference between peak memory of one layer and peak
+        # memory of all of them.
+        from torch.distributed.fsdp import fully_shard
+        for blk in model.blocks:
+            fully_shard(blk)
+        fully_shard(model)
+    # The optimizer is built AFTER sharding on purpose. Adam keeps two moments
+    # per parameter -- 8 bytes each in fp32, more than the parameters
+    # themselves -- so an optimizer constructed over unsharded parameters keeps
+    # the full optimizer state on every rank and throws away most of the saving.
     opt = torch.optim.AdamW(model.parameters(), lr=args.lr, betas=(0.9, 0.95), weight_decay=0.1, fused=device.type == "cuda")
 
     # Autocast was hardcoded to bfloat16 on CUDA, which silently restricted
@@ -136,9 +177,21 @@ def main(argv=None) -> dict:
         ck = checkpoint.read(latest, map_location=device)
         if ck["config"] != cfg.to_dict():
             raise SystemExit(f"{latest} was trained with a different model config; use a new --out or the same --size")
-        checkpoint.load_state(model, ck["model"], str(latest))
-        if ck.get("optim"):
-            opt.load_state_dict(ck["optim"])
+        if fsdp:
+            # A checkpoint holds ONE full model. Each rank holds a shard. These
+            # helpers scatter the full tensors back across ranks; a plain
+            # load_state_dict here would either fail on DTensor or load the
+            # whole model onto every rank and defeat the sharding.
+            from torch.distributed.checkpoint.state_dict import (
+                set_model_state_dict, set_optimizer_state_dict, StateDictOptions)
+            o = StateDictOptions(full_state_dict=True, broadcast_from_rank0=True)
+            set_model_state_dict(model, ck["model"], options=o)
+            if ck.get("optim"):
+                set_optimizer_state_dict(model, opt, ck["optim"], options=o)
+        else:
+            checkpoint.load_state(model, ck["model"], str(latest))
+            if ck.get("optim"):
+                opt.load_state_dict(ck["optim"])
         step = ck["step"]
         if ck.get("rng"):
             torch.set_rng_state(ck["rng"]["torch"].cpu())
@@ -158,6 +211,9 @@ def main(argv=None) -> dict:
     if ddp:
         # an expert that no token on this GPU picked has no gradient this step; DDP must allow for that
         model = torch.nn.parallel.DistributedDataParallel(model, device_ids=[device.index], find_unused_parameters=bool(cfg.moe_layers))
+    # FSDP needs no wrapper: fully_shard modifies the module in place, so
+    # `model` and `raw` are the same object and every existing use of `raw`
+    # (last_stats, grad_norms, checkpointing) keeps working unchanged.
 
     train = TokenStream(Path(args.data) / "train.bin", manifest["dtype"], cfg.max_seq_len, seed=args.seed + rank + step)
     val = TokenStream(Path(args.data) / "val.bin", manifest["dtype"], cfg.max_seq_len, seed=0)
@@ -170,7 +226,28 @@ def main(argv=None) -> dict:
                                                                 "loss_scaling": scaler.is_enabled(),
                                                                 "device": torch.cuda.get_device_name(device) if use_amp else "cpu"}},
                                                  indent=2))
-    tokens_per_step = args.batch * args.accum * cfg.max_seq_len * (dist.get_world_size() if ddp else 1)
+    tokens_per_step = args.batch * args.accum * cfg.max_seq_len * (dist.get_world_size() if distributed else 1)
+
+    def full_state():
+        """The whole model as ordinary tensors, on rank 0 -- or None under DDP.
+
+        COLLECTIVE under FSDP: every rank must call it, because gathering a
+        sharded parameter needs every shard. Calling it inside `if main_proc`
+        hangs the other ranks at the next barrier, which is why the save below
+        gathers first and writes second.
+        """
+        if not fsdp:
+            return None
+        from torch.distributed.checkpoint.state_dict import get_model_state_dict, StateDictOptions
+        return get_model_state_dict(model, options=StateDictOptions(
+            full_state_dict=True, cpu_offload=True))
+
+    def full_optim():
+        if not fsdp:
+            return None
+        from torch.distributed.checkpoint.state_dict import get_optimizer_state_dict, StateDictOptions
+        return get_optimizer_state_dict(model, opt, options=StateDictOptions(
+            full_state_dict=True, cpu_offload=True))
     t0 = time.time()
     end = min(args.stop_at, args.steps) if args.stop_at else args.steps
     while step < end:
@@ -180,8 +257,17 @@ def main(argv=None) -> dict:
         train.rng = np.random.default_rng([args.seed, rank, step])  # batches depend only on the step, so resume is exact
         for micro in range(args.accum):
             x, y, d = train.batch(args.batch, with_domains=True)
-            sync = not ddp or micro == args.accum - 1
-            ctx = model.no_sync() if ddp and not sync else torch.enable_grad()
+            sync = not distributed or micro == args.accum - 1
+            # Skipping the all-reduce on every micro-step but the last is what
+            # makes accumulation cheap. DDP spells it no_sync(); FSDP2 spells
+            # it set_requires_gradient_sync(). Calling no_sync() on an FSDP2
+            # module raises, and simply omitting it would reduce gradients
+            # accum times per step instead of once.
+            if fsdp:
+                model.set_requires_gradient_sync(sync)
+                ctx = torch.enable_grad()
+            else:
+                ctx = model.no_sync() if ddp and not sync else torch.enable_grad()
             # backward stays inside ctx so DDP's no_sync still covers it, but
             # outside autocast: gradients are produced in fp32 regardless, and
             # scaling them is the scaler's job, not autocast's.
@@ -205,13 +291,18 @@ def main(argv=None) -> dict:
         # would be meaningless.
         if scaler.is_enabled():
             scaler.unscale_(opt)
-        norms = grad_norms(raw) if main_proc and cfg.moe_layers and (record_eval or step == 1) else None
+        # EVERY rank computes these, not just rank 0: under FSDP both read
+        # sharded tensors and so are collective. Only rank 0 records them.
+        norms = grad_norms(raw) if cfg.moe_layers and (record_eval or step == 1) else None
         grad_norm = torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0).item()
         # scaler.step skips the update when this step's gradients overflowed
         # and lowers the scale; with the scaler disabled it is just opt.step().
         scaler.step(opt)
         scaler.update()
         opt.zero_grad(set_to_none=True)
+        # Collective, so outside the main_proc guard for the same reason.
+        val_loss = (validation_loss(raw, val, args.batch, args.eval_batches, device)
+                    if record_eval else None)
         if main_proc:
             rec = {"step": step, "loss": round(total, 4), **{k: round(v, 4) for k, v in parts.items()},
                    "lr": opt.param_groups[0]["lr"], "grad_norm": round(grad_norm, 3),
@@ -222,13 +313,17 @@ def main(argv=None) -> dict:
             if norms is not None:
                 rec["router_expert_grad_norms"] = norms
             if record_eval:
-                rec["val_loss"] = round(validation_loss(raw, val, args.batch, args.eval_batches, device), 4)
+                rec["val_loss"] = round(val_loss, 4)
                 print(json.dumps({k: v for k, v in rec.items() if k not in ("expert_load", "router_expert_grad_norms")}), flush=True)
             log.write(json.dumps(rec) + "\n")
             log.flush()
-            if step % args.ckpt_every == 0 or step == end:
+        if step % args.ckpt_every == 0 or step == end:
+            # Outside the main_proc guard: the gather is collective.
+            state, optim_state = full_state(), full_optim()
+            if main_proc:
                 checkpoint.save(latest, raw, opt, step, vars(args),
-                                extra={"scaler": scaler.state_dict()} if scaler.is_enabled() else None)
+                                extra={"scaler": scaler.state_dict()} if scaler.is_enabled() else None,
+                                state=state, optim=optim_state)
     result = {}
     if main_proc:
         result = json.loads(open(out / "metrics.jsonl").read().strip().splitlines()[-1])

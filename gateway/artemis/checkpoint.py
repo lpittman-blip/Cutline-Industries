@@ -31,13 +31,25 @@ class CheckpointError(RuntimeError):
     pass
 
 
-def save(path: str | Path, model: ArtemisLM, opt=None, step: int = 0, args: dict | None = None, extra: dict | None = None):
+def save(path: str | Path, model: ArtemisLM, opt=None, step: int = 0, args: dict | None = None, extra: dict | None = None,
+         state: dict | None = None, optim: dict | None = None):
+    """Write a checkpoint. `state`/`optim` override what is read off the model.
+
+    A sharded (FSDP) run must pass them. Each rank holds only a slice of every
+    parameter, so `model.state_dict()` there returns DTensors describing one
+    shard; saving that produces a file no ordinary ArtemisLM can load and one
+    that silently depends on being reloaded at the same world size. The caller
+    gathers the full tensors first and hands them in, so the file on disk is
+    identical in shape to a single-GPU checkpoint however many GPUs wrote it.
+    """
     path = Path(path)
     tmp = path.with_suffix(".tmp")
-    torch.save({"format_version": FORMAT_VERSION, "arch": ARCH, "config": model.cfg.to_dict(), "model": model.state_dict(),
-                "optim": opt.state_dict() if opt is not None else None, "step": step, "args": args or {},
+    state = model.state_dict() if state is None else state
+    optim = (opt.state_dict() if opt is not None else None) if optim is None else optim
+    torch.save({"format_version": FORMAT_VERSION, "arch": ARCH, "config": model.cfg.to_dict(), "model": state,
+                "optim": optim, "step": step, "args": args or {},
                 "rng": {"torch": torch.get_rng_state(), "numpy": np.random.get_state(), "python": random.getstate()},
-                "params": {k: list(v.shape) for k, v in model.state_dict().items()}, **(extra or {})}, tmp)
+                "params": {k: list(v.shape) for k, v in state.items()}, **(extra or {})}, tmp)
     tmp.replace(path)  # atomic: a crash never leaves a half-written checkpoint
 
 
