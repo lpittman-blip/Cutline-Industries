@@ -21,6 +21,15 @@ deterministic); workers tokenise and write their own bins. At the end the bins
 are concatenated. Concatenation order does not matter: `TokenStream` samples
 random windows, so the corpus is a bag of documents either way.
 
+MEASURED, not estimated. 4 shards of real CommitPack Python at vocab 32000 on
+a 4-core box: 15.7s sequential, 6.7s with 4 workers, 7,222,546 tokens either
+way. That is 2.35x, not 4x, and the gap is structural: one core is spent in
+the parent parsing JSON and routing documents, and every document crosses a
+process boundary. Expect scaling to flatten further as workers grow, since the
+single parser becomes the ceiling -- roughly 4-5x on 8 cores, not 8x. If the
+parser ever becomes the bottleneck outright, the fix is to parse in the
+workers and route raw lines, at the cost of hashing each line twice.
+
 CALLERS MUST BE IMPORTABLE. The "spawn" start method re-imports the parent
 module in each worker, so driving this from a heredoc or `python -` fails with
 `FileNotFoundError: .../<stdin>`. Run it from a real file or module, and guard
