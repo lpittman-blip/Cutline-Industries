@@ -32,6 +32,7 @@ ledger size for no practical gain. Stated so the tradeoff is on the record.
 from __future__ import annotations
 
 import hashlib
+import os
 import json
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -100,6 +101,17 @@ class ShardWriter:
         self.counts[split] += len(ids)
         if label != UNLABELED:
             self.domain_tokens[EXPERT_NAMES[label]][split] += len(ids)
+
+    def flush(self) -> None:
+        """Push buffered bytes to the OS so a recorded count is real.
+
+        A commit point that leaves tokens in a Python buffer is worse than no
+        commit point: the state file would claim bytes the file does not yet
+        have, and the length check on resume would refuse to continue.
+        """
+        for f in self._f.values():
+            f.flush()
+            os.fsync(f.fileno())
 
     def close(self) -> None:
         for f in self._f.values():
