@@ -5,6 +5,24 @@
   const RM = matchMedia('(prefers-reduced-motion: reduce)').matches;
   const DPR = Math.min(window.devicePixelRatio || 1, 2);
 
+  /* ---------- reveals ----------
+     Armed first, so an error further down can't leave sections hidden. Content is only hidden once
+     html.rv-on is set; reduced motion, no IntersectionObserver, or an observer that never reports all show everything. */
+  (() => {
+    const rvs = document.querySelectorAll('.rv');
+    const showAll = () => rvs.forEach(el => el.classList.add('in'));
+    if (RM || !('IntersectionObserver' in window)) return showAll();
+    let heard = false;
+    const io = new IntersectionObserver(es => { heard = true; es.forEach(en => {
+      // reveal on entry, and anything already scrolled past (anchor jumps)
+      if (en.isIntersecting || en.boundingClientRect.bottom < 0) { en.target.classList.add('in'); io.unobserve(en.target); }
+    }); }, { threshold: 0, rootMargin: '0px 0px -8% 0px' });
+    root.classList.add('rv-on');
+    rvs.forEach(el => io.observe(el));
+    setTimeout(() => { if (!heard) showAll(); }, 1500);
+    addEventListener('beforeprint', showAll);
+  })();
+
   /* ---------- hero particle field ---------- */
   const cv = document.getElementById('hero-canvas');
   const ctx = cv.getContext('2d');
@@ -176,10 +194,6 @@
     html += `<div class="tool${(i === 0 || i === 6) ? ' accent' : ''}" style="--i:${n++}"><svg viewBox="0 0 24 24">${d}</svg><span>${name}</span></div>`;
   });
   track.innerHTML = html;
-
-  /* ---------- reveals ---------- */
-  const io = new IntersectionObserver(es => es.forEach(en => { if (en.isIntersecting) { en.target.classList.add('in'); io.unobserve(en.target); } }), { threshold: .15, rootMargin: '0px 0px -40px 0px' });
-  document.querySelectorAll('.rv').forEach(el => io.observe(el));
 
   /* chat bubbles appear in sequence */
   const chatIO = new IntersectionObserver(es => es.forEach(en => {
