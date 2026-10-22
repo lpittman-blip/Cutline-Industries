@@ -231,8 +231,9 @@ footer nav{display:flex;gap:24px;margin-left:auto}
 footer nav a:hover{color:var(--ink)}
 
 /* reveal */
-.rv{opacity:0;transform:translateY(28px);transition:opacity 1s var(--ease),transform 1s var(--ease)}
-.rv.in{opacity:1;transform:none}
+/* hidden only after liftoff.js arms reveals (html.rv-on); without JS, or if it fails, sections stay visible */
+.rv-on .rv{opacity:0;transform:translateY(28px);transition:opacity 1s var(--ease),transform 1s var(--ease)}
+.rv-on .rv.in{opacity:1;transform:none}
 
 @media (max-width:960px){
   .links,.nav .right .signin{display:none}
