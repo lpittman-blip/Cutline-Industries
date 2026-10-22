@@ -1,5 +1,6 @@
-// Same-origin authenticated chat. Browser storage contains drafts, not conversation logs or credentials.
+// Authenticated chat against the Artemis gateway (credentialed CORS). Browser storage contains drafts, not conversation logs or credentials.
 (() => {
+  const API_ORIGIN = 'https://api.artemisai-bycutlineindustries.studio';
   const { node, button, renderText, renderTools, codeBlock } = ArtemisUI;
   const root = document.getElementById('view-chat'), box = document.getElementById('msgs');
   const composer = root.querySelector('.composer'), form = document.getElementById('composer'), input = document.getElementById('prompt');
@@ -57,7 +58,7 @@
   if (oldWaitlist) waitlist.append(oldWaitlist); if (waitlistResult) waitlist.append(waitlistResult);
 
   async function api(path, options = {}) {
-    const response = await fetch(path, { method: options.method || 'GET', credentials: 'same-origin', signal: options.signal || AbortSignal.timeout(15000),
+    const response = await fetch(API_ORIGIN + path, { method: options.method || 'GET', credentials: 'include', signal: options.signal || AbortSignal.timeout(15000),
       headers: { ...(options.body !== undefined ? { 'Content-Type': 'application/json' } : {}), ...(user && options.method ? { 'X-CSRF-Token': user.csrf } : {}) },
       body: options.body === undefined ? undefined : JSON.stringify(options.body) });
     const body = await response.json().catch(() => ({}));
@@ -236,7 +237,7 @@
     try {
       while (!terminal && !ctrl.signal.aborted && retries < 8) {
         try {
-          const response = await fetch('/api/requests/' + rid + '/events?after=' + cursor, { credentials: 'same-origin', headers: { Accept: 'text/event-stream' }, signal: AbortSignal.any([ctrl.signal, AbortSignal.timeout(35000)]) });
+          const response = await fetch(API_ORIGIN + '/api/requests/' + rid + '/events?after=' + cursor, { credentials: 'include', headers: { Accept: 'text/event-stream' }, signal: AbortSignal.any([ctrl.signal, AbortSignal.timeout(35000)]) });
           if (!response.ok) { const result = await response.json(); const error = new Error(result.error || 'Unable to reconnect.'); error.code = response.status; throw error; }
           await ArtemisStream.readEvents(response.body, onEvent);
           retries = 0;
@@ -264,7 +265,7 @@
   input.addEventListener('keydown', event => { if (event.key === 'Enter' && !event.shiftKey && !event.isComposing) { event.preventDefault(); form.requestSubmit(); } });
   send.addEventListener('click', () => { if (flight) stop(); });
 
-  // Account credentials are sent only to same-origin login endpoints and cleared from the form.
+  // Account credentials are sent only to the Artemis gateway's login endpoints and cleared from the form.
   const accountPage = document.getElementById('account-page-content'), accountNav = document.getElementById('accountNav'), authForm = node('form', 'auth-card'), authTitle = node('h2', '', 'Sign in to Artemis'); authTitle.id = 'auth-title';
   authForm.setAttribute('aria-labelledby', authTitle.id); let signup = false;
   const email = node('input'), password = node('input'), authError = node('p', 'message-error'); authError.setAttribute('role', 'alert');

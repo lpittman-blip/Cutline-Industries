@@ -191,7 +191,7 @@
     var ctrl = "AbortController" in window ? new AbortController() : null;
     var t = ctrl ? setTimeout(function () { ctrl.abort(); }, 6000) : 0;
     var t0 = performance.now();
-    return fetch(path, { cache: "no-store", signal: ctrl ? ctrl.signal : undefined })
+    return fetch(path, { cache: "no-store", credentials: "include", signal: ctrl ? ctrl.signal : undefined })
       .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
       .then(function (j) { clearTimeout(t); return { json: j, ms: performance.now() - t0 }; })
       .catch(function (e) { clearTimeout(t); throw e; });
@@ -340,7 +340,7 @@
   window.addEventListener("resize", drawSpark);
 
   function pollHealth() {
-    return getJSON("/gateway/health").then(function (r) {
+    return getJSON("https://api.artemisai-bycutlineindustries.studio/api/health").then(function (r) {
       gw.health = r.json;
       gw.samples.push(Math.round(r.ms));
       if (read) read.textContent = "/api/health " + (r.json.ok ? "ok" : "not ok") + " \u00b7 " + Math.round(r.ms) + " ms round trip";
@@ -354,7 +354,7 @@
     });
   }
   function pollStatus() {
-    return getJSON("/gateway/status").then(function (r) { gw.status = r.json; })
+    return getJSON("https://api.artemisai-bycutlineindustries.studio/api/status").then(function (r) { gw.status = r.json; })
       .catch(function () { gw.status = null; })
       .then(function () { paintMeta(); paintCoreStatus(); });
   }

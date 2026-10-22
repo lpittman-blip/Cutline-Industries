@@ -11,7 +11,7 @@
 
 // Waitlist: save sign-ups through the Artemis API. If the API is unreachable, the page's built-in message is shown instead.
 (() => {
-  const API = "";
+  const API = "https://api.artemisai-bycutlineindustries.studio";
   const form = document.getElementById("waitlist"), email = document.getElementById("wl-email"), done = document.getElementById("wlDone");
   if (!form || !email || !done) return;
   const fallback = done.textContent;

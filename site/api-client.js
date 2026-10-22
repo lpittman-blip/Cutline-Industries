@@ -1,9 +1,10 @@
-// Same-origin JSON transport. Never treat an HTML fallback page as an API success.
+// JSON transport to the Artemis gateway (credentialed CORS). Never treat an HTML fallback page as an API success.
 (function (root) {
+  const API_ORIGIN = 'https://api.artemisai-bycutlineindustries.studio';
   async function request(path, options = {}, user = null) {
     if (!path.startsWith('/') || path.startsWith('//')) throw new Error('Invalid application endpoint.');
-    const response = await fetch(path, {
-      method: options.method || 'GET', credentials: 'same-origin',
+    const response = await fetch(API_ORIGIN + path, {
+      method: options.method || 'GET', credentials: 'include',
       signal: options.signal || AbortSignal.timeout(15000),
       headers: { Accept: 'application/json', ...(options.body !== undefined ? { 'Content-Type': 'application/json' } : {}),
         ...(user && options.method ? { 'X-CSRF-Token': user.csrf } : {}) },
