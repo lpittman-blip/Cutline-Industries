@@ -123,43 +123,27 @@ Two consequences worth knowing before you plan the cutover:
 | security group | `vpcsecuritygroup-e00vajgc6qvb1kfmk6` (egress all, ingress tcp/22) |
 | image | `ubuntu24.04-cuda13.0` |
 
-**Resolved 2026-10-11 — this section previously said writes were blocked.**
-`serviceaccount-e04nwdxcrjmat9y8q0` is a member of `admins`
-(`group-e00mqgga9j7vgnwcw7`) and writes were confirmed working. Permissions no
-longer block anything.
+There is no GPU available to this project today. Every modern GPU family on
+the Azure subscription sits at limit 0 while the SKUs themselves are offered
+and unrestricted, so the blocker is one quota number, not hardware. A free
+support ticket is open for it. `docs/AZURE-GPU-QUOTA-REQUEST.md` has the
+request; `docs/TRAIN-ON-YOUR-OWN-GPU.md` is the zero-cost alternative on
+hardware you already own.
 
-You do not use that account. Codex has its own narrower identity,
-`serviceaccount-e00vtzxm35ebf0zmm2` (`artemis-codex`), holding `editor` rather
-than `admin`. Setup, verification results and the remaining owner steps are in
-`docs/codex-nebius-handoff.md` — read it before touching the GPU box.
+Confirm with the owner before starting any paid GPU, every time, whatever the
+provider.
 
-This instance costs roughly **$98/hour** while running. The owner's standing
-rule is that it is never started without their explicit confirmation. Ask, every
-time, even after permission is restored.
-
-Nebius only offers 1-GPU and 8-GPU presets. There is no 4-GPU option.
-
-## 6. Watching a run without SSH
+## Watching a run without SSH
 
 Outbound port 22 is blocked from Claude and Codex cloud containers to **every**
-host. This is not a security-group problem on the Nebius side; the serial console
-log proved egress from the instance always worked. Two channels over HTTPS are
-proven:
+host. That is a property of the containers, not of any provider, so it applies
+to whatever GPU is used next. Plan for a readback channel over HTTPS from the
+start: object storage the box writes to, the provider's own log query, or a
+platform serial console. On Azure, `az vm run-command invoke` reaches a VM with
+no SSH at all and is how the gateway is deployed today.
 
-```bash
-# serial console — cloud-init, systemd, the lot
-nebius logging query '{syslog_facility=~".+"} |= "bootstrap"' \
-  --project-id project-e00yn51ypr007sqnbn1x9t --since 1h
-
-# status + checkpoints, synced every 120s by artemis-sync.service
-aws --endpoint-url https://storage.eu-north1.nebius.cloud \
-  s3 cp s3://artemis-train-logs/status.txt -
-```
-
-The serial log is what finally diagnosed four silent boot failures. Reach for it
-before guessing. If you need an interactive shell on the GPU box, the access to
-ask the owner for is **a Nebius-side exec/console path or a bastion on 443** —
-not a private key, which must never be pasted into a conversation.
+Whatever the channel, read the boot log before guessing. Silent boot failures
+are the single largest time sink on a fresh GPU box.
 
 ## 7. The cutover, concretely
 
@@ -240,7 +224,9 @@ The traps, all of which already cost a day:
    instance will not re-trigger setup. Use a systemd unit with
    `Restart=on-failure` that `git pull`s first — then a pushed fix is picked up
    by the retry instead of needing the instance rebuilt.
-5. **There is no 4-GPU preset.** Nebius offers 1 or 8, nothing between.
+5. **Check the preset ladder before planning.** Providers jump from 1 GPU
+   to 8 with nothing between far more often than not; a '4-GPU plan' is
+   frequently unbuyable.
 
 ## 10. Corpus — measured, not estimated
 
