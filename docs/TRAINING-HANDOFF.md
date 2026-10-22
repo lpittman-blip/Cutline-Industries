@@ -37,13 +37,9 @@ solves a problem produces no training data and improves by exactly zero.
 
 **Resolved 2026-10-11.** This previously read as a blocker: service account
 `serviceaccount-e04nwdxcrjmat9y8q0` had lost write permission, every write
-returning `PermissionDenied`. It is a member of `admins`
-(`group-e00mqgga9j7vgnwcw7`) again, carrying `admin` plus the storage roles, and
-writes were confirmed working. Nothing is blocked on permissions.
-
-Codex operates this VM through a separate, narrower identity —
-`serviceaccount-e00vtzxm35ebf0zmm2` (`artemis-codex`), `editor` only. See
-`docs/codex-nebius-handoff.md`.
+There is no GPU attached to this project. See
+`docs/AZURE-GPU-QUOTA-REQUEST.md` for the pending request and
+`docs/TRAIN-ON-YOUR-OWN-GPU.md` for the free path on your own hardware.
 
 ## Five things that will waste your time if you do not know them
 
@@ -58,25 +54,21 @@ Codex operates this VM through a separate, narrower identity —
    instance will not re-trigger setup. Use a systemd unit with
    `Restart=on-failure` that `git pull`s first — then a pushed fix is picked up
    by the retry instead of needing the instance rebuilt.
-5. **There is no 4-GPU preset.** Nebius offers 1 or 8, nothing between.
+5. **Check the preset ladder before planning.** Providers jump from 1 GPU
+   to 8 with nothing between far more often than not; a '4-GPU plan' is
+   frequently unbuyable.
 
 ## Watching a run without SSH
 
-Outbound port 22 is blocked from Claude/Codex cloud containers, to every host.
-Two channels work over HTTPS and both are proven:
+Outbound port 22 is blocked from Claude and Codex cloud containers to **every**
+host. That is a property of the containers, not of any provider, so it applies
+to whatever GPU is used next. Plan for a readback channel over HTTPS from the
+start: object storage the box writes to, the provider's own log query, or a
+platform serial console. On Azure, `az vm run-command invoke` reaches a VM with
+no SSH at all and is how the gateway is deployed today.
 
-```
-# serial console, including cloud-init and systemd
-nebius logging query '{syslog_facility=~".+"} |= "bootstrap"' \
-  --project-id project-e00yn51ypr007sqnbn1x9t --since 1h
-
-# status + checkpoints, synced every 120s by artemis-sync.service
-aws --endpoint-url https://storage.eu-north1.nebius.cloud \
-  s3 cp s3://artemis-train-logs/status.txt -
-```
-
-The serial log is what finally diagnosed four silent boot failures. Reach for
-it before guessing.
+Whatever the channel, read the boot log before guessing. Silent boot failures
+are the single largest time sink on a fresh GPU box.
 
 ## Corpus — measured, not estimated
 

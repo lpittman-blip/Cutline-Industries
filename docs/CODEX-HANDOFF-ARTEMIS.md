@@ -34,12 +34,10 @@ the commands above supersede them.
    version of `setup-vps-gateway.sh` (that bug is fixed in commit `7178df3`).
 4. **A Gemini API key** (`AQ.Ab8RN6...` prefix) — revoke in Google AI Studio.
 5. **Three SSH private keys** (one ed25519, two RSA) for the VMs.
-6. **The Nebius S3 static key `accesskey-e00zdh5pd3q0dcjxy4`
-   (`artemis-train-sync`)** — sits in plaintext inside the `artemis-8gpu`
-   instance's cloud-init, and `nebius iam v2 access-key list` returns its
-   secret to anyone who can read the project. Already `INACTIVE`, so the
-   exposure is spent rather than live, but it must not be re-created the same
-   way; see blocker 3.
+6. **A third-party object-storage static key, already `INACTIVE`.** The
+   exposure is spent rather than live. It is recorded here only so it is not
+   re-created the same way: a storage secret must never be written into
+   cloud-init, which is readable by anyone with project read access.
 
 ## Current state, verified
 
@@ -240,44 +238,13 @@ evidence them.
    card. The only modern GPU that fits under a 10-vCPU cap is
    `Standard_NC4as_T4_v3`.
 
-2. **Nebius: abandoned by decision, 2026-10-19.** It was the closest thing to
-   working — an 8xH100 SXM instance `computeinstance-e00hf3ff9c9d3g63z1`
-   (`artemis-8gpu`, project `project-e00yn51ypr007sqnbn1x9t`, eu-north1) was
-   already built and bootstrapped to run stage 1 from `origin/main` on boot,
-   with capacity confirmed on-demand 1/1 AVAILABILITY_HIGH. The tenant is
-   nonetheless barred from creating or starting billable compute:
+2. **Judge any provider partly on readback.** The ability to read a boot log
+   and journald over plain HTTPS, with no SSH, is worth more than it sounds:
+   its absence once cost six days to a misdiagnosed "sshd problem" that was
+   really a powered-off VM plus a container with no outbound SSH at all. On
+   Azure that capability is `az vm run-command invoke`, which works against a
+   VM with no SSH and is how the gateway is deployed today.
 
-   - `instance start` and a fresh `instance create` in a *different* region and
-     project both return `PermissionDenied`, so it is not instance- or
-     region-specific.
-   - It is not RBAC. The service account has been in the tenant `admins` group
-     since 2026-10-11, and that group holds `admin`, `editor` and
-     `compute.instance-power-operator` on the tenant itself. Reads work, IAM
-     writes work, and `instance stop` on the same instance in the same region
-     succeeded and bumped `resource_version`.
-   - Only operations that *begin* billing are refused, on a tenant whose log
-     bucket also reads `suspension_state: SUSPENDED`. That is a billing hold.
-
-   Do not spend time on roles, regions or quota here. The decision is to use
-   Vast.ai instead; this entry exists so nobody re-derives the diagnosis.
-
-   **One loose end that can cost money.** That instance still exists, stopped,
-   with a 2000 GiB NETWORK_SSD boot disk attached. Storage normally bills while
-   an instance exists, stopped or not. Nothing appears to be accruing while the
-   hold is in force, but if the hold is ever cleared the disk starts billing
-   immediately — and nobody will be watching, because this path is abandoned.
-   Delete it in the console, or:
-   `nebius compute instance delete --id computeinstance-e00hf3ff9c9d3g63z1`
-   (the MCP server in use refuses commands containing "delete", so this one is
-   a human or a direct CLI call). The same applies to the `artemis-train-logs`
-   bucket and the two `artemis-train-*` projects.
-
-3. **What Nebius did prove, and Vast now provides.** `nebius compute instance
-   logs` returned serial console and journald over plain HTTPS — the readback
-   this container never had on Azure, and the absence of which cost six days to
-   a misdiagnosed "sshd problem" that was really a powered-off VM plus a
-   container with no outbound SSH at all. Any future provider should be judged
-   partly on whether it offers that. On Vast the equivalent is the instance's
    own log endpoint plus the journal written by the onstart script, which is why
    `vast-rent.sh` sends everything through `tee` to a log file.
 
@@ -335,8 +302,10 @@ left to a default the wrapper could not see.
 
 ## Next executable work, in order
 
-1. **Get a GPU. Vast.ai is the chosen route; Nebius is abandoned by decision,
-   Azure by exhaustion.** Two human steps, about five minutes, and neither can
+1. **Get a GPU on Azure.** Every modern GPU family sits at limit 0 while the
+   SKUs are offered and unrestricted, so one quota number is the blocker. A
+   free support ticket is open. See `docs/AZURE-GPU-QUOTA-REQUEST.md`, and
+   `docs/TRAIN-ON-YOUR-OWN-GPU.md` for the zero-cost path on owned hardware. Two human steps, about five minutes, and neither can
    be done from a container because both need a payment instrument and a
    verified email:
 
