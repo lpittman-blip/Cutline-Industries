@@ -1,5 +1,5 @@
 {
-  "id": "REPLACE_WITH_KAGGLE_USERNAME/artemis-100m",
+  "id": "lamontpittman1/artemis-100m",
   "title": "artemis-100m",
   "code_file": "artemis-100m.py",
   "language": "python",
@@ -9,5 +9,6 @@
   "enable_internet": true,
   "dataset_sources": [],
   "competition_sources": [],
-  "kernel_sources": []
+  "kernel_sources": [],
+  "machine_shape": "NvidiaTeslaT4"
 }
