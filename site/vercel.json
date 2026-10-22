@@ -29,11 +29,11 @@
   "rewrites": [
     {
       "source": "/api/:path*",
-      "destination": "https://api.cutline-industries.studio/api/:path*"
+      "destination": "https://api.artemisai-bycutlineindustries.studio/api/:path*"
     },
     {
       "source": "/v1/:path*",
-      "destination": "https://api.cutline-industries.studio/v1/:path*"
+      "destination": "https://api.artemisai-bycutlineindustries.studio/v1/:path*"
     },
     {
       "source": "/gateway/status",
