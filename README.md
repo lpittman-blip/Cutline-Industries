@@ -110,9 +110,6 @@ pipeline/                # Artemis ingest service (systemd unit, watcher, upload
 api/                     # Serverless API entrypoint
 infra/                   # AWS skeleton configs
 docs/                    # Architecture, training, inference and business documentation
-
-# Thermal (the second product in this monorepo — see below)
-src/  server/  scripts/  db/  apps/  public/  synthlang/  tools/
 ```
 
 `inbox/`, `shorts_out/` and `uploaded/` are runtime I/O, tracked only as placeholders.
@@ -283,7 +280,9 @@ None require Postgres.
 
 ## Thermal
 
-The second product in this monorepo: turn live-stream heat into monetized Shorts.
+Also in this monorepo: turn live-stream heat into monetized Shorts. It lives in
+`src/`, `server/`, `scripts/`, `db/`, `apps/`, `public/`, `synthlang/` and
+`tools/`, and shares nothing with the Artemis engine above.
 
 ```bash
 npm install && cp .env.example .env
