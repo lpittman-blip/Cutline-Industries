@@ -23,7 +23,7 @@ import sys
 import time
 from pathlib import Path
 
-REPO = "https://github.com/lpittman-g/Cutline-Industries.git"
+REPO = "https://github.com/lpittman-blip/Cutline-Industries.git"
 WORK = Path("/kaggle/working/artemis")
 SRC = Path("/kaggle/working/source")
 SHARDS = int(os.environ.get("ARTEMIS_SHARDS", "31"))     # ~2.2B tokens
@@ -89,7 +89,9 @@ def main():
     # Steps follow the token budget, not the clock. The session may not reach
     # the end; --stop-at lets it stop cleanly where it is, and the next session
     # picks up from the same step count.
-    batch, accum, seq = 6, 4, 2048
+    # 6 sequences per GPU ran a 15 GB T4 out of memory on the first step
+    # (Oct 22 run). 2 x 12 keeps the same 98,304 tokens per step in smaller pieces.
+    batch, accum, seq = 2, 12, 2048
     ngpu = int(subprocess.run(["nvidia-smi", "--list-gpus"], capture_output=True,
                               text=True).stdout.count("GPU "))
     per_step = batch * accum * seq * max(ngpu, 1)
@@ -100,7 +102,10 @@ def main():
             "--steps", str(steps), "--batch", str(batch), "--accum", str(accum),
             "--lr", "3e-4", "--warmup", str(max(1, steps // 50)), "--seed", "1337",
             "--route-coef", "0", "--eval-every", "500", "--eval-batches", "20",
-            "--ckpt-every", "250"]            # frequent: a lost session costs 250 steps
+            "--ckpt-every", "250",
+            # T4s have no native bf16; torch still reports it as supported and
+            # "auto" picked it, so force fp16 with loss scaling.
+            "--amp-dtype", "fp16"]            # frequent: a lost session costs 250 steps
 
     remaining = BUDGET_S - (time.time() - t0)
     print(f"=== training, {remaining/3600:.1f} h of session budget left ===", flush=True)
