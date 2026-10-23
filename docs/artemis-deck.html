@@ -1,0 +1,358 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Artemis — Cutline Industries</title>
+<style>
+  :root{
+    --ink:#0f1620; --ink-2:#1b2635; --paper:#ffffff; --wash:#f4f6f8;
+    --rule:#d8dee6; --muted:#5d6b7d; --accent:#c8532b; --accent-soft:#fdf1ec;
+    --ok:#1f6f4a;
+    --h1:68px; --h2:44px; --h3:26px; --body:21px; --small:16px; --tiny:13.5px;
+  }
+  *{box-sizing:border-box; margin:0; padding:0}
+  html,body{background:var(--wash)}
+  body{font-family:"IBM Plex Sans",-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif; color:var(--ink);
+       -webkit-font-smoothing:antialiased}
+  .slide{
+    position:relative; width:1920px; height:1080px; background:var(--paper);
+    padding:104px 128px 92px; display:flex; flex-direction:column; overflow:hidden;
+    margin:0 auto 32px; page-break-after:always; break-after:page;
+  }
+  .slide:last-child{page-break-after:auto; break-after:auto; margin-bottom:0}
+  .eyebrow{font-family:"IBM Plex Mono",monospace; font-size:var(--tiny); font-weight:600;
+           letter-spacing:.18em; text-transform:uppercase; color:var(--accent)}
+  h1{font-size:var(--h1); font-weight:700; letter-spacing:-.025em; line-height:1.04; text-wrap:balance}
+  h2{font-size:var(--h2); font-weight:600; letter-spacing:-.02em; line-height:1.1; text-wrap:balance}
+  h3{font-size:var(--h3); font-weight:600; letter-spacing:-.01em; line-height:1.25}
+  p{font-size:var(--body); line-height:1.5; color:var(--ink-2); max-width:34em}
+  .lede{font-size:28px; line-height:1.42; color:var(--ink-2); max-width:30em}
+  .muted{color:var(--muted)}
+  .mono{font-family:"IBM Plex Mono",monospace}
+  .slide-head{display:flex; flex-direction:column; gap:18px; margin-bottom:52px; flex:none}
+  .fill{flex:1 1 auto; min-height:0; display:flex; flex-direction:column; justify-content:center}
+  .foot{position:absolute; left:128px; right:128px; bottom:44px; display:flex;
+        justify-content:space-between; align-items:baseline;
+        font-family:"IBM Plex Mono",monospace; font-size:var(--tiny); color:var(--muted);
+        border-top:1px solid var(--rule); padding-top:18px}
+  .cols{display:grid; gap:40px}
+  .c2{grid-template-columns:1fr 1fr}
+  .c3{grid-template-columns:repeat(3,1fr)}
+  .card{background:var(--wash); border:1px solid var(--rule); border-radius:4px; padding:34px 36px;
+        display:flex; flex-direction:column; gap:14px; min-width:0}
+  .card h3{font-size:23px}
+  .card p{font-size:18.5px; line-height:1.45; max-width:none}
+  .num{font-family:"IBM Plex Mono",monospace; font-size:56px; font-weight:600;
+       letter-spacing:-.03em; color:var(--accent); font-variant-numeric:tabular-nums; line-height:1}
+  .num-sm{font-family:"IBM Plex Mono",monospace; font-size:40px; font-weight:600;
+          letter-spacing:-.02em; font-variant-numeric:tabular-nums; line-height:1}
+  table{border-collapse:collapse; width:100%; font-variant-numeric:tabular-nums}
+  th,td{text-align:left; padding:17px 22px; border-bottom:1px solid var(--rule); font-size:19.5px}
+  th{font-family:"IBM Plex Mono",monospace; font-size:var(--tiny); font-weight:600;
+     letter-spacing:.14em; text-transform:uppercase; color:var(--muted)}
+  td.n{font-family:"IBM Plex Mono",monospace; font-weight:500}
+  ul{list-style:none; display:flex; flex-direction:column; gap:19px}
+  li{font-size:21px; line-height:1.45; color:var(--ink-2); padding-left:30px; position:relative; max-width:33em}
+  li::before{content:""; position:absolute; left:0; top:.6em; width:11px; height:2px; background:var(--accent)}
+  .pill{display:inline-flex; align-items:center; gap:9px; align-self:flex-start;
+        font-family:"IBM Plex Mono",monospace; font-size:var(--small); font-weight:500;
+        background:var(--accent-soft); color:var(--accent); border:1px solid #f0d4c8;
+        border-radius:999px; padding:9px 18px}
+  .pill.n{background:#eef4f1; color:var(--ok); border-color:#cfe3d8}
+  /* ---- architecture diagram ---- */
+  .arch{display:flex; flex-direction:column; align-items:center; gap:0}
+  .core{background:var(--ink); color:#fff; border-radius:4px; padding:26px 56px; text-align:center}
+  .core .t{font-size:26px; font-weight:600; letter-spacing:-.01em}
+  .core .s{font-family:"IBM Plex Mono",monospace; font-size:15px; color:#9fb0c4; margin-top:7px}
+  .stem{width:2px; height:34px; background:var(--rule)}
+  .bus{width:1430px; height:2px; background:var(--rule)}
+  .experts{display:flex; justify-content:space-between; width:1430px; gap:9px; margin-top:26px}
+  .ex{position:relative; flex:1 1 0; min-width:0; background:var(--paper); border:1.5px solid var(--rule);
+      border-top:3px solid var(--accent); border-radius:3px; padding:17px 7px; text-align:center}
+  .ex::before{content:""; position:absolute; top:-26px; left:50%; width:2px; height:26px;
+              background:var(--rule); transform:translateX(-50%)}
+  .ex .n{font-family:"IBM Plex Mono",monospace; font-size:12px; color:var(--muted); display:block; margin-bottom:6px}
+  .ex .l{font-size:15.5px; font-weight:600; letter-spacing:-.005em}
+  .eq{font-family:"IBM Plex Mono",monospace; font-size:21px; color:var(--ink-2);
+      background:var(--wash); border:1px solid var(--rule); border-radius:4px; padding:19px 28px; align-self:center}
+  /* ---- title slide ---- */
+  .title-slide{background:var(--ink); color:#fff}
+  .title-slide h1{font-size:92px; max-width:21em}
+  .title-slide .lede{color:#b9c6d6; max-width:27em}
+  .title-slide .eyebrow{color:#e8906c}
+  .title-slide .foot{color:#7d8da0; border-top-color:#2b3849}
+  .rule-v{width:3px; background:var(--accent); align-self:stretch; flex:none}
+  .withrule{display:flex; gap:34px; align-items:stretch}
+  .gap{height:40px; flex:none}
+  @media print{
+    @page{size:1920px 1080px; margin:0}
+    html,body{background:#fff}
+    .slide{margin:0; box-shadow:none}
+  }
+</style>
+</head>
+<body>
+
+<!-- 1 — TITLE -->
+<section class="slide title-slide">
+  <div class="slide-head"><span class="eyebrow">Cutline Industries</span></div>
+  <div class="fill">
+    <h1>AI for software delivery that never sends your code to someone else's model.</h1>
+    <div class="gap"></div>
+    <p class="lede">Artemis is a mixture-of-experts transformer we train ourselves and run entirely inside the customer's own infrastructure.</p>
+  </div>
+  <div class="foot"><span>NVIDIA Inception — program application</span><span>October 2026</span></div>
+</section>
+
+<!-- 2 — PROBLEM -->
+<section class="slide">
+  <div class="slide-head">
+    <span class="eyebrow">01 — Problem</span>
+    <h2>CI failure triage is high-volume, low-complexity toil.</h2>
+  </div>
+  <div class="fill">
+    <div class="withrule">
+      <div class="rule-v"></div>
+      <div>
+        <p>Every engineering team runs continuous integration, and a large share of what it reports is mechanical to diagnose: a dependency drifted, a flaky test re-ran, a migration ordered wrong, a cache key went stale.</p>
+        <div class="gap"></div>
+        <p>Diagnosing these is not hard. It is <strong>tedious</strong>, it interrupts whoever is on call, and it scales linearly with the number of pipelines a team runs.</p>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>Cutline Industries — Artemis</span><span class="mono">02 / 10</span></div>
+</section>
+
+<!-- 3 — WHY THE MARKET IS BLOCKED -->
+<section class="slide">
+  <div class="slide-head">
+    <span class="eyebrow">02 — Why that market is blocked</span>
+    <h2>The tools that automate it require source-code egress.</h2>
+  </div>
+  <div class="fill">
+    <p style="max-width:44em">Existing assistants send source code and build logs to a third-party model API. For a large class of buyer, that single architectural fact disqualifies the entire category:</p>
+    <div class="gap"></div>
+    <div class="cols c3">
+      <div class="card"><h3>Regulated industries</h3><p>Finance, healthcare, and critical infrastructure operate under audit regimes that treat third-party model inference as uncontrolled data processing.</p></div>
+      <div class="card"><h3>Defence &amp; public sector</h3><p>Suppliers working under export control or classification cannot route source artefacts through a commercial inference endpoint.</p></div>
+      <div class="card"><h3>Source-code escrow</h3><p>Contractual custody obligations are incompatible with transmitting code to a provider the customer has no privity with.</p></div>
+    </div>
+  </div>
+  <div class="foot"><span>Cutline Industries — Artemis</span><span class="mono">03 / 10</span></div>
+</section>
+
+<!-- 4 — PRODUCT -->
+<section class="slide">
+  <div class="slide-head">
+    <span class="eyebrow">03 — Product</span>
+    <h2>A self-hosted engine for the software delivery lifecycle.</h2>
+  </div>
+  <div class="fill">
+    <div class="cols c3">
+      <div class="card">
+        <span class="num">01</span><h3>CI failure triage</h3>
+        <p>Reads the build log, the diff, and the test output; identifies the failing stage and the probable cause.</p>
+      </div>
+      <div class="card">
+        <span class="num">02</span><h3>Deploy review</h3>
+        <p>Inspects a release against prior deploy outcomes and flags the changes that historically preceded rollbacks.</p>
+      </div>
+      <div class="card">
+        <span class="num">03</span><h3>Cost analysis</h3>
+        <p>Attributes build and infrastructure spend to the pipelines and services that generate it.</p>
+      </div>
+    </div>
+    <div class="gap"></div>
+    <p style="max-width:46em"><strong>The deployment model is the product.</strong> Artemis runs on the customer's own hardware. No source code, build log, or telemetry leaves their environment, and no external model provider is called at inference time.</p>
+  </div>
+  <div class="foot"><span>Cutline Industries — Artemis</span><span class="mono">04 / 10</span></div>
+</section>
+
+<!-- 5 — ARCHITECTURE -->
+<section class="slide">
+  <div class="slide-head">
+    <span class="eyebrow">04 — Architecture</span>
+    <h2>Prime Core, plus ten additively-routed experts.</h2>
+  </div>
+  <div class="fill">
+    <div class="arch">
+      <div class="core">
+        <div class="t">Prime Core</div>
+        <div class="s">dense decoder-only transformer</div>
+      </div>
+      <div class="stem"></div>
+      <div class="bus"></div>
+      <div class="experts">
+        <div class="ex"><span class="n">e0</span><span class="l">intent</span></div>
+        <div class="ex"><span class="n">e1</span><span class="l">architecture</span></div>
+        <div class="ex"><span class="n">e2</span><span class="l">planning</span></div>
+        <div class="ex"><span class="n">e3</span><span class="l">build</span></div>
+        <div class="ex"><span class="n">e4</span><span class="l">test</span></div>
+        <div class="ex"><span class="n">e5</span><span class="l">deploy</span></div>
+        <div class="ex"><span class="n">e6</span><span class="l">memory</span></div>
+        <div class="ex"><span class="n">e7</span><span class="l">security</span></div>
+        <div class="ex"><span class="n">e8</span><span class="l">observability</span></div>
+        <div class="ex"><span class="n">e9</span><span class="l">cost</span></div>
+      </div>
+      <div class="gap"></div>
+      <div class="eq">h&nbsp;←&nbsp;x&nbsp;+&nbsp;ffn(h)&nbsp;+&nbsp;Σ&nbsp;g<sub>e</sub>·expert<sub>e</sub>(h)</div>
+    </div>
+    <div class="gap"></div>
+    <p style="max-width:48em; align-self:center; text-align:center">Experts are <strong>additive</strong>, not a replacement for the dense feed-forward path — the core always contributes. Each expert maps to one stage of delivery, so routing is supervisable against the stage a task actually belongs to.</p>
+  </div>
+  <div class="foot"><span>Cutline Industries — Artemis</span><span class="mono">05 / 10</span></div>
+</section>
+
+<!-- 6 — VALIDATION -->
+<section class="slide">
+  <div class="slide-head">
+    <span class="eyebrow">05 — Validation</span>
+    <h2>What is built, trained, and measured today.</h2>
+  </div>
+  <div class="fill">
+    <table>
+      <thead><tr><th>Component</th><th>Status</th><th>Evidence</th></tr></thead>
+      <tbody>
+        <tr><td>Prime Core + 10 MoE experts</td><td class="n">Trained</td><td>153M-parameter checkpoint, trained to its compute-optimal (Chinchilla) token budget</td></tr>
+        <tr><td>Architecture justification</td><td class="n">Measured</td><td>Matched-compute dense baseline and a routing ablation, both run and evaluated</td></tr>
+        <tr><td>Corpus pipeline</td><td class="n">Production</td><td>Resumable, bounded-disk tokeniser with byte-offset rollback and SHA-256 dedup; 2.35× on 4 cores</td></tr>
+        <tr><td>Inference gateway</td><td class="n">Deployed</td><td>Streaming API in production; credentialed CORS and CSRF double-submit, verified live</td></tr>
+        <tr><td>Sharded training (FSDP)</td><td class="n">Written</td><td>Implemented against PyTorch <span class="mono">fully_shard</span>; validated on CPU/gloo, <strong>not yet on GPUs</strong></td></tr>
+      </tbody>
+    </table>
+    <div class="gap"></div>
+    <p class="muted" style="font-size:19px; max-width:52em">The model is deliberately small. The purpose of this checkpoint was to establish that the routed architecture earns its parameters against a matched-compute dense baseline before scaling it — not to demonstrate capability.</p>
+  </div>
+  <div class="foot"><span>Cutline Industries — Artemis</span><span class="mono">06 / 10</span></div>
+</section>
+
+<!-- 7 — THE CONSTRAINT -->
+<section class="slide">
+  <div class="slide-head">
+    <span class="eyebrow">06 — The constraint</span>
+    <h2>Every run to date has been on a free Tesla T4.</h2>
+  </div>
+  <div class="fill">
+    <div class="cols c2">
+      <div>
+        <ul>
+          <li><strong>T4 is Turing (SM 7.5).</strong> No native bfloat16 — <span class="mono">is_bf16_supported()</span> returns true, but the path is emulated, so training runs in fp16 with loss scaling.</li>
+          <li><strong>16 GB of VRAM</strong> caps us near 150M parameters. Our last attempt at a larger batch returned CUDA OOM at 14.56 GiB.</li>
+          <li><strong>Single device.</strong> The FSDP sharding path cannot be validated at all, because there is no second GPU to shard across.</li>
+        </ul>
+      </div>
+      <div class="card" style="justify-content:center">
+        <span class="eyebrow">What Ampere-or-newer unlocks</span>
+        <div class="gap" style="height:10px"></div>
+        <p><strong>bf16 tensor cores</strong> (SM ≥ 8.0) — numerically stable training without loss scaling.</p>
+        <p><strong>Multi-GPU interconnect</strong> — validates the sharded path that a 1–3B model requires.</p>
+        <p><strong>TensorRT / Triton</strong> — quantised serving, which is a direct margin driver for a self-hosted product.</p>
+      </div>
+    </div>
+    <div class="gap"></div>
+    <p style="max-width:50em">A100-class access is the difference between a 153M research artefact and a 1–3B production model. It is the single gating dependency on this project.</p>
+  </div>
+  <div class="foot"><span>Cutline Industries — Artemis</span><span class="mono">07 / 10</span></div>
+</section>
+
+<!-- 8 — MARKET -->
+<section class="slide">
+  <div class="slide-head">
+    <span class="eyebrow">07 — Market</span>
+    <h2>DevOps tooling, entered through the segment that cannot buy the incumbents.</h2>
+  </div>
+  <div class="fill">
+    <div class="cols c2">
+      <div class="card">
+        <span class="eyebrow">Wedge</span>
+        <h3>No-egress software delivery</h3>
+        <p>Teams for whom third-party model inference is disqualifying, not merely undesirable. They are underserved precisely because the constraint is architectural and cannot be retrofitted by a competitor built on a hosted API.</p>
+      </div>
+      <div class="card">
+        <span class="eyebrow">Why a small model is the right answer here</span>
+        <h3>Narrow task, structured context</h3>
+        <p>CI triage has bounded inputs — a log, a diff, a test report. Cost per triaged failure, not general capability, is the metric buyers compare. A specialised 1–3B model competes on that metric in a way a frontier model's pricing does not.</p>
+      </div>
+    </div>
+    <div class="gap"></div>
+    <p class="muted" style="font-size:19px; max-width:52em">We are pre-revenue and make no forecast here. The claim on this slide is about why the segment exists and why it is structurally hard for an API-based competitor to serve — not about captured demand.</p>
+  </div>
+  <div class="foot"><span>Cutline Industries — Artemis</span><span class="mono">08 / 10</span></div>
+</section>
+
+<!-- 9 — ASK -->
+<section class="slide">
+  <div class="slide-head">
+    <span class="eyebrow">08 — Ask</span>
+    <h2>GPU access. Not capital.</h2>
+  </div>
+  <div class="fill">
+    <div class="cols c3">
+      <div class="card">
+        <span class="num-sm" style="color:var(--accent)">A100</span>
+        <h3>Ampere-class compute</h3>
+        <p>To train the 1–3B production model to its compute-optimal budget, and to validate the FSDP path on real multi-GPU hardware before it costs money to debug.</p>
+      </div>
+      <div class="card">
+        <span class="num-sm" style="color:var(--accent)">SDK</span>
+        <h3>TensorRT &amp; Triton</h3>
+        <p>Quantised inference serving. Because Artemis is self-hosted, inference efficiency is a margin driver rather than an infrastructure line item.</p>
+      </div>
+      <div class="card">
+        <span class="num-sm" style="color:var(--accent)">DGX</span>
+        <h3>Technical guidance</h3>
+        <p>Review of the sharded training configuration. We have the implementation; we have never been able to run it on the hardware it targets.</p>
+      </div>
+    </div>
+    <div class="gap"></div>
+    <div class="withrule">
+      <div class="rule-v"></div>
+      <div><p style="max-width:48em">We are not raising. The binding constraint on this project is not capital — it is that we have never had access to a GPU with native bf16 and a second device to shard across.</p></div>
+    </div>
+  </div>
+  <div class="foot"><span>Cutline Industries — Artemis</span><span class="mono">09 / 10</span></div>
+</section>
+
+<!-- 10 — TEAM / CLOSE -->
+<section class="slide">
+  <div class="slide-head">
+    <span class="eyebrow">09 — Company</span>
+    <h2>Cutline Industries</h2>
+  </div>
+  <div class="fill">
+    <div class="cols c2">
+      <div>
+        <table>
+          <tbody>
+            <tr><td>Entity</td><td class="n">Registered LLC</td></tr>
+            <tr><td>Founded</td><td class="n">Under 10 years</td></tr>
+            <tr><td>Team</td><td class="n">1 — founder-operated</td></tr>
+            <tr><td>Funding</td><td class="n">Bootstrapped, pre-seed</td></tr>
+            <tr><td>Revenue</td><td class="n">Pre-revenue</td></tr>
+            <tr><td>Prior cloud credits</td><td class="n">None</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div style="display:flex; flex-direction:column; gap:22px; justify-content:center">
+        <span class="pill n">✓ Not a consultancy or outsourced development firm</span>
+        <span class="pill n">✓ Not crypto-associated</span>
+        <span class="pill n">✓ Not a cloud service provider, reseller, or distributor</span>
+        <span class="pill n">✓ Not a public company</span>
+        <span class="pill n">✓ Working website, actively operated by a founder</span>
+      </div>
+    </div>
+    <div class="gap"></div>
+    <div class="withrule">
+      <div class="rule-v"></div>
+      <div>
+        <p style="max-width:46em">Artemis exists because one architectural decision — never call an external model — was treated as a product requirement rather than a limitation. Everything else followed from it.</p>
+        <div class="gap" style="height:22px"></div>
+        <p class="mono" style="font-size:19px; color:var(--muted); max-width:none; white-space:nowrap">cutline-industries.studio&nbsp;&nbsp;·&nbsp;&nbsp;artemisai-bycutlineindustries.studio</p>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>Cutline Industries — Artemis</span><span class="mono">10 / 10</span></div>
+</section>
+
+</body>
+</html>
