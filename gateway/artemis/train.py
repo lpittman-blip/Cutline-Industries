@@ -156,8 +156,12 @@ def main(argv=None) -> dict:
     # Pick the dtype the device actually has. fp16 carries ~3 fewer exponent
     # bits than bf16 and will overflow gradients to inf without loss scaling,
     # so it gets a GradScaler; bf16 and CPU do not need one.
+    # is_bf16_supported() is the wrong predicate here: it returns True on a T4,
+    # because PyTorch counts emulated bf16 as supported. Emulated bf16 is slower
+    # than fp16 and buys nothing, so gate on the compute capability instead --
+    # SM 8.0 (Ampere) is where the bf16 tensor cores actually appear.
     if args.amp_dtype == "auto":
-        amp_dtype = (torch.bfloat16 if device.type == "cuda" and torch.cuda.is_bf16_supported()
+        amp_dtype = (torch.bfloat16 if device.type == "cuda" and torch.cuda.get_device_capability()[0] >= 8
                      else torch.float16 if device.type == "cuda" else torch.float32)
     else:
         amp_dtype = {"bf16": torch.bfloat16, "fp16": torch.float16, "fp32": torch.float32}[args.amp_dtype]

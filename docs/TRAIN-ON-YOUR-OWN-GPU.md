@@ -130,8 +130,12 @@ Halving the pool halves the disk and roughly halves the time.
 
 ## What to expect
 
-- **VRAM:** 100m at `batch 6 × seq 2048` fits comfortably in 12 GB. A 24 GB
-  card has plenty of headroom; you could raise `BATCH` and lower `ACCUM`.
+- **VRAM:** `batch 6 × seq 2048` does **not** fit in 16 GB -- it was measured
+  OOMing on a 16 GB T4, which reported 14.56 GiB in use at the failure. The
+  configuration that does run there is `batch 2 × accum 12`, which holds the
+  same tokens per step at a third of the activation memory. Treat 12 GB as the
+  floor for `batch 2`, not for `batch 6`. A 24 GB card has real headroom; raise
+  `BATCH` and lower `ACCUM` together so tokens per step stay constant.
 - **Hours:** derived from your actual card. Measured examples at 30% MFU:
   RTX 3090 ≈ 26 h, RTX 4090 ≈ 11 h, A100 ≈ 6 h. Plus a few hours of largely
   single-threaded data prep in front of training, which no GPU speeds up.
