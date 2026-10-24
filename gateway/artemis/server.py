@@ -29,7 +29,7 @@ import uuid
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 from .backends import (
-    GROK_DEFAULT_MODEL, AzureAIBackend, ArtemisServerBackend, GrokBackend,
+    GROK_DEFAULT_MODEL, ArtemisPreviewBackend, AzureAIBackend, ArtemisServerBackend, GrokBackend,
     LocalBackend, NotReadyBackend,
 )
 from .business import Business, PaymentRequired, RateLimited, Unauthorized
@@ -55,6 +55,11 @@ def added_models() -> dict:
     key = os.environ.get("XAI_API_KEY") or os.environ.get("GROK_API_KEY")
     if key:
         out["grok"] = GrokBackend(key, os.environ.get("GROK_MODEL", GROK_DEFAULT_MODEL))
+    # Artemis's own partially trained checkpoint (artemis/preview_server.py). Not third-party, but
+    # it is opt-in per message exactly like an added service, so it can never become the default.
+    preview = os.environ.get("ARTEMIS_PREVIEW_URL")
+    if preview:
+        out["artemis-preview"] = ArtemisPreviewBackend(preview)
     return out
 
 

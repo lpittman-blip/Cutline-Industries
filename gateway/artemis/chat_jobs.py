@@ -277,9 +277,12 @@ class ChatJobs:
         """
         rid, assistant, owner = request["id"], request["assistant_id"], request["owner"]
         spec = self.biz.model_spec(model)
-        system = (f"You are {spec.get('display') or model}, a third-party model offered through the "
-                  f"Artemis platform as an added service. You are not Artemis and must not claim to "
-                  f"be. Answer the user directly.")
+        if spec.get("external", True):
+            system = (f"You are {spec.get('display') or model}, a third-party model offered through the "
+                      f"Artemis platform as an added service. You are not Artemis and must not claim to "
+                      f"be. Answer the user directly.")
+        else:  # Artemis's own preview checkpoint: not third-party (it reads no system prompt)
+            system = f"You are {spec.get('display') or model}, an early preview of Artemis's own model."
         backend = RecordingBackend(self, request, backend=_Brainless(self.app.added_models[model]))
         messages = [{"role": m["role"], "content": m["content"]} for m in context]
         content = ""

@@ -390,3 +390,91 @@ class GrokBackend:
                     metadata_sink({"external": True, "provider": "xai", "model": self.model})
         except (urllib.error.URLError, TimeoutError, OSError, ValueError, KeyError, IndexError, TypeError) as e:
             raise ModelUnavailable("Grok is unavailable right now; please retry later.") from e
+
+
+ARTEMIS_PREVIEW_MODEL = "artemis-100m-step5250"
+ARTEMIS_PREVIEW_QUALITY = "preview, partially trained code model"
+
+
+class ArtemisPreviewBackend:
+    """Artemis's OWN partially trained checkpoint, served by artemis/preview_server.py on CPU.
+
+    Selectable as the "artemis-preview" model, never the default. It is a code-only pretrain
+    (artemis-100m at step 5,250 of 22,533, no chat tuning), so it answers by continuing source
+    code. readiness() and every reply's metadata say so: quality is
+    "preview, partially trained code model", external is False (these are our weights).
+
+    Same added-service signature as GrokBackend: generate/stream(system, messages, max_tokens).
+    """
+
+    def __init__(self, base_url: str, timeout: float = 180.0, model: str = ARTEMIS_PREVIEW_MODEL):
+        base = base_url.rstrip("/")
+        self.base_url = base[:-3].rstrip("/") if base.endswith("/v1") else base
+        self.timeout, self.model = timeout, model
+        self._health_lock = threading.Lock()
+        self._health = None
+        self._health_at = 0.0
+
+    def _meta(self) -> dict:
+        return {"external": False, "provider": "artemis-preview", "model": self.model,
+                "quality": ARTEMIS_PREVIEW_QUALITY}
+
+    def readiness(self):
+        """GET /health on the preview server (no generation: CPU time is the scarce resource), cached 15 s."""
+        with self._health_lock:
+            if self._health is not None and time.monotonic() - self._health_at < 15:
+                return dict(self._health)
+            try:
+                with urllib.request.urlopen(f"{self.base_url}/health", timeout=3) as r:
+                    data = json.load(r)
+                available = bool(data.get("ok"))
+                step = data.get("step")
+            except (urllib.error.URLError, TimeoutError, OSError, ValueError):
+                available, step = False, None
+            self._health = {"configured": True, "serving": available,
+                            "status": "available" if available else "unavailable",
+                            "step": step, **self._meta()}
+            self._health_at = time.monotonic()
+            return dict(self._health)
+
+    def _request(self, messages: list[dict], max_tokens: int, stream: bool):
+        body = {"model": self.model, "max_tokens": max_tokens, "stream": stream,
+                "messages": [{"role": m["role"], "content": clean(m["content"])} for m in messages]}
+        return urllib.request.Request(f"{self.base_url}/v1/chat/completions", data=json.dumps(body).encode(),
+                                      headers={"Content-Type": "application/json"})
+
+    def generate(self, system: str, messages: list[dict], max_tokens: int = 512, metadata_sink=None) -> str:
+        try:
+            with urllib.request.urlopen(self._request(messages, max_tokens, False), timeout=self.timeout) as r:
+                data = json.load(r)
+                content = data["choices"][0]["message"]["content"]
+                if not isinstance(content, str):
+                    raise ValueError("invalid inference content")
+                if metadata_sink:
+                    metadata_sink({**self._meta(), "finish_reason": data["choices"][0].get("finish_reason")})
+                return content
+        except (urllib.error.URLError, TimeoutError, OSError, ValueError, KeyError, IndexError, TypeError) as e:
+            raise ModelUnavailable("Artemis preview is unavailable right now; please retry later.") from e
+
+    def stream(self, system: str, messages: list[dict], max_tokens: int = 512, metadata_sink=None):
+        try:
+            with urllib.request.urlopen(self._request(messages, max_tokens, True), timeout=self.timeout) as r:
+                finish = None
+                for raw in r:
+                    line = raw.decode().strip()
+                    if line == "data: [DONE]":
+                        break
+                    if not line.startswith("data:"):
+                        continue
+                    data = json.loads(line[5:])
+                    for c in data.get("choices", []):
+                        finish = c.get("finish_reason") or finish
+                        piece = (c.get("delta") or {}).get("content")
+                        if piece:
+                            if not isinstance(piece, str):
+                                raise ValueError("invalid inference content")
+                            yield piece
+                if metadata_sink:
+                    metadata_sink({**self._meta(), "finish_reason": finish})
+        except (urllib.error.URLError, TimeoutError, OSError, ValueError, KeyError, IndexError, TypeError) as e:
+            raise ModelUnavailable("Artemis preview is unavailable right now; please retry later.") from e
