@@ -39,14 +39,14 @@ def test_unlimited_is_null_not_a_big_number():
 def test_an_unknown_account_reads_as_the_free_plan():
     data = Business(":memory:").entitlements("guest:1")
     assert data["plan"]["id"] == "free" and data["plan"]["price_usd_month"] == 0
-    assert [m["id"] for m in data["capabilities"]["models"]] == ["artemis"]
+    assert [m["id"] for m in data["capabilities"]["models"]] == ["artemis", "artemis-preview"]
 
 
 def test_capabilities_match_the_plan_grants():
     biz = Business(":memory:")
     biz.set_plan("acct:x", "pro")
     caps = biz.entitlements("acct:x")["capabilities"]
-    assert {m["id"] for m in caps["models"]} == {"artemis", "grok"}
+    assert {m["id"] for m in caps["models"]} == {"artemis", "grok", "artemis-preview"}
     assert "run_python" in caps["tools"]
     assert len(caps["brains"]) > 3, "pro grants every brain, not the free three"
 

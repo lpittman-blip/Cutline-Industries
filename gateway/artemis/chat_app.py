@@ -125,7 +125,11 @@ def make_chat_handler(app, biz, records, jobs, site=None):
                 if method == "GET" and name == "status":
                     health = app.backend.readiness() if hasattr(app.backend, "readiness") else {"serving": False, "status": "unverified"}
                     self._json(200, {**health, "model": jobs.model, "capabilities": {"text_chat": True, "tools": getattr(app, "toolbox", None).status() if getattr(app, "toolbox", None) else {},
-                        "voice_input": False, "file_upload": False, "read_aloud": "browser_support_required"}, "storage": "server", "training_collection": False}); return True
+                        "voice_input": False, "file_upload": False, "read_aloud": "browser_support_required"}, "storage": "server", "training_collection": False,
+                        "default_model": "artemis",
+                        # Selectable models besides the default, each with its own honest readiness.
+                        "added_models": {mid: (b.readiness() if hasattr(b, "readiness") else {"configured": True})
+                                         for mid, b in getattr(app, "added_models", {}).items() if mid != "grok"}}); return True
                 if method == "GET" and name == "me":
                     try: user = self._user()
                     except ChatError: user = None

@@ -209,9 +209,11 @@ def test_model_picker_lists_the_plan_and_marks_what_is_external():
     with server(make_handler(app, biz)) as base:
         code, body = request(base, "/v1/models", None, AUTH)
     listed = {m["id"]: m for m in json.loads(body)["models"]}
-    assert code == 200 and set(listed) == {"artemis", "grok"}
+    assert code == 200 and set(listed) == {"artemis", "grok", "artemis-preview"}
     assert listed["artemis"]["external"] is False and listed["artemis"]["available"] is True
     assert listed["grok"]["external"] is True and listed["grok"]["display"] == "Grok"
+    # Our own early checkpoint: not external, and not available unless a preview server is wired.
+    assert listed["artemis-preview"]["external"] is False
 
 
 def test_picker_shows_an_included_model_as_unavailable_rather_than_hiding_it():
@@ -224,10 +226,13 @@ def test_picker_shows_an_included_model_as_unavailable_rather_than_hiding_it():
 
 
 def test_the_free_picker_offers_artemis_only():
+    """Free gets Artemis and Artemis's own preview checkpoint, never a third-party model."""
     biz, app, model, grok = wire()
     with server(make_handler(app, biz)) as base:
         code, body = request(base, "/v1/models")
-    assert code == 200 and [m["id"] for m in json.loads(body)["models"]] == ["artemis"]
+    models = json.loads(body)["models"]
+    assert code == 200 and [m["id"] for m in models] == ["artemis", "artemis-preview"]
+    assert not any(m["external"] for m in models)
 
 
 # --------------------------------------------------------------- Blueprint 5 and 12
